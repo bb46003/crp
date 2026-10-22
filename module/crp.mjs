@@ -4,7 +4,7 @@ import { CRPActor } from "./actor/actor.mjs";
 import { CRPActorData, CRPNPCKnechtData, CRPNPCRycerzData } from "./actor/actor-data.mjs";
 import { CRP } from "./config.mjs";
 import { CRPRoll } from "./rolls/roll.mjs";
-import { CRPActorSheet, CRPAdvancementWindow } from "./actor/actor-sheet.mjs";
+import { CRPActorSheet } from "./actor/actor-sheet.mjs";
 import { CRPNPCCommonerSheet } from "./actor/npc-commoner-sheet.mjs";
 import { CRPNPCKnechtSheet } from "./actor/npc-knecht-sheet.mjs";
 import { CRPNPCRycerzSheet } from "./actor/npc-rycerz-sheet.mjs";
@@ -14,21 +14,12 @@ import { CRPWeaponData, CRPArmorData, CRPShieldData, CRPStuffData, CRPLanguageDa
 import { CRPWeaponSheet, CRPArmorSheet, CRPShieldSheet, CRPStuffSheet, CRPLanguageSheet, CRPOriginSheet, CRPTraitSheet } from "./item/item-sheet.mjs";
 
 const CRP_MOUNT_UNDERLAY = "systems/crp/assets/wierzchowiec.webp";
-const CRP_INITIATIVE_TOTALS = new Map();
 const CRP_PENDING_INITIATIVE_UPDATES = new Map();
-const CRP_NPC_ACTOR_TYPES = new Set(["npc", "npc-knecht", "npc-rycerz"]);
 
 function hasChangedPath(changed, path) {
   return foundry.utils.hasProperty(changed, path) || Object.hasOwn(changed, path);
 }
 
-function hasInitiativeEquipmentChange(changed) {
-  return [
-    "system.equipment.rightHand",
-    "system.equipment.leftHand",
-    "system.equipment.armor"
-  ].some(path => hasChangedPath(changed, path));
-}
 
 function getInitiativeTotal(actor) {
   return Number(actor?.system?.derived?.initiativeTotal ?? actor?.system?.derived?.initiative ?? 0);
@@ -58,14 +49,7 @@ async function refreshCombatInitiativeForActor(actor, previousBase = null) {
   }
 }
 
-function queueCombatInitiativeRefresh(actor, previousBase = null) {
-  const combat = game.combat;
-  if (!combat?.started || !actor) return;
 
-  if (!CRP_PENDING_INITIATIVE_UPDATES.has(actor.uuid)) {
-    CRP_PENDING_INITIATIVE_UPDATES.set(actor.uuid, previousBase);
-  }
-}
 
 async function flushPendingCombatInitiatives(combat) {
   if (!game.user.isGM || !combat?.started || !CRP_PENDING_INITIATIVE_UPDATES.size) return;
@@ -508,58 +492,6 @@ Hooks.on("updateItem", async (item, changed) => {
 });
 
 
-Hooks.on("createActor", async (actor) => {
-
-  if (!["character", ...CRP_NPC_ACTOR_TYPES].includes(actor.type)) return;
-
-  const max = actor.system.derived.health.max;
-
-  const updates = {
-    "system.derived.health.value": max
-  };
-
-  if (actor.type === "character") {
-    updates["system.resources.advantageUses.value"] = actor.system.attributes?.reason?.value ?? 4;
-  }
-
-  await actor.update(updates);
-
-  // TOKEN DEFAULT
-  await actor.update({
-    prototypeToken: {
-      name: actor.name,
-      displayName: CONST.TOKEN_DISPLAY_MODES.ALWAYS,
-      displayBars: CONST.TOKEN_DISPLAY_MODES.ALWAYS,
-      bar1: {
-        attribute: "derived.health"
-      }
-    }
-  });
-
-});
-
-Hooks.on("updateActor", (actor, changed) => {
-  const hasExperienceChange = [
-    "system.resources.experience",
-    "system.resources.experience.value",
-    "system.resources.experience.free",
-    "system.resources.experience.log"
-  ].some(path => hasChangedPath(changed, path));
-  const hasManeuverChange = [
-    "system.derived.maneuver",
-    "system.derived.maneuver.value",
-    "system.derived.maneuver.max"
-  ].some(path => hasChangedPath(changed, path));
-
-  if (!hasExperienceChange && !hasManeuverChange) return;
-
-  actor.sheet?.render(false);
-
-  if (hasExperienceChange) {
-    CRPAdvancementWindow.refreshForActor(actor);
-  }
-});
-
 Hooks.on("canvasReady", () => {
   for (const token of canvas.tokens?.placeables ?? []) {
     refreshMountedTokenUnderlay(token);
@@ -592,36 +524,6 @@ Hooks.on("updateToken", (tokenDocument, changed) => {
   if (mountedChanged) refreshMountedTokenUnderlay(tokenDocument?.object);
 });
 
-Hooks.on("preUpdateActor", (actor, changed) => {
-  if (!hasInitiativeEquipmentChange(changed)) return;
-
-  CRP_INITIATIVE_TOTALS.set(actor.uuid, getInitiativeTotal(actor));
-});
-
-Hooks.on("updateActor", async (actor, changed) => {
-  if (typeof changed.name === "string" && actor.prototypeToken?.name !== actor.name) {
-    await actor.update({ "prototypeToken.name": actor.name });
-  }
-
-  const mountedChanged =
-    hasChangedPath(changed, "system.equipment.mounted");
-
-  if (mountedChanged) refreshMountedActorUnderlays(actor);
-
-  if (hasInitiativeEquipmentChange(changed)) {
-    const previousBase = CRP_INITIATIVE_TOTALS.get(actor.uuid) ?? null;
-    CRP_INITIATIVE_TOTALS.delete(actor.uuid);
-
-    queueCombatInitiativeRefresh(actor, previousBase);
-  }
-});
-
-Hooks.on("preCreateToken", (token) => {
-  const actor = game.actors.get(token.actorId);
-  if (!actor || token.actorLink || token.name === actor.name) return;
-
-  token.updateSource({ name: actor.name });
-});
 
 Hooks.on("renderChatMessageHTML", (message, html) => {
 
