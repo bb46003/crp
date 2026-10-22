@@ -12,6 +12,7 @@ import { CRPGMPanel } from "./gm-panel.mjs";
 import { CRPItem } from "./item/item.mjs";
 import { CRPWeaponData, CRPArmorData, CRPShieldData, CRPStuffData, CRPLanguageData, CRPOriginData, CRPTraitData } from "./item/item-data.mjs";
 import { CRPWeaponSheet, CRPArmorSheet, CRPShieldSheet, CRPStuffSheet, CRPLanguageSheet, CRPOriginSheet, CRPTraitSheet } from "./item/item-sheet.mjs";
+import { CRPCombat } from "./combat.mjs";
 
 const CRP_MOUNT_UNDERLAY = "systems/crp/assets/wierzchowiec.webp";
 const CRP_PENDING_INITIATIVE_UPDATES = new Map();
@@ -377,7 +378,7 @@ Hooks.once("init", () => {
   };
 
   CONFIG.CRP = CRP;
-
+  CONFIG.Combat.documentClass = CRPCombat;
   foundry.documents.collections.Actors.registerSheet("crp", CRPActorSheet, {
   types: ["character"],
   makeDefault: true
@@ -1257,3 +1258,39 @@ Hooks.once("ready", () => {
   });
 
 });
+Hooks.once("diceSoNiceReady", async (dice3d) => {
+  dice3d.addSystem({ id: "crp", name: "Corona Regni Poloniae" }, 'preferred');
+
+  dice3d.addColorset({
+    name: "crp",
+    description: "Corona Regni Poloniae",
+    category: "Colors",
+    foreground: "#ffffff",
+    background: "#000000",
+    outline: "gray",
+    texture: "none",
+    
+  },
+  'preferred');
+
+  dice3d.addDicePreset(
+    {
+      type: "d10",
+      labels: [
+        "systems/crp/assets/orzel-ai.webp",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "systems/crp/assets/Insignia_Germany_Order_Teutonic.png"
+      ],
+      system: "crp",
+    },
+    "d10",
+  );
+
+})

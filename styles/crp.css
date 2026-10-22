@@ -27,15 +27,20 @@
 
 .crp-sheet {
   font-family: serif;
-  padding: 10px;
-  overflow-y: auto;
-  border: 5px double rgba(75, 48, 20, 1);
+
+  border: 10px double rgba(75, 48, 20, 1);
       background:
   url("../assets/parchment.png");
   background-size: cover;
   color: #4b3014;
+  .window-content{
+    padding: 0px
+  }
 }
-
+.crp--sheet{
+    padding: 10px;
+  overflow-y: auto;
+}
 .crp-name {
   font-family: "CRP-Header", serif;
   letter-spacing: 1px;

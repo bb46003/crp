@@ -375,7 +375,7 @@ export class CRPActorSheet extends HandlebarsApplicationMixin(DocumentSheetV2) {
       ...super.DEFAULT_OPTIONS,
     editable: true,
 
-    classes: ["crp", "sheet", "actor"],
+    classes: ["crp-sheet", "sheet", "actor"],
     tag: "section",
     editable: true,
     window: {
@@ -383,8 +383,8 @@ export class CRPActorSheet extends HandlebarsApplicationMixin(DocumentSheetV2) {
       resizable: true
     },
     position: {
-      width: 1000,
-      height: 800
+      width: 945,
+      height: 860
     },
 
     dragDrop: [{ dropSelector: ".crp-sheet" }]

@@ -4,7 +4,7 @@ import { CRPAdvancementWindow } from "./actor-sheet.mjs";
 
 const ARMOR_PENALIZED_SKILLS = new Set(["athletics", "stealth", "survival"]);
 const CRP_NPC_ACTOR_TYPES = new Set(["npc", "npc-knecht", "npc-rycerz"]);
-const CRP_INITIATIVE_TOTALS = new Map();
+
 
 function isNPCActor(actor) {
   return CRP_NPC_ACTOR_TYPES.has(actor?.type);
@@ -356,19 +356,8 @@ async _preCreate(data, options, user) {
     hasChangedPath(data, "system.equipment.mounted");
 
   if (mountedChanged) refreshMountedActorUnderlays(actor);
-  if (hasInitiativeEquipmentChange(data)) {
-    const previousBase = CRP_INITIATIVE_TOTALS.get(actor.uuid) ?? null;
-    CRP_INITIATIVE_TOTALS.delete(actor.uuid);
 
-    await queueCombatInitiativeRefresh(actor, previousBase);
-  }
  }
- //rzeczy do zrobienia przed updatu Aktora
-async _preUpdate(data, options, user) {
-    await super._preUpdate(data, options, user);
-    if (!hasInitiativeEquipmentChange(data)) return;
-    CRP_INITIATIVE_TOTALS.set(this.uuid, getInitiativeTotal(this));
-}
  
 }
 
@@ -383,29 +372,7 @@ function refreshMountedActorUnderlays(actor) {
     refreshMountedTokenUnderlay(token);
   }
 }
-function hasInitiativeEquipmentChange(changed) {
-  return [
-    "system.equipment.rightHand",
-    "system.equipment.leftHand",
-    "system.equipment.armor"
-  ].some(path => hasChangedPath(changed, path));
-}
-function getInitiativeTotal(actor) {
-  return Number(actor?.system?.derived?.initiativeTotal ?? actor?.system?.derived?.initiative ?? 0);
-}
-async function queueCombatInitiativeRefresh(actor, previousBase = null) {
-  const combat = game.combat;
-  if (!combat?.started || !actor) return;
-  const combatant = combat.combatants.find(c => c.actor?.uuid === actor.uuid);
-  if(combatant){
-    const rolledInitiative = combatant.flags.crp.initiativeRoll;
-    const iniciativeBonus = actor.system.derived.initiativeTotal;
-    const newInitiative = rolledInitiative + iniciativeBonus;
-
-    await combatant.update({
-      initiative: newInitiative
-    });  
-  }
 
 
-}
+
+
