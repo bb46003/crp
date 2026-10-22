@@ -1,9 +1,10 @@
 import { CRPRoll } from "../rolls/roll.mjs";
-
-// module/actor/actor.mjs
+import { CRPAdvancementWindow } from "./actor-sheet.mjs";
+ // module/actor/actor.mjs
 
 const ARMOR_PENALIZED_SKILLS = new Set(["athletics", "stealth", "survival"]);
 const CRP_NPC_ACTOR_TYPES = new Set(["npc", "npc-knecht", "npc-rycerz"]);
+const CRP_INITIATIVE_TOTALS = new Map();
 
 function isNPCActor(actor) {
   return CRP_NPC_ACTOR_TYPES.has(actor?.type);
@@ -280,6 +281,131 @@ async applyDamage(amount) {
 
   await this.applyWoundsState();
 }
+//rzeczy do zrobienia przed stworzeniem Aktora
+async _preCreate(data, options, user) {
+  await super._preCreate(data, options, user);
+  const actor = this;
+  if (!["character", ...CRP_NPC_ACTOR_TYPES].includes(actor.type)) return;
+    const reasonValue = this?.system?.attributes?.reason?.value ?? 4;
+    // TOKEN DEFAULT
+    await this.updateSource({
+      prototypeToken: {
+        name: actor.name,
+        displayName: CONST.TOKEN_DISPLAY_MODES.ALWAYS,
+        displayBars: CONST.TOKEN_DISPLAY_MODES.ALWAYS,
+        bar1: {
+          ttribute: "derived.health"
+        }
+      },
+      ["system.resources.advantageUses.value"]: reasonValue
+    });
+  }
+//rzeczy do zrobienia przy updacie Aktora
+ async _onUpdate(data, options, user) {
+  const  changeName = data?.name ?? false
+   const actor = this;
+  if(changeName && this.type === "character"){
+    const tokenName = data.name
+    const dialog =  await foundry.applications.api.DialogV2.confirm({
+      title: game.i18n.localize("CRP.ui.dialog.changeTokenName.title"),
+      content: `<p>${game.i18n.format("CRP.ui.dialog.changeTokenName.content", { name: tokenName })}</p>`,
+    });         
+    if (dialog) {
+     
+      await actor.prototypeToken.update({ name: tokenName });
+      const dependedTokens = actor.getDependentTokens();
+      for (const token of dependedTokens) {                      
+        await token.update({ name: tokenName });
+      }
+    }
+  }
+  const tokenImg = data?.prototypeToken?.texture?.src ?? false;
+  if(tokenImg && this.type === "character"){
+    const tokenName = data.name
+    const dialog =  await foundry.applications.api.DialogV2.confirm({
+      title: game.i18n.localize("CRP.ui.dialog.changeTokenImage.title"),
+      content: `<p>${game.i18n.format("CRP.ui.dialog.changeTokenImage.content", { name: tokenName })}</p>`,
+    });
+    if (dialog) {
+      await actor.prototypeToken.update({ name: tokenName });
+      const dependedTokens = actor.getDependentTokens();
+      for (const token of dependedTokens) {                      
+        await token.update({ ["texture.src"]: tokenImg });
+      }
+    }
+  }
 
+    const hasExperienceChange = [
+    "system.resources.experience",
+    "system.resources.experience.value",
+    "system.resources.experience.free",
+    "system.resources.experience.log"
+  ].some(path => hasChangedPath(data, path));
+  const hasManeuverChange = [
+    "system.derived.maneuver",
+    "system.derived.maneuver.value",
+    "system.derived.maneuver.max"
+  ].some(path => hasChangedPath(data, path));
+
+  if (hasExperienceChange && hasManeuverChange){
+  if (hasExperienceChange) {
+    CRPAdvancementWindow.refreshForActor(actor);
+  }
+}
+    const mountedChanged =
+    hasChangedPath(data, "system.equipment.mounted");
+
+  if (mountedChanged) refreshMountedActorUnderlays(actor);
+  if (hasInitiativeEquipmentChange(data)) {
+    const previousBase = CRP_INITIATIVE_TOTALS.get(actor.uuid) ?? null;
+    CRP_INITIATIVE_TOTALS.delete(actor.uuid);
+
+    await queueCombatInitiativeRefresh(actor, previousBase);
+  }
+ }
+ //rzeczy do zrobienia przed updatu Aktora
+async _preUpdate(data, options, user) {
+    await super._preUpdate(data, options, user);
+    if (!hasInitiativeEquipmentChange(data)) return;
+    CRP_INITIATIVE_TOTALS.set(this.uuid, getInitiativeTotal(this));
+}
+ 
 }
 
+function hasChangedPath(changed, path) {
+  return foundry.utils.hasProperty(changed, path) || Object.hasOwn(changed, path);
+}
+
+function refreshMountedActorUnderlays(actor) {
+  const tokens = getMountedActorTokens(actor);
+
+  for (const token of tokens) {
+    refreshMountedTokenUnderlay(token);
+  }
+}
+function hasInitiativeEquipmentChange(changed) {
+  return [
+    "system.equipment.rightHand",
+    "system.equipment.leftHand",
+    "system.equipment.armor"
+  ].some(path => hasChangedPath(changed, path));
+}
+function getInitiativeTotal(actor) {
+  return Number(actor?.system?.derived?.initiativeTotal ?? actor?.system?.derived?.initiative ?? 0);
+}
+async function queueCombatInitiativeRefresh(actor, previousBase = null) {
+  const combat = game.combat;
+  if (!combat?.started || !actor) return;
+  const combatant = combat.combatants.find(c => c.actor?.uuid === actor.uuid);
+  if(combatant){
+    const rolledInitiative = combatant.flags.crp.initiativeRoll;
+    const iniciativeBonus = actor.system.derived.initiativeTotal;
+    const newInitiative = rolledInitiative + iniciativeBonus;
+
+    await combatant.update({
+      initiative: newInitiative
+    });  
+  }
+
+
+}

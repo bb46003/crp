@@ -245,6 +245,10 @@ bio: new SchemaField({
 
     
   }
+  prepareDerivedData() {
+    super.prepareDerivedData();
+  }
+
 }
 
 export class CRPNPCKnechtData extends CRPActorData {}

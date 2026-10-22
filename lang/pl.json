@@ -61,6 +61,18 @@
         "name": "Rozbrojenie",
         "description": "Zamiast zadawać rany, postać wytrąca broń z dłoni przeciwnika, jeśli osiągnie sukces w teście walki."
       }
+    },
+    "ui":{
+      "dialog": {
+        "changeTokenName": {
+          "title": "Zmiana nazwy tokena",
+          "content": "Czy na pewno chcesz zmienić nazwę tokena na {name}?"
+        },
+        "changeTokenImage": {
+          "title": "Zmiana obrazu tokena",
+          "content": "Czy na pewno chcesz zmienić obraz tokena na {name}?"
+        }
+      }
     }
   },
   "TYPES": {
