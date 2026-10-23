@@ -21,7 +21,19 @@
   src: url("../fonts/Kingthings-Petrock.ttf") format("truetype");
   font-weight: bold;
 }
-
+/* ikona kostek */
+.roll.die.d10.min {
+  background-image: url("../assets/tarcza_kostka.webp");
+      color: unset;
+    filter: none;
+        font-size: 0px;
+}
+.roll.die.d10.max {
+  background-image: url("../assets/orzel-kostka.webp");
+      color: unset;
+    filter: none;
+        font-size: 0px;
+}
 
 /* ===== OGÓLNE ===== */
 

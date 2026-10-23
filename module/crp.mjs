@@ -302,6 +302,15 @@ async function refreshMountedTokenUnderlay(token) {
   }
 }
 
+
+
+function refreshMountedActorUnderlays(actor) {
+  const tokens = getMountedActorTokens(actor);
+
+  for (const token of tokens) {
+    refreshMountedTokenUnderlay(token);
+  }
+}
 function getMountedActorTokens(actor) {
   const tokens = new Set(actor?.getActiveTokens?.(false) ?? []);
 
@@ -320,15 +329,6 @@ function getMountedActorTokens(actor) {
 
   return [...tokens];
 }
-
-function refreshMountedActorUnderlays(actor) {
-  const tokens = getMountedActorTokens(actor);
-
-  for (const token of tokens) {
-    refreshMountedTokenUnderlay(token);
-  }
-}
-
 function refreshCharacterSheetLocks(locked) {
   for (const sheet of document.querySelectorAll(".crp-sheet")) {
     sheet.querySelectorAll(
@@ -1277,7 +1277,7 @@ Hooks.once("diceSoNiceReady", async (dice3d) => {
     {
       type: "d10",
       labels: [
-        "systems/crp/assets/orzel-ai.webp",
+        "systems/crp/assets/tarcza_kostka.webp",
         "2",
         "3",
         "4",
@@ -1286,9 +1286,10 @@ Hooks.once("diceSoNiceReady", async (dice3d) => {
         "7",
         "8",
         "9",
-        "systems/crp/assets/Insignia_Germany_Order_Teutonic.png"
+        "systems/crp/assets/orzel-kostka.webp"
       ],
       system: "crp",
+      labelScale: 0.5,
     },
     "d10",
   );
