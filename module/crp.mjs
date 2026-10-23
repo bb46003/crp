@@ -13,6 +13,7 @@ import { CRPItem } from "./item/item.mjs";
 import { CRPWeaponData, CRPArmorData, CRPShieldData, CRPStuffData, CRPLanguageData, CRPOriginData, CRPTraitData } from "./item/item-data.mjs";
 import { CRPWeaponSheet, CRPArmorSheet, CRPShieldSheet, CRPStuffSheet, CRPLanguageSheet, CRPOriginSheet, CRPTraitSheet } from "./item/item-sheet.mjs";
 import { CRPCombat } from "./combat.mjs";
+import { registerHandlebarsHelpers } from "./handlebars.mjs";
 
 const CRP_MOUNT_UNDERLAY = "systems/crp/assets/wierzchowiec.webp";
 const CRP_PENDING_INITIATIVE_UPDATES = new Map();
@@ -444,7 +445,7 @@ CONFIG.Combat.initiative = {
   formula: "1d6",
   decimals: 0
 };
-
+registerHandlebarsHelpers();
 Combat.prototype.rollInitiative = async function(ids, options = {}) {
 
   ids = typeof ids === "string" ? [ids] : ids;
@@ -1277,7 +1278,7 @@ Hooks.once("diceSoNiceReady", async (dice3d) => {
     {
       type: "d10",
       labels: [
-        "systems/crp/assets/tarcza_kostka.webp",
+        "systems/crp/assets/orzel-kostka.webp",
         "2",
         "3",
         "4",
@@ -1286,7 +1287,7 @@ Hooks.once("diceSoNiceReady", async (dice3d) => {
         "7",
         "8",
         "9",
-        "systems/crp/assets/orzel-kostka.webp"
+        "systems/crp/assets/tarcza_kostka.webp"
       ],
       system: "crp",
       labelScale: 0.5,

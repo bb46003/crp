@@ -23,13 +23,13 @@
 }
 /* ikona kostek */
 .roll.die.d10.min {
-  background-image: url("../assets/tarcza_kostka.webp");
+  background-image: url("../assets/orzel-kostka.webp");
       color: unset;
     filter: none;
         font-size: 0px;
 }
 .roll.die.d10.max {
-  background-image: url("../assets/orzel-kostka.webp");
+  background-image: url("../assets/tarcza_kostka.webp");
       color: unset;
     filter: none;
         font-size: 0px;
@@ -52,6 +52,7 @@
 .crp--sheet{
     padding: 10px;
   overflow-y: auto;
+      min-height: 330px;
 }
 .crp-name {
   font-family: "CRP-Header", serif;
@@ -115,8 +116,6 @@
 
 .crp-attributes {
   min-height: 500px;
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
   gap: 10px;
   border-right: 1px solid rgba(75, 48, 20, 1);
   border-bottom: 1px solid rgba(75, 48, 20, 1);
@@ -906,14 +905,23 @@ input:focus {
 
 /* pojedynczy slot */
 .crp-eq-slot {
-
-  border: 1px solid rgba(75,48,20, 1);
-  padding: 6px;
-  border-radius: 4px;
-  background: rgba(0,0,0,0.2);
-  min-height: 60px;
+  border: 1px solid rgba(75, 48, 20, 1);
+    padding: 6px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.2);
+    max-height: 105px;
+    display: flex;
+    flex-direction: column;
+    .crp-item-row.crp-unarmed-slot{
+      margin:auto
+    }
 }
-
+.crp-eq-slot[data-slot="armor"] {
+  .crp-item-row{
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  }
+}
 .crp-attack-dialog {
   display: flex;
   flex-direction: column;
@@ -1026,10 +1034,7 @@ input:focus {
 
 .crp-mounted-toggle {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 36px;
+  margin:auto
 }
 
 .crp-mounted-toggle input {
@@ -1055,7 +1060,8 @@ input:focus {
 }
 
 .crp-item-row .crp-slot-clear {
-  margin-left: auto;
+  width: 100%;
+    margin: auto;
 }
 
 /* ===== STATS BAR ===== */
@@ -1318,6 +1324,7 @@ justify-content: flex-start;
   display: flex;
   width: 100%;
   margin-bottom: 10px;
+
 }
 
 /* TAB */

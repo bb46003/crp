@@ -3,165 +3,7 @@ import { formatMoney, normalizeMoney, obolsToMoney } from "../currency.mjs";
 
 const { ApplicationV2, DocumentSheetV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const CRP_NPC_ACTOR_TYPES = new Set(["npc", "npc-knecht", "npc-rycerz"]);
-
-function isNPCActor(actor) {
-  return CRP_NPC_ACTOR_TYPES.has(actor?.type);
-}
-
-function getSkillAdvancementCost(skillValue, attrValue) {
-  const baseCost = skillValue === 0 ? 2 : skillValue + 1;
-  return skillValue + 1 > attrValue ? baseCost * 2 : baseCost;
-}
-
-async function getAttackModifier(actor, { allowManeuvers = true } = {}) {
-  const strikeText = text => [...text].map(character => `${character}\u0336`).join("");
-  const activeAimedAttack = actor.getFlag("crp", "aimedAttack");
-  const activeDefensiveAttack = actor.getFlag("crp", "defensiveAttack");
-  const hasActiveManeuver = !!activeAimedAttack || !!activeDefensiveAttack;
-  const availableManeuver = actor.system.derived.maneuver?.value ?? 0;
-  const maneuvers = [
-    { key: "none", cost: 0, implemented: true },
-    { key: "assault", cost: 0, implemented: false },
-    { key: "holdBack", cost: 0, implemented: false },
-    { key: "charge", cost: 0, implemented: false },
-    { key: "shieldGuard", cost: 0, implemented: false },
-    { key: "harry", cost: 1, implemented: false },
-    { key: "withdraw", cost: 1, implemented: false },
-    { key: "knockdown", cost: 1, implemented: false },
-    { key: "standUp", cost: 1, implemented: false },
-    { key: "defensiveAttack", cost: 2, implemented: true },
-    { key: "aimedAttack", cost: 2, implemented: true },
-    { key: "lightningAttack", cost: 2, implemented: false },
-    { key: "shieldBash", cost: 2, implemented: false },
-    { key: "extraDodge", cost: 4, implemented: false },
-    { key: "disarm", cost: 4, implemented: false }
-  ].map(maneuver => ({
-    ...maneuver,
-    name: game.i18n.localize(`CRP.Maneuvers.${maneuver.key}.name`),
-    description: game.i18n.localize(`CRP.Maneuvers.${maneuver.key}.description`)
-  })).sort((a, b) => {
-    if (a.key === "none") return -1;
-    if (b.key === "none") return 1;
-    if (a.cost !== b.cost) return a.cost - b.cost;
-    return a.name.localeCompare(b.name, game.i18n.lang);
-  }).map(maneuver => ({
-    ...maneuver,
-    displayName: maneuver.implemented ? maneuver.name : strikeText(maneuver.name),
-    disabled:
-      maneuver.key !== "none" &&
-      (hasActiveManeuver || maneuver.cost > availableManeuver)
-  }));
-
-  const content = await foundry.applications.handlebars.renderTemplate(
-    "systems/crp/templates/attack.hbs",
-    {
-      maneuver: actor.system.derived.maneuver,
-      maneuvers,
-      allowManeuvers
-    }
-  );
-
-  return foundry.applications.api.DialogV2.wait({
-    window: { title: "Atak" },
-    content,
-    buttons: [
-      {
-        action: "confirm",
-        label: "Atakuj",
-        default: true,
-        callback: (_event, _button, dialog) => {
-          const value = Number(dialog.element.querySelector("input[name='attackModifier']")?.value ?? 0);
-          const maneuverSelect = dialog.element.querySelector("select[name='maneuver']");
-          const maneuverOption = maneuverSelect?.selectedOptions[0];
-          const maneuverCost = Number(maneuverOption?.dataset.cost ?? 0);
-          const maneuverDisabled = maneuverOption?.disabled;
-
-          return {
-            confirmed: true,
-            modifier: Math.max(-4, Math.min(4, Number.isFinite(value) ? value : 0)),
-            maneuver: allowManeuvers && !maneuverDisabled ? maneuverSelect?.value ?? "none" : "none",
-            maneuverCost: allowManeuvers && !maneuverDisabled && Number.isFinite(maneuverCost) ? maneuverCost : 0
-          };
-        }
-      },
-      {
-        action: "cancel",
-        label: "Anuluj",
-        callback: () => ({ confirmed: false })
-      }
-    ],
-    render: (_event, dialog) => {
-      const input = dialog.element.querySelector("input[name='attackModifier']");
-      const output = dialog.element.querySelector(".crp-attack-modifier-value");
-      if (!input || !output) return;
-
-      const refreshOutput = () => {
-        const value = Number(input.value) || 0;
-        output.value = value >= 0 ? `+${value}` : String(value);
-      };
-
-      input.addEventListener("input", refreshOutput);
-      refreshOutput();
-
-      const maneuverSelect = dialog.element.querySelector("select[name='maneuver']");
-      const maneuverDescription = dialog.element.querySelector(".crp-attack-maneuver-description");
-
-      if (maneuverSelect && maneuverDescription) {
-        const refreshManeuverDescription = () => {
-          const option = maneuverSelect.selectedOptions[0];
-          maneuverDescription.textContent = option?.dataset.description ?? "";
-        };
-
-        maneuverSelect.addEventListener("change", refreshManeuverDescription);
-        refreshManeuverDescription();
-      }
-    }
-  });
-}
-
-async function getSkillModifier() {
-  const content = await foundry.applications.handlebars.renderTemplate(
-    "systems/crp/templates/skills.hbs"
-  );
-
-  return foundry.applications.api.DialogV2.wait({
-    window: { title: "Test umiejętności" },
-    content,
-    buttons: [
-      {
-        action: "confirm",
-        label: "Rzuć",
-        default: true,
-        callback: (_event, _button, dialog) => {
-          const value = Number(dialog.element.querySelector("input[name='skillModifier']")?.value ?? 0);
-          return {
-            confirmed: true,
-            modifier: Math.max(-4, Math.min(4, Number.isFinite(value) ? value : 0))
-          };
-        }
-      },
-      {
-        action: "cancel",
-        label: "Anuluj",
-        callback: () => ({ confirmed: false })
-      }
-    ],
-    render: (_event, dialog) => {
-      const input = dialog.element.querySelector("input[name='skillModifier']");
-      const output = dialog.element.querySelector(".crp-skills-modifier-value");
-      if (!input || !output) return;
-
-      const refreshOutput = () => {
-        const value = Number(input.value) || 0;
-        output.value = value >= 0 ? `+${value}` : String(value);
-      };
-
-      input.addEventListener("input", refreshOutput);
-      refreshOutput();
-    }
-  });
-}
-
+const { api, sheets } = foundry.applications;
 export class CRPAdvancementWindow extends HandlebarsApplicationMixin(ApplicationV2) {
   static openWindows = new Map();
 
@@ -363,9 +205,14 @@ export class CRPAdvancementWindow extends HandlebarsApplicationMixin(Application
   }
 }
 
-export class CRPActorSheet extends HandlebarsApplicationMixin(DocumentSheetV2) {
+export class CRPActorSheet extends api.HandlebarsApplicationMixin(sheets.ActorSheetV2,) {
 
-  activeTab = "sheet";
+   constructor(...args) {
+    super(...args);
+
+    /** @type {CharacterActor} */
+    this.actor;
+  }
 
   get isEditable() {
   return true;
@@ -394,8 +241,31 @@ export class CRPActorSheet extends HandlebarsApplicationMixin(DocumentSheetV2) {
   static PARTS = {
     body: {
       template: "systems/crp/templates/actor/character-sheet.hbs"
-    }
+    },
+    bio: {
+      id: "tabs",
+      template: "systems/crp/templates/actor/tabs/character-tab-bio.hbs",
+    },
+    equipment: {
+       id: "tabs",
+      template: "systems/crp/templates/actor/tabs/character-tab-equipment.hbs",
+    },
+    attributes: {
+       id: "tabs",
+      template: "systems/crp/templates/actor/tabs/character-tab-attributes.hbs",
+    },
   };
+  static TABS = {
+    items: {
+      tabs: [
+        { id: "bio", group: "items", label: "" },
+        { id: "equipment", group: "items", label: "" },
+        { id: "attributes", group: "items", label: "" },
+      ],
+      initial: "attributes",
+    },
+  };
+  
 
   _getRootElement() {
     return this.element instanceof HTMLElement
@@ -844,7 +714,6 @@ return {
   protection,
   npcSheetLocked: !!this.document.getFlag("crp", "npcSheetLocked"),
   tokenImg,
-  activeTab: this.activeTab,
   characterSheetsLocked: game.settings.get("crp", "characterSheetsLocked"),
   languages: {
     native: nativeLanguage,
@@ -869,10 +738,16 @@ return {
 };
 
   }
-
+ async _prepareContext(options){
+    const context = await super._prepareContext(options);
+    return context;
+ }
 _onRender(context, options) {
   const scrollTop = this._pendingScrollTop ?? this._getScrollTop();
-
+  const group = "items";
+  const tab = "bio"
+    const tabElement = this.element.querySelector(`.tab [data-group="${group}"][data-tab="${tab}"]`);
+  console.log("tabElement", tabElement);
   super._onRender(context, options);
 
 const html = this._getRootElement();
@@ -1349,7 +1224,7 @@ if (slotEl) {
 
   this._rememberScrollPosition();
   await this.document.update(updates);
-
+  this.render({force: true});
   return;
 }
 
@@ -1680,7 +1555,7 @@ html.querySelectorAll(".crp-slot-clear").forEach(btn => {
 
 this._rememberScrollPosition();
 await this.document.update(updates);
-
+this.render({force: true});
 
   });
 });
@@ -1804,15 +1679,8 @@ html.querySelector(".crp-exp")?.addEventListener("click", ev => {
   new CRPAdvancementWindow(this.document).render({ force: true });
 });
 
-// ======================
-// TABS
-// ======================
-html.querySelectorAll(".crp-tab-btn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    this.activeTab = btn.dataset.tab;
-    this.render(false);
-  });
-});
+
+
 
 
 // ======================
@@ -1910,4 +1778,161 @@ html.querySelector(".crp-add-advantage-use")?.addEventListener("click", async ev
 }
 
 
+}
+function isNPCActor(actor) {
+  return CRP_NPC_ACTOR_TYPES.has(actor?.type);
+}
+
+function getSkillAdvancementCost(skillValue, attrValue) {
+  const baseCost = skillValue === 0 ? 2 : skillValue + 1;
+  return skillValue + 1 > attrValue ? baseCost * 2 : baseCost;
+}
+
+async function getAttackModifier(actor, { allowManeuvers = true } = {}) {
+  const strikeText = text => [...text].map(character => `${character}\u0336`).join("");
+  const activeAimedAttack = actor.getFlag("crp", "aimedAttack");
+  const activeDefensiveAttack = actor.getFlag("crp", "defensiveAttack");
+  const hasActiveManeuver = !!activeAimedAttack || !!activeDefensiveAttack;
+  const availableManeuver = actor.system.derived.maneuver?.value ?? 0;
+  const maneuvers = [
+    { key: "none", cost: 0, implemented: true },
+    { key: "assault", cost: 0, implemented: false },
+    { key: "holdBack", cost: 0, implemented: false },
+    { key: "charge", cost: 0, implemented: false },
+    { key: "shieldGuard", cost: 0, implemented: false },
+    { key: "harry", cost: 1, implemented: false },
+    { key: "withdraw", cost: 1, implemented: false },
+    { key: "knockdown", cost: 1, implemented: false },
+    { key: "standUp", cost: 1, implemented: false },
+    { key: "defensiveAttack", cost: 2, implemented: true },
+    { key: "aimedAttack", cost: 2, implemented: true },
+    { key: "lightningAttack", cost: 2, implemented: false },
+    { key: "shieldBash", cost: 2, implemented: false },
+    { key: "extraDodge", cost: 4, implemented: false },
+    { key: "disarm", cost: 4, implemented: false }
+  ].map(maneuver => ({
+    ...maneuver,
+    name: game.i18n.localize(`CRP.Maneuvers.${maneuver.key}.name`),
+    description: game.i18n.localize(`CRP.Maneuvers.${maneuver.key}.description`)
+  })).sort((a, b) => {
+    if (a.key === "none") return -1;
+    if (b.key === "none") return 1;
+    if (a.cost !== b.cost) return a.cost - b.cost;
+    return a.name.localeCompare(b.name, game.i18n.lang);
+  }).map(maneuver => ({
+    ...maneuver,
+    displayName: maneuver.implemented ? maneuver.name : strikeText(maneuver.name),
+    disabled:
+      maneuver.key !== "none" &&
+      (hasActiveManeuver || maneuver.cost > availableManeuver)
+  }));
+
+  const content = await foundry.applications.handlebars.renderTemplate(
+    "systems/crp/templates/attack.hbs",
+    {
+      maneuver: actor.system.derived.maneuver,
+      maneuvers,
+      allowManeuvers
+    }
+  );
+
+  return foundry.applications.api.DialogV2.wait({
+    window: { title: "Atak" },
+    content,
+    buttons: [
+      {
+        action: "confirm",
+        label: "Atakuj",
+        default: true,
+        callback: (_event, _button, dialog) => {
+          const value = Number(dialog.element.querySelector("input[name='attackModifier']")?.value ?? 0);
+          const maneuverSelect = dialog.element.querySelector("select[name='maneuver']");
+          const maneuverOption = maneuverSelect?.selectedOptions[0];
+          const maneuverCost = Number(maneuverOption?.dataset.cost ?? 0);
+          const maneuverDisabled = maneuverOption?.disabled;
+
+          return {
+            confirmed: true,
+            modifier: Math.max(-4, Math.min(4, Number.isFinite(value) ? value : 0)),
+            maneuver: allowManeuvers && !maneuverDisabled ? maneuverSelect?.value ?? "none" : "none",
+            maneuverCost: allowManeuvers && !maneuverDisabled && Number.isFinite(maneuverCost) ? maneuverCost : 0
+          };
+        }
+      },
+      {
+        action: "cancel",
+        label: "Anuluj",
+        callback: () => ({ confirmed: false })
+      }
+    ],
+    render: (_event, dialog) => {
+      const input = dialog.element.querySelector("input[name='attackModifier']");
+      const output = dialog.element.querySelector(".crp-attack-modifier-value");
+      if (!input || !output) return;
+
+      const refreshOutput = () => {
+        const value = Number(input.value) || 0;
+        output.value = value >= 0 ? `+${value}` : String(value);
+      };
+
+      input.addEventListener("input", refreshOutput);
+      refreshOutput();
+
+      const maneuverSelect = dialog.element.querySelector("select[name='maneuver']");
+      const maneuverDescription = dialog.element.querySelector(".crp-attack-maneuver-description");
+
+      if (maneuverSelect && maneuverDescription) {
+        const refreshManeuverDescription = () => {
+          const option = maneuverSelect.selectedOptions[0];
+          maneuverDescription.textContent = option?.dataset.description ?? "";
+        };
+
+        maneuverSelect.addEventListener("change", refreshManeuverDescription);
+        refreshManeuverDescription();
+      }
+    }
+  });
+}
+
+async function getSkillModifier() {
+  const content = await foundry.applications.handlebars.renderTemplate(
+    "systems/crp/templates/skills.hbs"
+  );
+
+  return foundry.applications.api.DialogV2.wait({
+    window: { title: "Test umiejętności" },
+    content,
+    buttons: [
+      {
+        action: "confirm",
+        label: "Rzuć",
+        default: true,
+        callback: (_event, _button, dialog) => {
+          const value = Number(dialog.element.querySelector("input[name='skillModifier']")?.value ?? 0);
+          return {
+            confirmed: true,
+            modifier: Math.max(-4, Math.min(4, Number.isFinite(value) ? value : 0))
+          };
+        }
+      },
+      {
+        action: "cancel",
+        label: "Anuluj",
+        callback: () => ({ confirmed: false })
+      }
+    ],
+    render: (_event, dialog) => {
+      const input = dialog.element.querySelector("input[name='skillModifier']");
+      const output = dialog.element.querySelector(".crp-skills-modifier-value");
+      if (!input || !output) return;
+
+      const refreshOutput = () => {
+        const value = Number(input.value) || 0;
+        output.value = value >= 0 ? `+${value}` : String(value);
+      };
+
+      input.addEventListener("input", refreshOutput);
+      refreshOutput();
+    }
+  });
 }

@@ -1,0 +1,187 @@
+  <section class="crp-tab-content {{tabs.bio.cssClass}} tab"
+  action-data="tab"
+  data-group="items"
+  data-tab="bio">
+<div class="crp-bio">
+
+  <div class="crp-bio-identity">
+    <section class="crp-bio-identity-section">
+      <h2>Pochodzenie</h2>
+      <div class="crp-origin-drop">
+        {{#if system.bio.origin.id}}
+          <img src="{{system.bio.origin.img}}" class="crp-bio-identity-img">
+          <div class="crp-bio-identity-details">
+            <strong>{{system.bio.origin.name}}</strong>
+            <span><!-- Kliknij, aby otworzyć --></span>
+          </div>
+          {{#unless characterSheetsLocked}}
+            <button type="button"
+                    class="crp-origin-clear"
+                    title="Usuń Pochodzenie">✖</button>
+          {{/unless}}
+        {{else}}
+          <div class="crp-bio-identity-empty">
+            Przeciągnij tutaj Item typu Pochodzenie
+          </div>
+        {{/if}}
+      </div>
+    </section>
+
+    <section class="crp-bio-identity-section">
+      <h2>Herb postaci</h2>
+      <div class="crp-crest-slot">
+        <textarea class="crp-crest-description"
+                  data-path="system.bio.crestDescription"
+                  placeholder="Opis herbu">{{system.bio.crestDescription}}</textarea>
+
+        <div class="crp-crest-image-wrap">
+          {{#if system.bio.crest}}
+            <img src="{{system.bio.crest}}"
+                 class="crp-crest-select crp-crest-image"
+                 title="Kliknij, aby zmienić herb">
+          <!--  <button type="button"
+                    class="crp-crest-clear"
+                    title="Usuń herb">✖</button> -->
+          {{else}}
+            <button type="button" class="crp-crest-select crp-crest-empty">
+              Wybierz grafikę herbu
+            </button>
+          {{/if}}
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="crp-languages">
+    <section class="crp-language-section">
+      <h2>Język ojczysty</h2>
+      <div class="crp-language-drop" data-language-role="native">
+        {{#if languages.native}}
+          <div class="crp-item-row crp-language-row"
+               draggable="true"
+               data-item-id="{{languages.native.id}}">
+            <img src="{{languages.native.img}}" class="crp-item-img">
+            <div class="crp-language-details">
+              <strong>{{languages.native.name}}</strong>
+              <span>Alfabet: {{lookup languages.alphabets languages.native.system.alphabet}}</span>
+            </div>
+            {{#unless characterSheetsLocked}}
+              <button type="button"
+                      class="crp-item-delete"
+                      data-item-id="{{languages.native.id}}">✖</button>
+            {{/unless}}
+          </div>
+        {{else}}
+          <div class="crp-language-empty">Przeciągnij tutaj język ojczysty</div>
+        {{/if}}
+      </div>
+    </section>
+
+    <section class="crp-language-section">
+      <h2>Języki obce {{languages.used}}/{{languages.limit}}</h2>
+      <div class="crp-language-drop crp-language-foreign"
+           data-language-role="foreign">
+        {{#each languages.foreign as |language|}}
+          <div class="crp-item-row crp-language-row"
+               draggable="true"
+               data-item-id="{{language.id}}">
+            <img src="{{language.img}}" class="crp-item-img">
+            <div class="crp-language-details">
+              <strong>{{language.name}}</strong>
+              <span>Alfabet: {{lookup ../languages.alphabets language.system.alphabet}}</span>
+            </div>
+            {{#unless ../characterSheetsLocked}}
+              <button type="button"
+                      class="crp-item-delete"
+                      data-item-id="{{language.id}}">✖</button>
+            {{/unless}}
+          </div>
+        {{/each}}
+
+        {{#if languages.remaining}}
+          <div class="crp-language-empty">Przeciągnij tutaj język obcy</div>
+        {{else}}
+          {{#unless languages.foreign.length}}
+            <div class="crp-language-empty">Brak dostępnych miejsc</div>
+          {{/unless}}
+        {{/if}}
+      </div>
+    </section>
+  </div>
+
+  <div class="crp-traits">
+    <section class="crp-trait-section">
+      <div class="crp-trait-header">
+        <h2>Zalety: {{traits.advantageUses}}</h2>
+        <div class="crp-trait-uses-actions">
+          <button type="button"
+                  class="crp-add-advantage-use"
+                  title="Dodaj użycie Zalety">
+            +
+          </button>
+          <button type="button"
+                  class="crp-use-advantage"
+                  {{#unless traits.advantageUses}}disabled{{/unless}}>
+            Użyj
+          </button>
+        </div>
+      </div>
+      <div class="crp-trait-drop"
+           data-trait-category="advantage">
+        {{#each traits.advantages as |trait|}}
+          <div class="crp-item-row crp-trait-row"
+               draggable="true"
+               data-item-id="{{trait.id}}">
+            <img src="{{trait.img}}" class="crp-item-img">
+            <div class="crp-item-name">{{trait.name}}</div>
+            {{#unless ../characterSheetsLocked}}
+              <button type="button"
+                      class="crp-item-delete"
+                      data-item-id="{{trait.id}}">✖</button>
+            {{/unless}}
+          </div>
+        {{/each}}
+
+        {{#if traits.advantagesRemaining}}
+          <div class="crp-trait-empty">Przeciągnij tutaj Zaletę</div>
+        {{/if}}
+      </div>
+    </section>
+
+    <section class="crp-trait-section">
+      <h2>Wada</h2>
+      <div class="crp-trait-drop"
+           data-trait-category="flaw">
+        {{#each traits.flaws as |trait|}}
+          <div class="crp-item-row crp-trait-row"
+               draggable="true"
+               data-item-id="{{trait.id}}">
+            <img src="{{trait.img}}" class="crp-item-img">
+            <div class="crp-item-name">{{trait.name}}</div>
+            {{#unless ../characterSheetsLocked}}
+              <button type="button"
+                      class="crp-item-delete"
+                      data-item-id="{{trait.id}}">✖</button>
+            {{/unless}}
+          </div>
+        {{/each}}
+
+        {{#if traits.flawsRemaining}}
+          <div class="crp-trait-empty">Przeciągnij tutaj Wadę</div>
+        {{/if}}
+      </div>
+    </section>
+  </div>
+
+  <div class="crp-bio-header">
+    <button type="button" class="crp-bio-edit" title="Edytuj biografię">
+      <i class="fa-solid fa-edit"></i>
+    </button>
+  </div>
+
+  <div class="crp-bio-content">
+    {{{system.bio.description}}}
+  </div>
+
+</div>
+  </section>
