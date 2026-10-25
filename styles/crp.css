@@ -52,12 +52,19 @@
 .crp--sheet{
     padding: 10px;
   overflow-y: auto;
-      min-height: 330px;
+      min-height: 300px;
 }
 .crp-name {
   font-family: "CRP-Header", serif;
   letter-spacing: 1px;
   color: #4b3014;
+  input{
+        background: transparent;
+    min-height: 80px;
+    color: rgb(75, 48, 20);
+    text-align: center;
+    border: 1px solid #4b3014;
+  }
 }
 
 /* ===== HEADER ===== */
@@ -891,7 +898,7 @@ input:focus {
   width: 100%;
   display: flex;
   span{
-    width:60%;
+    width:70%;
   }
   
 }
@@ -1037,7 +1044,8 @@ input:focus {
 
 .crp-mounted-toggle {
   display: flex;
-  margin:auto
+  margin:auto;
+  align-items: center;
 }
 
 .crp-mounted-toggle input {
@@ -1840,32 +1848,25 @@ input[type="checkbox"] {
 }
 
 .crp-sheet input[type="checkbox"] {
-  appearance: none;
-
-  width: 16px;
-  height: 16px;
-
-  border: 0px solid #4b3014;
-  background: rgba(75, 48, 20, 1);
-
-  cursor: pointer;
-
-  position: relative;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border: 0px solid #4b3014;
+    background: rgba(75, 48, 20, 1);
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .crp-sheet input[type="checkbox"]:checked::after {
-  content: "✓";
-
-  position: absolute;
-
-  top: -3px;
-  left: 0px;
-
-  background: #4b3014;
-  color: #f0e6d2;
-  font-size: 14px;
-  font-weight: bold;
-  padding-left:5px;
+content: "✓";
+    position: absolute;
+    background: #4b3014;
+    color: #f0e6d2;
+    font-size: 14px;
+    justify-content: center;
+    display: flex;
 }
 
 .crp-price-section {
@@ -2069,4 +2070,16 @@ input[type="checkbox"] {
   align-items: center;
 
   min-height: 50px;
+}
+.crp-tab{
+  overflow: auto;
+  .all-attr{
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+    gap: 5px;
+  }
+}
+nav.crp-tabs{
+  margin-bottom: 0px;
+  line-height: 1.5;
 }
