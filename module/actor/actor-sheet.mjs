@@ -213,18 +213,8 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(sheets.ActorSh
     /** @type {CharacterActor} */
     this.actor;
   }
-
-  get isEditable() {
-  return true;
-}
-
   static DEFAULT_OPTIONS = {
-      ...super.DEFAULT_OPTIONS,
-    editable: true,
-
     classes: ["crp-sheet", "sheet", "actor"],
-    tag: "section",
-    editable: true,
     window: {
       title: "CRP Actor",
       resizable: true
@@ -233,7 +223,9 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(sheets.ActorSh
       width: 945,
       height: 860
     },
-
+    form: {
+      submitOnChange: true,
+    },
     dragDrop: [{ dropSelector: ".crp-sheet" }]
 
   };
@@ -628,34 +620,7 @@ async _preparePartContext(partId, context) {
 
     const attributesList = [];
 
-    for (const key of Object.keys(config.attributes)) {
-      const attrData = system.attributes?.[key];
 
-      attributesList.push({
-        key,
-        label: String(config.attributes[key]), // 👈 ważne
-        value: attrData?.value ?? 0,
-        skills: Object.keys(attrData?.skills ?? {}).map(sk => {
-  const skillValue = attrData.skills[sk].value ?? 0;
-  const attrValue = attrData?.value ?? 0;
-  const armorPenalty = this.document.getArmorSkillPenalty?.(sk) ?? 0;
-
-  
-  return {
-    key: sk,
-    label: String(config.skills[sk]),
-    value: skillValue,
-    total: Math.max(
-      0,
-      isNPCActor(this.document)
-        ? (Number(system.npc?.attributes) || 0) - armorPenalty
-        : skillValue + attrValue - armorPenalty
-    ),
-    armorPenalty
-  };
-})
-      });
-    }
 
     const hp = system.derived.health;
 
@@ -740,14 +705,69 @@ return {
   }
  async _prepareContext(options){
     const context = await super._prepareContext(options);
+    const system = this.actor.system;
+    Object.assign(context, {
+      actor: this.actor,
+      system: system,
+      attributesList: this._prepareAttributesList(),
+      healthPercent :this._prepareHealthPercent(),
+      initiative: this._prepareInitiative(),
+      characterSheetsLocked: game.settings.get("crp", "characterSheetsLocked"),
+      formattedMoney: formatMoney(obolsToMoney(system.money.total)),
+      items: this.actor.items
+    });
+   
     return context;
+ }
+ _prepareAttributesList() {
+   const attributesList = [];
+    const config = CONFIG.CRP;
+    for (const key of Object.keys(config.attributes)) {
+      const attrData = this.actor.system.attributes?.[key];
+      attributesList.push({
+        key,
+        label: String(config.attributes[key]), // 👈 ważne
+        value: attrData?.value ?? 0,
+        skills: Object.keys(attrData?.skills ?? {}).map(sk => {
+          const skillValue = attrData.skills[sk].value ?? 0;
+          const attrValue = attrData?.value ?? 0;
+          const armorPenalty = this.document.getArmorSkillPenalty?.(sk) ?? 0;
+            return {
+              key: sk,
+              label: String(config.skills[sk]),
+              value: skillValue,
+              total: Math.max(
+                0,
+              isNPCActor(this.document)
+                ? (Number(system.npc?.attributes) || 0) - armorPenalty
+                : skillValue + attrValue - armorPenalty
+              ),
+            armorPenalty
+          };
+        })
+      });
+    }
+    return attributesList;
+ }
+ _prepareHealthPercent() {
+   const system = this.actor.system;
+   const hp = system.derived.health;
+   return hp.max > 0 ? Math.floor((hp.value / hp.max) * 100) : 0;
+ }
+ _prepareInitiative() {
+    const system = this.actor.system;
+    const  initiative ={
+    weaponModifierText: system.initiativeWeaponModifier >= 0
+      ? `+${system.initiativeWeaponModifier}`
+      : `${system.initiativeWeaponModifier}`,
+    armorModifierText: system.initiativeArmorModifier >= 0
+      ? `+${system.initiativeArmorModifier}`
+      : `${system.initiativeArmorModifier}`
+    }
+    return initiative;
  }
 _onRender(context, options) {
   const scrollTop = this._pendingScrollTop ?? this._getScrollTop();
-  const group = "items";
-  const tab = "bio"
-    const tabElement = this.element.querySelector(`.tab [data-group="${group}"][data-tab="${tab}"]`);
-  console.log("tabElement", tabElement);
   super._onRender(context, options);
 
 const html = this._getRootElement();
@@ -846,80 +866,7 @@ html.querySelector(".crp-npc-sheet-lock")?.addEventListener("click", async ev =>
   // ======================
   //  INPUTY
   // ======================
-html.querySelectorAll("input[data-path], textarea[data-path]").forEach(input => {
 
-  input.addEventListener("change", async ev => {
-
-    const path = ev.currentTarget.dataset.path;
-
-    const isCheckbox =
-      ev.currentTarget.type === "checkbox";
-    const isText =
-      ev.currentTarget.tagName === "TEXTAREA" ||
-      ev.currentTarget.type === "text";
-
-    let value = isCheckbox
-      ? ev.currentTarget.checked
-      : isText
-        ? ev.currentTarget.value
-        : Number(ev.currentTarget.value);
-
-    if (!isCheckbox && !isText && isNaN(value)) {
-      value = 0;
-    }
-
-    if (isCheckbox) {
-
-      // checkbox bez ograniczeń
-
-    } else if (isText) {
-
-      // tekst bez ograniczeń liczbowych
-
-    } else if (path.startsWith("system.attributes")) {
-
-      value = Math.max(0, Math.min(10, value));
-
-    } else {
-
-      value = Math.max(0, value);
-
-    }
-
-    // ======================
-    // MONEY NORMALIZATION
-    // ======================
-
-    if (path.startsWith("system.money")) {
-      const key = path.replace("system.money.", "");
-      const money = foundry.utils.deepClone(this.document.system.money);
-      money[key] = value;
-      const normalized = normalizeMoney(money);
-
-      this._rememberScrollPosition();
-      await this.document.update({
-        "system.money": normalized
-      });
-
-      return;
-    }
-
-    // ======================
-    // NORMAL INPUT UPDATE
-    // ======================
-
-    this._rememberScrollPosition();
-    await this.document.update({
-      [path]: value
-    });
-
-    if (path === "system.equipment.mounted") {
-      Hooks.callAll("crpMountedChanged", this.document);
-    }
-
-  });
-
-});
 
 
   // ======================
@@ -1776,7 +1723,9 @@ html.querySelector(".crp-add-advantage-use")?.addEventListener("click", async ev
 
 
 }
-
+  _processFormData(event, form, formData) {
+    return super._processFormData(event, form, formData);
+  }
 
 }
 function isNPCActor(actor) {

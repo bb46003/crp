@@ -24,7 +24,6 @@
   </button>
 
 </div>
-
   <div class="crp-money-grid">
 
     <div class="crp-money-row">
@@ -33,7 +32,7 @@
         type="number"
         min="0"
         value="{{system.money.grosz}}"
-        data-path="system.money.grosz">
+        name="system.money.grosz">
     </div>
 
     <div class="crp-money-row">
@@ -42,7 +41,7 @@
         type="number"
         min="0"
         value="{{system.money.kwartnik}}"
-        data-path="system.money.kwartnik">
+        name="system.money.kwartnik">
     </div>
 
     <div class="crp-money-row">
@@ -51,7 +50,7 @@
         type="number"
         min="0"
         value="{{system.money.cwiercgrosz}}"
-        data-path="system.money.cwiercgrosz">
+        name="system.money.cwiercgrosz">
     </div>
 
     <div class="crp-money-row">
@@ -60,7 +59,7 @@
         type="number"
         min="0"
         value="{{system.money.denar}}"
-        data-path="system.money.denar">
+        name="system.money.denar">
     </div>
 
     <div class="crp-money-row">
@@ -69,7 +68,7 @@
         type="number"
         min="0"
         value="{{system.money.obol}}"
-        data-path="system.money.obol">
+        name="system.money.obol">
     </div>
 
   </div>
@@ -84,7 +83,7 @@
     
     <h2 class="crp-section-header">Broń</h2>
     <div class="crp-item-list">
-      {{#each document.items as |item|}}
+      {{#each items as |item|}}
         {{#if (eq item.type "weapon")}}
           <div class="crp-item-row" draggable="true" data-item-id="{{item.id}}">
             <img src="{{item.img}}" class="crp-item-img">
@@ -101,7 +100,7 @@
   <div class="crp-inventory-section">
     <h2 class="crp-section-header">Zbroja</h2>
     <div class="crp-item-list">
-      {{#each document.items as |item|}}
+      {{#each items as |item|}}
         {{#if (eq item.type "armor")}}
           <div class="crp-item-row" draggable="true" data-item-id="{{item.id}}">
             <img src="{{item.img}}" class="crp-item-img">
@@ -118,7 +117,7 @@
     <div class="crp-inventory-section">
     <h2 class="crp-section-header">Tarcza</h2>
     <div class="crp-item-list">
-      {{#each document.items as |item|}}
+      {{#each items as |item|}}
         {{#if (eq item.type "shield")}}
           <div class="crp-item-row" draggable="true" data-item-id="{{item.id}}">
             <img src="{{item.img}}" class="crp-item-img">
@@ -136,7 +135,7 @@
   <div class="crp-inventory-section">
     <h2 class="crp-section-header">Inne</h2>
     <div class="crp-item-list">
-      {{#each document.items as |item|}}
+      {{#each items as |item|}}
         {{#unless (or (eq item.type "weapon") (eq item.type "armor") (eq item.type "shield") (eq item.type "language") (eq item.type "origin") (eq item.type "trait"))}}
           <div class="crp-item-row" draggable="true" data-item-id="{{item.id}}">
             <img src="{{item.img}}" class="crp-item-img">

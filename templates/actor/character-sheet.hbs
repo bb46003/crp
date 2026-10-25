@@ -4,12 +4,14 @@
 
   <!-- PORTRET -->
   <div class="crp-portrait">
-    <img src="{{document.img}}" data-edit="img">
+    <img src="{{actor.img}}" data-edit="img" data-action="editImage">
   </div>
 
   <!-- ŚRODEK -->
   <div class="crp-header-main">
-      <h1 class="crp-name" contenteditable="true" data-edit="name">{{document.name}}</h1>
+      <h1 class="crp-name" contenteditable="true" data-edit="name">
+        <input type="text" name="name" value="{{actor.name}}">
+      </h1>
 
 
 <div class="crp-stats">
@@ -21,13 +23,13 @@
 
           <div class="crp-health-values">
             <input type="number" 
-                   data-path="system.derived.health.value"
+                   name="system.derived.health.value"
                    value="{{system.derived.health.value}}">
             / {{system.derived.health.max}}
           </div>
                     <div class="crp-health-bar">
             <div class="crp-health-fill {{system.derived.woundState}}"
-                 style="width: {{system.derived.health.percent}}%;">
+                 style="width: {{healthPercent}}%;">
             </div>
           </div>
 
@@ -43,14 +45,14 @@
     <div class="crp-stat">
     <label>Manewry</label>
     <div class="crp-stat-value">
-      {{system.derived.maneuver.value}} / {{system.derived.maneuver.max}}
+      {{system.maneuver.value}} / {{system.maneuver.max}}
     </div>
   </div>
 
   <div class="crp-stat">
     <label>Inicjatywa</label>
     <div class="crp-stat-value crp-initiative-value">
-      <span>{{system.derived.initiative}}</span>
+      <span>{{system.initiative}}</span>
       <span class="crp-initiative-mod">
         {{initiative.weaponModifierText}}
         <i class="fa-solid fa-sword" title="Modyfikator z broni"></i>
@@ -70,13 +72,13 @@
           <div class="crp-health-values">
             <input type="number"
                    class="crp-pd-value"
-                   data-path="system.resources.experience.free"
+                   name="system.resources.experience.free"
                    value="{{system.resources.experience.free}}"
                    {{#if characterSheetsLocked}}disabled{{/if}}>
             /
             <input type="number"
                    class="crp-pd-value"
-                   data-path="system.resources.experience.value"
+                   name="system.resources.experience.value"
                    value="{{system.resources.experience.value}}"
                    {{#if characterSheetsLocked}}disabled{{/if}}>
           </div>
@@ -88,7 +90,7 @@
     </div>
   <!-- TOKEN -->
   <div class="crp-token">
-    <img src="{{tokenImg}}" data-edit="token">
+    <img src="{{actor.tokenImg}}" data-action="editImage" data-edit="prototypeToken.texture.src">
   </div>
 
 </header>

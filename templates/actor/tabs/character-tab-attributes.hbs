@@ -2,7 +2,6 @@
   action-data="tab"
   data-group="items"
   data-tab="attributes">
-  {{log this}}
     {{#each attributesList}}
       <div class="crp-attr">
 
@@ -12,7 +11,7 @@
                class="crp-attr-value"
                min="0"
                max="10"
-               data-path="system.attributes.{{this.key}}.value"
+               name="system.attributes.{{this.key}}.value"
                value="{{this.value}}"
                {{#if ../characterSheetsLocked}}disabled{{/if}}>
 
@@ -34,7 +33,7 @@
          class="crp-skill-value"
          min="0"
          max="10"
-         data-path="system.attributes.{{../key}}.skills.{{skill.key}}.value"
+         name="system.attributes.{{../key}}.skills.{{skill.key}}.value"
          value="{{skill.value}}"
          {{#if ../../characterSheetsLocked}}disabled{{/if}}>
 
@@ -59,10 +58,10 @@
   <div class="crp-eq-slot" data-slot="rightHand">
     <div class="crp-eq-header">Prawa ręka</div>
 
-    {{#if document.system.equipment.rightHand.id}}
+    {{#if system.equipment.rightHand.id}}
       <div class="crp-item-row">
         <img src="{{document.system.equipment.rightHand.img}}" class="crp-item-img">
-        <span>{{document.system.equipment.rightHand.name}}</span>
+        <span>{{system.equipment.rightHand.name}}</span>
             <button class="crp-slot-clear" data-slot="rightHand">
       ✖
     </button>
@@ -80,10 +79,10 @@
   <div class="crp-eq-slot" data-slot="leftHand">
     <div class="crp-eq-header">Lewa ręka</div>
 
-    {{#if document.system.equipment.leftHand.id}}
+    {{#if system.equipment.leftHand.id}}
       <div class="crp-item-row">
         <img src="{{document.system.equipment.leftHand.img}}" class="crp-item-img">
-        <span>{{document.system.equipment.leftHand.name}}</span>
+        <span>{{system.equipment.leftHand.name}}</span>
             <button class="crp-slot-clear" data-slot="leftHand">
       ✖
     </button>
@@ -101,10 +100,10 @@
   <div class="crp-eq-slot" data-slot="armor">
     <div class="crp-eq-header">Pancerz</div>
 
-    {{#if document.system.equipment.armor.id}}
+    {{#if system.equipment.armor.id}}
       <div class="crp-item-row">
         <img src="{{document.system.equipment.armor.img}}" class="crp-item-img">
-        <span>{{document.system.equipment.armor.name}}</span>
+        <span>{{system.equipment.armor.name}}</span>
             <button class="crp-slot-clear" data-slot="armor">
       ✖
     </button>
@@ -123,8 +122,8 @@
       <img src="systems/crp/assets/konny.webp" class="crp-item-img">
       <input
         type="checkbox"
-        data-path="system.equipment.mounted"
-        {{#if document.system.equipment.mounted}}checked{{/if}}>
+        name="system.equipment.mounted"
+        {{#if system.equipment.mounted}}checked{{/if}}>
     </label>
   </div>
 
@@ -138,7 +137,7 @@
     
     <h2 class="crp-section-header">Broń</h2>
     <div class="crp-item-list">
-      {{#each document.items as |item|}}
+      {{#each items as |item|}}
         {{#if (eq item.type "weapon")}}
           <div class="crp-item-row" draggable="true" data-item-id="{{item.id}}">
             <img src="{{item.img}}" class="crp-item-img">
@@ -155,7 +154,7 @@
   <div class="crp-inventory-section">
     <h2 class="crp-section-header">Zbroja</h2>
     <div class="crp-item-list">
-      {{#each document.items as |item|}}
+      {{#each items as |item|}}
         {{#if (eq item.type "armor")}}
           <div class="crp-item-row" draggable="true" data-item-id="{{item.id}}">
             <img src="{{item.img}}" class="crp-item-img">
@@ -172,7 +171,7 @@
     <div class="crp-inventory-section">
     <h2 class="crp-section-header">Tarcza</h2>
     <div class="crp-item-list">
-      {{#each document.items as |item|}}
+      {{#each items as |item|}}
         {{#if (eq item.type "shield")}}
           <div class="crp-item-row" draggable="true" data-item-id="{{item.id}}">
             <img src="{{item.img}}" class="crp-item-img">

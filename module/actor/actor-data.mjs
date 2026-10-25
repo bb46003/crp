@@ -111,6 +111,9 @@ export class CRPActorData extends TypeDataModel {
         maneuver: new SchemaField({
           value: new NumberField({ initial: 0, min: 0 }),
           max: new NumberField({ initial: 0, min: 0 })
+        }),
+        woundState: new StringField({
+          initial: "healthy"
         })
       }),
 

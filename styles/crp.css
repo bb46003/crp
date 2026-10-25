@@ -890,6 +890,9 @@ input:focus {
 .crp-item-row {
   width: 100%;
   display: flex;
+  span{
+    width:60%;
+  }
   
 }
 
@@ -1060,8 +1063,8 @@ input:focus {
 }
 
 .crp-item-row .crp-slot-clear {
-  width: 100%;
-    margin: auto;
+    justify-self: right;
+
 }
 
 /* ===== STATS BAR ===== */
