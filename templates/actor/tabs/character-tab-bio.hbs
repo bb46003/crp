@@ -17,6 +17,7 @@
           {{#unless characterSheetsLocked}}
             <button type="button"
                     class="crp-origin-clear"
+                    data-action="deleteItem"
                     title="Usuń Pochodzenie">✖</button>
           {{/unless}}
         {{else}}
@@ -68,6 +69,7 @@
             {{#unless characterSheetsLocked}}
               <button type="button"
                       class="crp-item-delete"
+                      data-action="deleteItem"
                       data-item-id="{{languages.native.id}}">✖</button>
             {{/unless}}
           </div>
@@ -93,6 +95,7 @@
             {{#unless ../characterSheetsLocked}}
               <button type="button"
                       class="crp-item-delete"
+                      data-action="deleteItem"
                       data-item-id="{{language.id}}">✖</button>
             {{/unless}}
           </div>
@@ -137,6 +140,7 @@
             {{#unless ../characterSheetsLocked}}
               <button type="button"
                       class="crp-item-delete"
+                      data-action="deleteItem"
                       data-item-id="{{trait.id}}">✖</button>
             {{/unless}}
           </div>
@@ -161,6 +165,7 @@
             {{#unless ../characterSheetsLocked}}
               <button type="button"
                       class="crp-item-delete"
+                      data-action="deleteItem"
                       data-item-id="{{trait.id}}">✖</button>
             {{/unless}}
           </div>

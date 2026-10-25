@@ -52,7 +52,8 @@
 .crp--sheet{
     padding: 10px;
   overflow-y: auto;
-      min-height: 300px;
+      min-height: 305px;
+    margin-bottom: 5px;
 }
 .crp-name {
   font-family: "CRP-Header", serif;
@@ -178,7 +179,6 @@
 
 .crp-skill {
   display: grid;
-  grid-template-columns: 1fr 30px 36px;
   align-items: center;
   gap: 6px;
   font-weight: 800;
@@ -189,10 +189,15 @@
   padding: 2px 0 2px 4px;
   font-size: 12px;
   cursor: pointer;
+  .flexcol{
+    gap: 2px
+  }
 }
 
-.crp-skill:hover {
+.crp-skill{
+  a:hover {
   background: rgba(75, 48, 20, 0.4);
+}
 }
 
 .crp-skill:active {
@@ -205,19 +210,21 @@
 }
 
 .crp-skill-label {
-  font-family: "CRP-Header", serif;
-  color: rgba(75, 48, 20, 1);
-  white-space: normal;
-  overflow: hidden;
+    font-family: "CRP-Header", serif;
+    color: rgba(75, 48, 20, 1);
+    white-space: normal;
+    text-align: center;
 }
 
 .crp-skill-value {
-  width: 30px;
-  text-align: center;
-  border: none;
-  background: transparent;
-  font-size: 12px;
-  color: rgba(75, 48, 20, 1);
+    width: 30px;
+    text-align: center;
+    background: transparent;
+    font-size: 16px;
+    color: rgba(75, 48, 20, 1);
+    border: 1px solid;
+    padding: 0;
+    height: 30px;
 }
 
 .crp-skill-value:focus {
@@ -1167,11 +1174,14 @@ input:focus {
 }
 
 .crp-health-values input {
-  width: 50px;
-  min-width: 50px;
-  max-width: 50px;
-text-align: center;
-  flex: 0 0 auto;  
+    width: 50px;
+    min-width: 50px;
+    max-width: 50px;
+    text-align: center;
+    flex: 0 0 auto;
+    background: transparent;
+    border: 1px solid #4b3014;
+    color: #4b3014; 
 }
 
 .crp-health-values .crp-pd-value {

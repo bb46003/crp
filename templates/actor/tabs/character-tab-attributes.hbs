@@ -26,21 +26,30 @@
      {{#if skill.armorPenalty}}data-armor-penalty="{{skill.armorPenalty}}"{{/if}}
      title="{{skill.label}}" >
 
-  <span class="crp-skill-label">
+  <a class="crp-skill-label">
     {{skill.label}}
-  </span>
-
-  <input type="number"
+  </a>
+  <div class="flexcol">
+    <div class="flexrow">
+      <label>Wartość Umiejętności</label>
+        <input type="number"
          class="crp-skill-value"
          min="0"
          max="10"
          name="system.attributes.{{../key}}.skills.{{skill.key}}.value"
          value="{{skill.value}}"
          {{#if ../../characterSheetsLocked}}disabled{{/if}}>
+    </div>
 
-  <div class="crp-skill-total">
+<div class="flexrow">
+  <label>Całkowita Wartość</label>
+    <div class="crp-skill-total">
     {{skill.total}}
   </div>
+</div>
+
+  </div>
+ 
 
 </div>
 
@@ -60,7 +69,7 @@
     <div class="crp-eq-header">Prawa ręka</div>
 
     {{#if system.equipment.rightHand.id}}
-      <div class="crp-item-row">
+      <div class="crp-item-row" data-slot="rightHand">
         <img src="{{document.system.equipment.rightHand.img}}" class="crp-item-img">
         <span>{{system.equipment.rightHand.name}}</span>
             <button class="crp-slot-clear" data-slot="rightHand">
@@ -81,7 +90,7 @@
     <div class="crp-eq-header">Lewa ręka</div>
 
     {{#if system.equipment.leftHand.id}}
-      <div class="crp-item-row">
+      <div class="crp-item-row" data-slot="leftHand">
         <img src="{{document.system.equipment.leftHand.img}}" class="crp-item-img">
         <span>{{system.equipment.leftHand.name}}</span>
             <button class="crp-slot-clear" data-slot="leftHand">
@@ -143,7 +152,7 @@
           <div class="crp-item-row" draggable="true" data-item-id="{{item.id}}">
             <img src="{{item.img}}" class="crp-item-img">
             <div class="crp-item-name">{{item.name}}</div>
-              <button type="button" class="crp-item-delete" data-item-id="{{item.id}}">
+              <button type="button" class="crp-item-delete" data-action="deleteItem" data-item-id="{{item.id}}">
     ✖
   </button>
           </div>
@@ -160,7 +169,7 @@
           <div class="crp-item-row" draggable="true" data-item-id="{{item.id}}">
             <img src="{{item.img}}" class="crp-item-img">
             <div class="crp-item-name">{{item.name}}</div>
-              <button type="button" class="crp-item-delete" data-item-id="{{item.id}}">
+              <button type="button" class="crp-item-delete" data-action="deleteItem" data-item-id="{{item.id}}">
     ✖
   </button>
           </div>
@@ -177,7 +186,7 @@
           <div class="crp-item-row" draggable="true" data-item-id="{{item.id}}">
             <img src="{{item.img}}" class="crp-item-img">
             <div class="crp-item-name">{{item.name}}</div>
-              <button type="button" class="crp-item-delete" data-item-id="{{item.id}}">
+              <button type="button" class="crp-item-delete" data-action="deleteItem" data-item-id="{{item.id}}">
     ✖
   </button>
           </div>

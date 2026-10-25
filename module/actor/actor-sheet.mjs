@@ -223,6 +223,10 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(sheets.ActorSh
       width: 945,
       height: 860
     },
+    actions:{
+      clearMoney: CRPActorSheet.#clearMoney,
+      deleteItem: CRPActorSheet.#deleteItem,
+    },
     form: {
       submitOnChange: true,
     },
@@ -714,7 +718,8 @@ return {
       initiative: this._prepareInitiative(),
       characterSheetsLocked: game.settings.get("crp", "characterSheetsLocked"),
       formattedMoney: formatMoney(obolsToMoney(system.money.total)),
-      items: this.actor.items
+      items: this.actor.items,
+      woundPenalty: this._preparewoundPenalty(),
     });
    
     return context;
@@ -765,6 +770,17 @@ return {
       : `${system.initiativeArmorModifier}`
     }
     return initiative;
+ }
+ _preparewoundPenalty(){
+     const system = this.actor.system;
+   const hp = system.derived.health;
+   let penalty = 0
+       if (hp.value <= 0) {
+      penalty = -2;
+    } else if (hp.value < hp.max / 2) {
+      penalty = -1;
+    }
+    return penalty
  }
 _onRender(context, options) {
   const scrollTop = this._pendingScrollTop ?? this._getScrollTop();
@@ -944,87 +960,6 @@ html.querySelector(".crp-npc-sheet-lock")?.addEventListener("click", async ev =>
     });
   });
 
-//  USUWANIE PRZEDMIOTÓW
-if (!html.dataset.deleteBound) {
-  html.dataset.deleteBound = "true";
-
-  html.addEventListener("click", async ev => {
-
-  const btn = ev.target.closest(".crp-item-delete");
-
-  if (!btn) return;
-
-  ev.preventDefault();
-  ev.stopPropagation();
-
-  if (
-    btn.closest(".crp-bio") &&
-    game.settings.get("crp", "characterSheetsLocked")
-  ) {
-    ui.notifications.warn("Karta postaci jest zablokowana.");
-    return;
-  }
-
-  const itemId = btn.dataset.itemId;
-
-  if (!itemId) return;
-
-  const item = this.document.items.get(itemId);
-
-  const confirmed = await foundry.applications.api.DialogV2.confirm({
-    window: {
-      title: "Usunąć przedmiot?"
-    },
-    content: `
-      <p>
-        Czy na pewno chcesz usunąć przedmiot
-        <strong>${foundry.utils.escapeHTML(item?.name ?? "bez nazwy")}</strong>?
-      </p>
-    `,
-    yes: {
-      label: "Usuń",
-      icon: "fa-solid fa-trash"
-    },
-    no: {
-      label: "Anuluj",
-      icon: "fa-solid fa-times"
-    }
-  });
-
-  if (!confirmed) return;
-
-  const eq = this.document.system.equipment;
-  const updates = {};
-  const slots = ["rightHand", "leftHand", "armor"];
-
-  for (const slot of slots) {
-    if (eq[slot]?.id === itemId) {
-      updates[`system.equipment.${slot}`] = {
-        id: null,
-        name: null,
-        img: null
-      };
-    }
-  }
-
-  if (this.document.system.bio?.origin?.id === itemId) {
-    updates["system.bio.origin"] = {
-      id: null,
-      name: null,
-      img: null
-    };
-  }
-
-  this._rememberScrollPosition();
-  await this.document.deleteEmbeddedDocuments("Item", [itemId]);
-
-  if (Object.keys(updates).length) {
-    this._rememberScrollPosition();
-    await this.document.update(updates);
-  }
-
-});
-}
 
   // ======================
   //  DRAG & DROP (FIX)
@@ -1507,115 +1442,6 @@ this.render({force: true});
   });
 });
 
-
-// ======================
-// TOKEN CONFIG BUTTON
-// ======================
-const header = this.element.querySelector(".window-header");
-
-if (header && !header.querySelector(".crp-token-config")) {
-
-  const btn = document.createElement("a");
-  btn.classList.add("crp-token-config");
-  //btn.innerHTML = "👤";
-  // btn.innerHTML = `<img src="systems/crp/assets/token.svg" width="16" height="16">`;
-
-btn.innerHTML = `
-<svg class="crp-token-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dcdcdc" stroke-width="2">
-  <circle cx="12" cy="8" r="4"/>
-  <path d="M4 20c0-4 4-6 8-6s8 2 8 6"/>
-</svg>
-`;
-
-  btn.title = "Ustawienia tokena";
-
-  btn.addEventListener("click", async (ev) => {
-    ev.preventDefault();
-    ev.stopPropagation();
-
-    const renderOptions = { force: true };
-    const tokenDocument = [
-      this.token?.document,
-      this.token,
-      this.options?.token?.document,
-      this.options?.token,
-      this.document.token
-    ].find(candidate => candidate instanceof foundry.documents.TokenDocument) ?? null;
-
-    if (tokenDocument?.sheet) {
-      tokenDocument.sheet.render(renderOptions);
-    } else {
-      new CONFIG.Token.prototypeSheetClass({
-        prototype: this.document.prototypeToken
-      }).render(renderOptions);
-    }
-
-
-  });
-
-  header.appendChild(btn);
-
-// PRZESUŃ O 2 POZYCJE W LEWO (PEWNE)
-const prev1 = btn.previousElementSibling;
-const prev2 = prev1?.previousElementSibling;
-
-if (prev2) {
-  header.insertBefore(btn, prev2);
-}
-}
-
-// ======================
-// CLEAR MONEY
-// ======================
-html.querySelector(".crp-money-clear")?.addEventListener("click", async ev => {
-
-  ev.preventDefault();
-  ev.stopPropagation();
-
-  const confirmed = await foundry.applications.api.DialogV2.confirm({
-
-    window: {
-      title: "Opróżnić sakiewkę?"
-    },
-
-    content: `
-      <p>
-        Czy na pewno chcesz usunąć wszystkie monety tej postaci?
-      </p>
-    `,
-
-    yes: {
-      label: "Opróżnij",
-      icon: "fa-solid fa-coins"
-    },
-
-    no: {
-      label: "Anuluj",
-      icon: "fa-solid fa-times"
-    }
-
-  });
-
-  if (!confirmed) return;
-
-  const emptyMoney = normalizeMoney({
-    grzywna: 0,
-    skojec: 0,
-    grosz: 0,
-    kwartnik: 0,
-    cwiercgrosz: 0,
-    denar: 0,
-    obol: 0
-  });
-
-  this._rememberScrollPosition();
-
-  await this.document.update({
-    "system.money": emptyMoney
-  });
-
-});
-
 // ======================
 // ADVANCEMENT
 // ======================
@@ -1726,7 +1552,162 @@ html.querySelector(".crp-add-advantage-use")?.addEventListener("click", async ev
   _processFormData(event, form, formData) {
     return super._processFormData(event, form, formData);
   }
+async _onDrop(event) {
+  super._onDrop(event);
+  const data = event.dataTransfer;
+  const toElement = event.toElement;
+  const parent = toElement.closest(".crp-eq-slot")
+  if(toElement.classList.value.includes("slot") || parent.classList.value.includes("slot")){
+      let updateData = {};
+    const droppedItem = JSON.parse(data.getData("text/plain"))
+    const itemDoc = await fromUuid(droppedItem.uuid);
+    const slotType = toElement?.dataset?.slot || parent?.dataset?.slot;
+    if(itemDoc.type == slotType || (slotType.includes("Hand")&&itemDoc.type === "weapon")){
+      switch (slotType){
+        case "armor":
+          updateData = {["system.equipment.armor"]: {
+              id: itemDoc.id,
+              name: itemDoc.name,
+              img: itemDoc.img
+            }}
+          break;
+        case "leftHand":
+          updateData= {["system.equipment.leftHand"]: {
+              id: itemDoc.id,
+              name: itemDoc.name,
+              img: itemDoc.img
+            }}
+          break;
+        case "rightHand":
+          updateData= {["system.equipment.rightHand"]: {
+              id: itemDoc.id,
+              name: itemDoc.name,
+              img: itemDoc.img
+            }}
+          break;
+      }
+      await this.actor.update(updateData);
+      this.render({force:true})
+    }
+  }
+}
+  static async #clearMoney(ev){
+      const confirmed = await foundry.applications.api.DialogV2.confirm({
 
+    window: {
+      title: "Opróżnić sakiewkę?"
+    },
+
+    content: `
+      <p>
+        Czy na pewno chcesz usunąć wszystkie monety tej postaci?
+      </p>
+    `,
+
+    yes: {
+      label: "Opróżnij",
+      icon: "fa-solid fa-coins"
+    },
+
+    no: {
+      label: "Anuluj",
+      icon: "fa-solid fa-times"
+    }
+
+  });
+
+  if (!confirmed) return;
+
+  const emptyMoney = normalizeMoney({
+    grzywna: 0,
+    skojec: 0,
+    grosz: 0,
+    kwartnik: 0,
+    cwiercgrosz: 0,
+    denar: 0,
+    obol: 0
+  });
+
+  this._rememberScrollPosition();
+
+  await this.actor.update({
+    "system.money": emptyMoney
+  });
+  }
+  static async #deleteItem(ev){
+ const btn = ev.target.closest(".crp-item-delete");
+
+  if (!btn) return;
+
+  ev.preventDefault();
+  ev.stopPropagation();
+
+  if (
+    btn.closest(".crp-bio") &&
+    game.settings.get("crp", "characterSheetsLocked")
+  ) {
+    ui.notifications.warn("Karta postaci jest zablokowana.");
+    return;
+  }
+
+  const itemId = btn.dataset.itemId;
+
+  if (!itemId) return;
+
+  const item = this.actor.items.get(itemId);
+
+  const confirmed = await foundry.applications.api.DialogV2.confirm({
+    window: {
+      title: "Usunąć przedmiot?"
+    },
+    content: `
+      <p>
+        Czy na pewno chcesz usunąć przedmiot
+        <strong>${foundry.utils.escapeHTML(item?.name ?? "bez nazwy")}</strong>?
+      </p>
+    `,
+    yes: {
+      label: "Usuń",
+      icon: "fa-solid fa-trash"
+    },
+    no: {
+      label: "Anuluj",
+      icon: "fa-solid fa-times"
+    }
+  });
+
+  if (!confirmed) return;
+
+  const eq = this.actor.system.equipment;
+  const updates = {};
+  const slots = ["rightHand", "leftHand", "armor"];
+
+  for (const slot of slots) {
+    if (eq[slot]?.id === itemId) {
+      updates[`system.equipment.${slot}`] = {
+        id: null,
+        name: null,
+        img: null
+      };
+    }
+  }
+
+  if (this.actor.system.bio?.origin?.id === itemId) {
+    updates["system.bio.origin"] = {
+      id: null,
+      name: null,
+      img: null
+    };
+  }
+
+  this._rememberScrollPosition();
+  await this.document.deleteEmbeddedDocuments("Item", [itemId]);
+
+  if (Object.keys(updates).length) {
+    this._rememberScrollPosition();
+    await this.document.update(updates);
+  }
+  }
 }
 function isNPCActor(actor) {
   return CRP_NPC_ACTOR_TYPES.has(actor?.type);

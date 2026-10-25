@@ -27,9 +27,9 @@
                    value="{{system.derived.health.value}}">
             / {{system.derived.health.max}}
           </div>
-                    <div class="crp-health-bar">
+                    <div class="crp-health-bar" data-toggle="tooltip" data-placement="bottom" title="Kary za rany to {{woundPenalty}}">
             <div class="crp-health-fill {{system.derived.woundState}}"
-                 style="width: {{healthPercent}}%;">
+                 style="width: {{healthPercent}}%;" >
             </div>
           </div>
 
@@ -90,6 +90,7 @@
     </div>
   <!-- TOKEN -->
   <div class="crp-token">
+    {{log actor}}
     <img src="{{actor.tokenImg}}" data-action="editImage" data-edit="prototypeToken.texture.src">
   </div>
 
