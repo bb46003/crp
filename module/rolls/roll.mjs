@@ -3,223 +3,240 @@
 const CRP_NPC_ACTOR_TYPES = new Set(["npc", "npc-knecht", "npc-rycerz"]);
 
 function isNPCActor(actor) {
-    return CRP_NPC_ACTOR_TYPES.has(actor?.type);
+  return CRP_NPC_ACTOR_TYPES.has(actor?.type);
 }
 
 export class CRPRoll {
+  static resolveCritical(dice, total) {
+    const isDouble = dice.length === 2 && dice[0] === dice[1];
 
-      static resolveCritical(dice, total) {
-  const isDouble = dice.length === 2 && dice[0] === dice[1];
+    if (isDouble && total === 2) return "criticalSuccess";
+    if (isDouble && total === 20) return "criticalFailure";
 
-  if (isDouble && total === 2) return "criticalSuccess";
-  if (isDouble && total === 20) return "criticalFailure";
-
-  return null;
-}
-
-static resolveOutcome(dice, total, target) {
-  const critical = this.resolveCritical(dice, total);
-
-  const success =
-    critical === "criticalSuccess" ||
-    (critical !== "criticalFailure" && total <= target);
-
-  return { critical, success };
-}
-
-static formatMargin(margin) {
-  return margin >= 0 ? `+${margin}` : margin;
-}
-
-static async showDiceSoNice(roll) {
-  const diceSoNiceActive = game.modules.get("dice-so-nice")?.active;
-  const showForRoll = game.dice3d?.showForRoll;
-
-  if (!diceSoNiceActive || typeof showForRoll !== "function") return;
-
-  try {
-    await showForRoll.call(game.dice3d, roll, game.user, true);
-  } catch (error) {
-    console.warn("CRP | Nie udało się wyświetlić rzutu w Dice So Nice.", error);
+    return null;
   }
-}
 
+  static resolveOutcome(dice, total, target) {
+    const critical = this.resolveCritical(dice, total);
 
-    static async skill(actor, attrKey, skillKey, { chat = true, allowFate = true, modifier = 0, displayModifier = null, targetOverride = null, rollLabel = null } = {}) {
+    const success =
+      critical === "criticalSuccess" ||
+      (critical !== "criticalFailure" && total <= target);
 
-        if (!actor) {
-            console.error("Brak aktora");
-            return null;
-        }
+    return { critical, success };
+  }
 
-        const attr = actor.system.attributes[attrKey];
+  static formatMargin(margin) {
+    return margin >= 0 ? `+${margin}` : margin;
+  }
 
-        if (!attr) {
-            console.error("Brak atrybutu:", attrKey);
-            return null;
-        }
+  static async showDiceSoNice(roll) {
+    const diceSoNiceActive = game.modules.get("dice-so-nice")?.active;
+    const showForRoll = game.dice3d?.showForRoll;
 
-        const skill = attr.skills[skillKey];
+    if (!diceSoNiceActive || typeof showForRoll !== "function") return;
 
-        if (!skill) {
-            console.error("Brak skilla:", skillKey);
-            return null;
-        }
+    try {
+      await showForRoll.call(game.dice3d, roll, game.user, true);
+    } catch (error) {
+      console.warn(
+        "CRP | Nie udało się wyświetlić rzutu w Dice So Nice.",
+        error,
+      );
+    }
+  }
 
-        const isNPC = isNPCActor(actor);
-        const effectiveAllowFate = allowFate && !isNPC;
-        const penalty = actor.system.derived.woundPenalty ?? 0;
-        const armorPenalty = actor.getArmorSkillPenalty?.(skillKey) ?? 0;
-
-        const hasTargetOverride =
-          targetOverride !== null &&
-          targetOverride !== undefined &&
-          Number.isFinite(Number(targetOverride));
-
-        const targetBase = hasTargetOverride
-          ? Number(targetOverride)
-          : isNPC
-          ? Number(actor.system.npc?.attributes ?? 8)
-          : attr.value + skill.value;
-
-        const target = Math.max(
-  2,
-  targetBase + penalty + modifier - armorPenalty
-);
-
-
-        // rzut 2k10
-        const roll = await new Roll("2d10").roll();
-        await this.showDiceSoNice(roll);
-        const dice = roll.dice?.[0]?.results?.map(r => r.result) ?? [];
-        const total = roll.total;
-
-        // poziom sukcesu
-        const margin = target - total;
-
-        // sukces / porażka
-
-const { critical, success } = this.resolveOutcome(dice, total, target);
-
-
-        // symbole
-        const eagles = dice.filter(d => d === 1).length;
-        const shields = dice.filter(d => d === 10).length;
-
-        // wynik
-const result = {
-  dice,
-  total,
-  target,
-  margin,
-  success,
-  critical,
-  eagles,
-  shields,
-  armorPenalty,
-  displayModifier
-};
-
-if (chat) {
-  const content = this.renderRollHTML(actor, attrKey, skillKey, result, {
-    usedFate: false,
-    allowFate: effectiveAllowFate,
-    rollLabel
-  });
-
-  await ChatMessage.create({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content
-  });
-}
-
-return result;
-
-
+  static async skill(
+    actor,
+    attrKey,
+    skillKey,
+    {
+      chat = true,
+      allowFate = true,
+      modifier = 0,
+      displayModifier = null,
+      targetOverride = null,
+      rollLabel = null,
+    } = {},
+  ) {
+    if (!actor) {
+      console.error("Brak aktora");
+      return null;
     }
 
-    static async opposed(
-        actorA, attrA, skillA,
-        actorB, attrB, skillB,
-        { actorAOptions = {}, actorBOptions = {} } = {}
-    ) {
-        const rollA = await this.skill(actorA, attrA, skillA, { chat: false, ...actorAOptions });
-        const rollB = await this.skill(actorB, attrB, skillB, { chat: false, ...actorBOptions });
+    const attr = actor.system.attributes[attrKey];
 
-        if (!rollA || !rollB) {
-            console.error("Błąd testu przeciwstawnego");
-            ui.notifications.warn("Nie można wykonać testu");
-            return;
-        }
+    if (!attr) {
+      console.error("Brak atrybutu:", attrKey);
+      return null;
+    }
 
-        const penaltyA = actorA.system.derived.woundPenalty ?? 0;
-        const penaltyB = actorB.system.derived.woundPenalty ?? 0;
-        const armorPenaltyA = rollA.armorPenalty ?? 0;
-        const armorPenaltyB = rollB.armorPenalty ?? 0;
-        const attackModifierText = rollA.displayModifier === null
-          ? ""
-          : ` (modyfikator: ${rollA.displayModifier >= 0 ? "+" : ""}${rollA.displayModifier})`;
-        const defenseModifierText = rollB.displayModifier === null
-          ? ""
-          : ` (modyfikator: ${rollB.displayModifier >= 0 ? "+" : ""}${rollB.displayModifier})`;
+    const skill = attr.skills[skillKey];
 
-const marginTextA = rollA.critical
-  ? null
-  : this.formatMargin(rollA.margin);
+    if (!skill) {
+      console.error("Brak skilla:", skillKey);
+      return null;
+    }
 
-const marginTextB = rollB.critical
-  ? null
-  : this.formatMargin(rollB.margin);
+    const isNPC = isNPCActor(actor);
+    const effectiveAllowFate = allowFate && !isNPC;
+    const penalty = actor.system.derived.woundPenalty ?? 0;
+    const armorPenalty = actor.getArmorSkillPenalty?.(skillKey) ?? 0;
 
-        //  porównanie marginów
-        let winner;
+    const hasTargetOverride =
+      targetOverride !== null &&
+      targetOverride !== undefined &&
+      Number.isFinite(Number(targetOverride));
 
+    const targetBase = hasTargetOverride
+      ? Number(targetOverride)
+      : isNPC
+        ? Number(actor.system.npc?.attributes ?? 8)
+        : attr.value + skill.value;
 
-if (rollA.critical === "criticalSuccess" && rollB.critical === "criticalSuccess") {
-  winner = "tie";
-} else if (rollA.critical === "criticalSuccess") {
-  winner = "A";
-} else if (rollB.critical === "criticalSuccess") {
-  winner = "B";
-} else if (rollA.critical === "criticalFailure" && rollB.critical === "criticalFailure") {
-  winner = "tie";
-} else if (rollA.critical === "criticalFailure") {
-  winner = "B";
-} else if (rollB.critical === "criticalFailure") {
-  winner = "A";
-} else {
-  if (rollA.margin > rollB.margin) {
-    winner = "A";
-  } else if (rollB.margin > rollA.margin) {
-    winner = "B";
-  } else {
-    winner = "tie";
+    const target = Math.max(2, targetBase + penalty + modifier - armorPenalty);
+
+    // rzut 2k10
+    const roll = await new Roll("2d10").roll();
+    await this.showDiceSoNice(roll);
+    const dice = roll.dice?.[0]?.results?.map((r) => r.result) ?? [];
+    const total = roll.total;
+
+    // poziom sukcesu
+    const margin = target - total;
+
+    // sukces / porażka
+
+    const { critical, success } = this.resolveOutcome(dice, total, target);
+
+    // symbole
+    const eagles = dice.filter((d) => d === 1).length;
+    const shields = dice.filter((d) => d === 10).length;
+
+    // wynik
+    const result = {
+      dice,
+      total,
+      target,
+      margin,
+      success,
+      critical,
+      eagles,
+      shields,
+      armorPenalty,
+      displayModifier,
+    };
+
+    if (chat) {
+      const content = this.renderRollHTML(actor, attrKey, skillKey, result, {
+        usedFate: false,
+        allowFate: effectiveAllowFate,
+        rollLabel,
+      });
+
+      await ChatMessage.create({
+        speaker: ChatMessage.getSpeaker({ actor }),
+        content,
+      });
+    }
+
+    return result;
   }
-}
 
+  static async opposed(
+    actorA,
+    attrA,
+    skillA,
+    actorB,
+    attrB,
+    skillB,
+    { actorAOptions = {}, actorBOptions = {} } = {},
+  ) {
+    const rollA = await this.skill(actorA, attrA, skillA, {
+      chat: false,
+      ...actorAOptions,
+    });
+    const rollB = await this.skill(actorB, attrB, skillB, {
+      chat: false,
+      ...actorBOptions,
+    });
 
-        //  Chat summary
-        const speaker = ChatMessage.getSpeaker({ actor: actorA });
+    if (!rollA || !rollB) {
+      console.error("Błąd testu przeciwstawnego");
+      ui.notifications.warn("Nie można wykonać testu");
+      return;
+    }
 
-        // nazwy (ładne)
-        const skillLabelA = CONFIG.CRP.skills[skillA] ?? skillA;
-        const attrLabelA = CONFIG.CRP.attributes[attrA] ?? attrA;   
-        const skillLabelB = CONFIG.CRP.skills[skillB] ?? skillB;
-        const attrLabelB = CONFIG.CRP.attributes[attrB] ?? attrB;
+    const penaltyA = actorA.system.derived.woundPenalty ?? 0;
+    const penaltyB = actorB.system.derived.woundPenalty ?? 0;
+    const armorPenaltyA = rollA.armorPenalty ?? 0;
+    const armorPenaltyB = rollB.armorPenalty ?? 0;
+    const attackModifierText =
+      rollA.displayModifier === null
+        ? ""
+        : ` (modyfikator: ${rollA.displayModifier >= 0 ? "+" : ""}${rollA.displayModifier})`;
+    const defenseModifierText =
+      rollB.displayModifier === null
+        ? ""
+        : ` (modyfikator: ${rollB.displayModifier >= 0 ? "+" : ""}${rollB.displayModifier})`;
 
-        // wynik
-        let resultText;
+    const marginTextA = rollA.critical ? null : this.formatMargin(rollA.margin);
 
-        if (winner === "A") {
-            resultText = `👉 ${actorA.name} wygrywa`;
-        } else if (winner === "B") {
-            resultText = `👉 ${actorB.name} wygrywa`;
-        } else {
-            resultText = "👉 REMIS";
-        }
+    const marginTextB = rollB.critical ? null : this.formatMargin(rollB.margin);
 
-        // HTML
-        const content = `
+    //  porównanie marginów
+    let winner;
+
+    if (
+      rollA.critical === "criticalSuccess" &&
+      rollB.critical === "criticalSuccess"
+    ) {
+      winner = "tie";
+    } else if (rollA.critical === "criticalSuccess") {
+      winner = "A";
+    } else if (rollB.critical === "criticalSuccess") {
+      winner = "B";
+    } else if (
+      rollA.critical === "criticalFailure" &&
+      rollB.critical === "criticalFailure"
+    ) {
+      winner = "tie";
+    } else if (rollA.critical === "criticalFailure") {
+      winner = "B";
+    } else if (rollB.critical === "criticalFailure") {
+      winner = "A";
+    } else {
+      if (rollA.margin > rollB.margin) {
+        winner = "A";
+      } else if (rollB.margin > rollA.margin) {
+        winner = "B";
+      } else {
+        winner = "tie";
+      }
+    }
+
+    //  Chat summary
+    const speaker = ChatMessage.getSpeaker({ actor: actorA });
+
+    // nazwy (ładne)
+    const skillLabelA = CONFIG.CRP.skills[skillA] ?? skillA;
+    const attrLabelA = CONFIG.CRP.attributes[attrA] ?? attrA;
+    const skillLabelB = CONFIG.CRP.skills[skillB] ?? skillB;
+    const attrLabelB = CONFIG.CRP.attributes[attrB] ?? attrB;
+
+    // wynik
+    let resultText;
+
+    if (winner === "A") {
+      resultText = `👉 ${actorA.name} wygrywa`;
+    } else if (winner === "B") {
+      resultText = `👉 ${actorB.name} wygrywa`;
+    } else {
+      resultText = "👉 REMIS";
+    }
+
+    // HTML
+    const content = `
             <div class="crp-roll">
                 <h3>Test przeciwstawny</h3>
                 <hr>
@@ -246,54 +263,62 @@ if (rollA.critical === "criticalSuccess" && rollB.critical === "criticalSuccess"
             </div>
         `;
 
-const message = await ChatMessage.create({
-    speaker,
-    content
-});
+    const message = await ChatMessage.create({
+      speaker,
+      content,
+    });
 
-return {
-    rollA,
-    rollB,
-    winner,
-    messageId: message.id
-};
-    }
-
-static renderRollHTML(actor, attrKey, skillKey, result, { usedFate = false, allowFate = true, rollLabel = null } = {}) {
-
-  const canUseFate = allowFate && (actor.isOwner || game.user.isGM);
-
-  const skillLabel = CONFIG.CRP.skills[skillKey] ?? skillKey;
-  const attrLabel = CONFIG.CRP.attributes[attrKey] ?? attrKey;
-
-  const penalty = actor.system.derived.woundPenalty ?? 0;
-  const armorPenalty = result.armorPenalty ?? actor.getArmorSkillPenalty?.(skillKey) ?? 0;
-  const modifierText = result.displayModifier === null
-    ? ""
-    : ` (modyfikator: ${result.displayModifier >= 0 ? "+" : ""}${result.displayModifier})`;
-
-  //  wynik tekstowy
-  let resultText;
-  if (result.critical === "criticalSuccess") {
-    resultText = "🔥 KRYTYCZNY SUKCES";
-  } else if (result.critical === "criticalFailure") {
-    resultText = "💀 KRYTYCZNA PORAŻKA";
-  } else {
-    resultText = result.success ? "✔ SUKCES" : "❌ PORAŻKA";
+    return {
+      rollA,
+      rollB,
+      winner,
+      messageId: message.id,
+    };
   }
 
-  //  margin
-  const marginText = result.critical
-    ? ""
-    : `<div class="crp-roll-margin">Margin: ${this.formatMargin(result.margin)}</div>`;
+  static renderRollHTML(
+    actor,
+    attrKey,
+    skillKey,
+    result,
+    { usedFate = false, allowFate = true, rollLabel = null } = {},
+  ) {
+    const canUseFate = allowFate && (actor.isOwner || game.user.isGM);
 
-  //  symbole
-  let symbols = "";
-  if (result.eagles > 0) symbols += `🦅 ${result.eagles} `;
-  if (result.shields > 0) symbols += `🛡️ ${result.shields}`;
+    const skillLabel = CONFIG.CRP.skills[skillKey] ?? skillKey;
+    const attrLabel = CONFIG.CRP.attributes[attrKey] ?? attrKey;
 
-  //  przycisk Doli
-const fateButton = canUseFate ? `
+    const penalty = actor.system.derived.woundPenalty ?? 0;
+    const armorPenalty =
+      result.armorPenalty ?? actor.getArmorSkillPenalty?.(skillKey) ?? 0;
+    const modifierText =
+      result.displayModifier === null
+        ? ""
+        : ` (modyfikator: ${result.displayModifier >= 0 ? "+" : ""}${result.displayModifier})`;
+
+    //  wynik tekstowy
+    let resultText;
+    if (result.critical === "criticalSuccess") {
+      resultText = "🔥 KRYTYCZNY SUKCES";
+    } else if (result.critical === "criticalFailure") {
+      resultText = "💀 KRYTYCZNA PORAŻKA";
+    } else {
+      resultText = result.success ? "✔ SUKCES" : "❌ PORAŻKA";
+    }
+
+    //  margin
+    const marginText = result.critical
+      ? ""
+      : `<div class="crp-roll-margin">Margin: ${this.formatMargin(result.margin)}</div>`;
+
+    //  symbole
+    let symbols = "";
+    if (result.eagles > 0) symbols += `🦅 ${result.eagles} `;
+    if (result.shields > 0) symbols += `🛡️ ${result.shields}`;
+
+    //  przycisk Doli
+    const fateButton = canUseFate
+      ? `
   <button class="crp-use-fate ${usedFate ? "used" : ""}"
           data-actor-uuid="${actor.uuid}"
           data-attr="${attrKey}"
@@ -302,9 +327,10 @@ const fateButton = canUseFate ? `
           ${usedFate ? "disabled" : ""}>
     ${usedFate ? "✔ Dola użyta" : "✨ Użyj Doli"}
   </button>
-` : "";
+`
+      : "";
 
-  return `
+    return `
     <div class="crp-roll-card ${result.success ? "success" : "fail"}">
 
       <div class="crp-roll-header">
@@ -344,65 +370,59 @@ const fateButton = canUseFate ? `
       </div>
     </div>
   `;
-}
-
-
-static async processTurn(actor) {
-
-  // blokada wielokrotnego wywołania w tej samej turze
-  if (actor.getFlag("crp", "processedTurn")) return;
-  await actor.setFlag("crp", "processedTurn", true);
-
-if (actor.system.state.life === "dead") return;
-if (!actor.system.state.bleeding) return;
-
-  // rzut (BEZ chata)
-  const result = await this.fortitude(actor, { chat: false });
-  if (!result) return;
-
-  // =====================
-  // LOGIKA STANÓW (NA AKTUALNYM STANIE)
-  // =====================
- 
-  if (!actor.system.state.unconscious) {
-
-    // był przytomny → może stracić przytomność
-    if (!result.success) {
-      await actor.update({
-        "system.state.unconscious": true
-      });
-
-      ui.notifications.warn(`${actor.name} traci przytomność!`);
-    }
-
-  } else {
-
-    // był nieprzytomny → może umrzeć
-    if (!result.success) {
-      await actor.update({
-        "system.state.life": "dead",
-        "system.state.bleeding": false,
-        "system.state.unconscious": false
-      });
-
-      ui.notifications.error(`${actor.name} umiera!`);
-    }
-
   }
 
-  // odśwież UI (opcjonalne, ale OK)
-  await actor.sheet?.render(false);
+  static async processTurn(actor) {
+    // blokada wielokrotnego wywołania w tej samej turze
+    if (actor.getFlag("crp", "processedTurn")) return;
+    await actor.setFlag("crp", "processedTurn", true);
 
-  // render do chata (już po update → stan jest aktualny)
-  const content = this.renderFortitudeHTML(actor, result);
+    if (actor.system.state.life === "dead") return;
+    if (!actor.system.state.bleeding) return;
 
-  await ChatMessage.create({
-    speaker: ChatMessage.getSpeaker({ actor }),
-    content
-  });
-}
+    // rzut (BEZ chata)
+    const result = await this.fortitude(actor, { chat: false });
+    if (!result) return;
 
-/* TEST TĘŻYZNY!
+    // =====================
+    // LOGIKA STANÓW (NA AKTUALNYM STANIE)
+    // =====================
+
+    if (!actor.system.state.unconscious) {
+      // był przytomny → może stracić przytomność
+      if (!result.success) {
+        await actor.update({
+          "system.state.unconscious": true,
+        });
+
+        ui.notifications.warn(`${actor.name} traci przytomność!`);
+      }
+    } else {
+      // był nieprzytomny → może umrzeć
+      if (!result.success) {
+        await actor.update({
+          "system.state.life": "dead",
+          "system.state.bleeding": false,
+          "system.state.unconscious": false,
+        });
+
+        ui.notifications.error(`${actor.name} umiera!`);
+      }
+    }
+
+    // odśwież UI (opcjonalne, ale OK)
+    await actor.sheet?.render(false);
+
+    // render do chata (już po update → stan jest aktualny)
+    const content = this.renderFortitudeHTML(actor, result);
+
+    await ChatMessage.create({
+      speaker: ChatMessage.getSpeaker({ actor }),
+      content,
+    });
+  }
+
+  /* TEST TĘŻYZNY!
 
 static async fortitude(actor, { chat = true } = {}) {
   const result = await this.skill(actor, "strength", "endurance", {
@@ -421,20 +441,23 @@ static async fortitude(actor, { chat = true } = {}) {
 }
   */
 
-static renderFortitudeHTML(actor, result) {
+  static renderFortitudeHTML(actor, result) {
+    const penalty = actor.system.derived.woundPenalty ?? 0;
 
-  const penalty = actor.system.derived.woundPenalty ?? 0;
+    const resultText =
+      result.critical === "criticalSuccess"
+        ? "🔥 CUD! PRZETRWAŁ"
+        : result.critical === "criticalFailure"
+          ? "💀 NATYCHMIASTOWA ŚMIERĆ"
+          : result.success
+            ? "PRZETRWAŁ"
+            : "UMIERA";
 
-  const resultText =
-    result.critical === "criticalSuccess" ? "🔥 CUD! PRZETRWAŁ" :
-    result.critical === "criticalFailure" ? "💀 NATYCHMIASTOWA ŚMIERĆ" :
-    result.success ? "PRZETRWAŁ" : "UMIERA";
+    const marginText = result.critical
+      ? null
+      : this.formatMargin(result.margin);
 
-const marginText = result.critical
-  ? null
-  : this.formatMargin(result.margin);
-
-  return `
+    return `
     <div class="crp-roll">
       <h3>💀 Test tężyzny</h3>
 
@@ -448,92 +471,91 @@ const marginText = result.critical
       ${marginText !== null ? `<p><strong>Margin:</strong> ${marginText}</p>` : ""}
 
       <p>Stan: ${
-        actor.system.state.life === "dead" ? "💀 martwy" :
-        actor.system.state.unconscious ? "😵 nieprzytomny" :
-        actor.system.state.bleeding ? "🩸 krwawi" :
-        "✔ stabilny"
+        actor.system.state.life === "dead"
+          ? "💀 martwy"
+          : actor.system.state.unconscious
+            ? "😵 nieprzytomny"
+            : actor.system.state.bleeding
+              ? "🩸 krwawi"
+              : "✔ stabilny"
       }</p>
     </div>
   `;
-}
-
-// actor.mjs
-
-async rollAttack(skillKey) {
-
-  const weapon = this.getEquippedWeapon();
-
-  const attrKey = this._mapSkillToAttribute(skillKey);
-
-  const result = await this.rollSkill(attrKey, skillKey);
-
-  if (!result.success) return result;
-
-  let damage = weapon?.system.damage ?? 1;
-
-  // opcjonalnie margin jako bonus
-  damage += Math.max(0, result.margin);
-
-  return {
-    ...result,
-    damage
-  };
-}
-
-static async initiative(actor, { chat = true, combatant = null } = {}) {
-
-  const base = actor.system.derived.initiativeTotal ?? actor.system.derived.initiative ?? 0;
-
-  const roll = await new Roll("1d6").roll();
-  const dice = roll.dice?.[0]?.results?.map(r => r.result) ?? [];
-  const total = roll.total;
-
-  const final = base + total;
-
-  const result = {
-    base,
-    dice,
-    total,
-    final
-  };
-
-  // ======================
-  // COMBAT INTEGRATION
-  // ======================
-
-const combat = game.combat;
-
-if (combat) {
-
-  if (combatant) {
-
-    await combatant.setFlag("crp", "initiativeRoll", total);
-    await combatant.setFlag("crp", "initiativeBase", base);
-    await combat.setInitiative(combatant.id, final);
-
-  } else {
-
-    const fallback = combat.combatants.find(c => c.actor?.id === actor.id);
-
-    if (fallback) {
-      await fallback.setFlag("crp", "initiativeRoll", total);
-      await fallback.setFlag("crp", "initiativeBase", base);
-      await combat.setInitiative(fallback.id, final);
-    } else {
-      ui.notifications.warn("Aktor nie jest w walce");
-    }
-
   }
 
-}
+  // actor.mjs
 
-  // ======================
-  // CHAT
-  // ======================
+  async rollAttack(skillKey) {
+    const weapon = this.getEquippedWeapon();
 
-  if (chat) {
+    const attrKey = this._mapSkillToAttribute(skillKey);
 
-    const content = `
+    const result = await this.rollSkill(attrKey, skillKey);
+
+    if (!result.success) return result;
+
+    let damage = weapon?.system.damage ?? 1;
+
+    // opcjonalnie margin jako bonus
+    damage += Math.max(0, result.margin);
+
+    return {
+      ...result,
+      damage,
+    };
+  }
+
+  static async initiative(actor, { chat = true, combatant = null } = {}) {
+    const base =
+      actor.system.derived.initiativeTotal ??
+      actor.system.derived.initiative ??
+      0;
+
+    const roll = await new Roll("1d6").roll();
+    const dice = roll.dice?.[0]?.results?.map((r) => r.result) ?? [];
+    const total = roll.total;
+
+    const final = base + total;
+
+    const result = {
+      base,
+      dice,
+      total,
+      final,
+    };
+
+    // ======================
+    // COMBAT INTEGRATION
+    // ======================
+
+    const combat = game.combat;
+
+    if (combat) {
+      if (combatant) {
+        await combatant.setFlag("crp", "initiativeRoll", total);
+        await combatant.setFlag("crp", "initiativeBase", base);
+        await combat.setInitiative(combatant.id, final);
+      } else {
+        const fallback = combat.combatants.find(
+          (c) => c.actor?.id === actor.id,
+        );
+
+        if (fallback) {
+          await fallback.setFlag("crp", "initiativeRoll", total);
+          await fallback.setFlag("crp", "initiativeBase", base);
+          await combat.setInitiative(fallback.id, final);
+        } else {
+          ui.notifications.warn("Aktor nie jest w walce");
+        }
+      }
+    }
+
+    // ======================
+    // CHAT
+    // ======================
+
+    if (chat) {
+      const content = `
       <div class="crp-roll-card">
         <div class="crp-roll-header">
           <img src="${actor.img}" class="crp-roll-avatar">
@@ -551,13 +573,12 @@ if (combat) {
       </div>
     `;
 
-    await ChatMessage.create({
-      speaker: ChatMessage.getSpeaker({ actor }),
-      content
-    });
+      await ChatMessage.create({
+        speaker: ChatMessage.getSpeaker({ actor }),
+        content,
+      });
+    }
 
+    return result;
   }
-
-  return result;
-}
 }

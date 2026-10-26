@@ -8,12 +8,17 @@
     <div class="crp-actor-list">
       {{#each actors}}
         <label class="crp-actor-row">
-          <input type="checkbox" value="{{this.id}}">
+          <input type="checkbox" value="{{this.id}}" />
           <span>{{this.name}}</span>
-          <span class="crp-maneuver">Man: {{this.maneuver}} / {{this.maneuverMax}},</span>
+          <span class="crp-maneuver">Man:
+            {{this.maneuver}}
+            /
+            {{this.maneuverMax}},</span>
           <span class="crp-fate">Dola: {{this.fate}} / {{this.fateMax}},</span>
-          <span class="crp-advantage-uses">Zalety: {{this.advantageUses}},</span>
-          <span class="crp-xp">PD: <!--{{this.experienceFree}} / -->{{this.experience}}</span>
+          <span class="crp-advantage-uses">Zalety:
+            {{this.advantageUses}},</span>
+          <span class="crp-xp">PD:
+            {{this.experienceFree}}<!-- / -->{{this.experience}}</span>
         </label>
       {{/each}}
     </div>
@@ -31,25 +36,25 @@
         Rozdaj PD
       </button>
 
-            <button data-action="give-maneuver-selected">
+      <button data-action="give-maneuver-selected">
         +1 Manewr
       </button>
-                  <button data-action="spend-maneuver-selected">
+      <button data-action="spend-maneuver-selected">
         -1 Manewr
       </button>
 
-                  <button data-action="add-advancement-log">
+      <button data-action="add-advancement-log">
         Dodaj wpis do logu
       </button>
 
-            <button data-action="give-advantageUses-selected">
+      <button data-action="give-advantageUses-selected">
         +1 Zaleta
       </button>
-                  <button data-action="spend-advantageUses-selected">
+      <button data-action="spend-advantageUses-selected">
         -1 Zaleta
       </button>
 
-            <button data-action="clear-advancement-logs">
+      <button data-action="clear-advancement-logs">
         Wyczyść logi
       </button>
     </div>
@@ -62,10 +67,10 @@
       <button data-action="heal-all">
         Wylecz wszystkich
       </button>
-            <button data-action="reset-fate">
+      <button data-action="reset-fate">
         Reset Doli
       </button>
-                  <button data-action="reset-maneuvers">
+      <button data-action="reset-maneuvers">
         Reset Manewrów
       </button>
     </div>
@@ -82,9 +87,6 @@
       <button data-action="toggle-sheet-lock">
         {{#if characterSheetsLocked}}Odblokuj karty{{else}}Zablokuj karty{{/if}}
       </button>
-
-
-
 
     </div>
   </div>

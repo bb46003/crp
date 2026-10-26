@@ -32,7 +32,7 @@
       <h2>Herb postaci</h2>
       <div class="crp-crest-slot">
         <textarea class="crp-crest-description"
-                  data-path="system.bio.crestDescription"
+                  name="system.bio.crestDescription"
                   placeholder="Opis herbu">{{system.bio.crestDescription}}</textarea>
 
         <div class="crp-crest-image-wrap">
@@ -40,11 +40,8 @@
             <img src="{{system.bio.crest}}"
                  class="crp-crest-select crp-crest-image"
                  title="Kliknij, aby zmienić herb">
-          <!--  <button type="button"
-                    class="crp-crest-clear"
-                    title="Usuń herb">✖</button> -->
           {{else}}
-            <button type="button" class="crp-crest-select crp-crest-empty">
+            <button type="button" class="crp-crest-select crp-crest-empty" data-action="crestSelect">
               Wybierz grafikę herbu
             </button>
           {{/if}}
@@ -108,8 +105,33 @@
             <div class="crp-language-empty">Brak dostępnych miejsc</div>
           {{/unless}}
         {{/if}}
-      </div>
+      </div>      
     </section>
+    {{#if languages.unassigned}}
+    <section class="crp-language-section">
+      <h2>Języki obce nieprzypisane</h2>
+            <div class="crp-language-drop crp-language-foreign" data-language-role="unassigned">
+            {{#each languages.unassigned as |language|}}
+          <div class="crp-item-row crp-language-row"
+               draggable="true"
+               data-id="{{language.id}}"
+               data-toggle="tooltip" data-placement="bottom" title="Kliknij w nazwę Języka żeby przypisać typ">
+            <img src="{{language.img}}" class="crp-item-img">
+            <div class="crp-language-details">
+              <a data-action="assigneLanguageType"><strong>{{language.name}}</strong></a>
+              <span>Alfabet: {{lookup ../languages.alphabets language.system.alphabet}}</span>
+            </div>
+            {{#unless ../characterSheetsLocked}}
+              <button type="button"
+                      class="crp-item-delete"
+                      data-action="deleteItem"
+                      data-item-id="{{language.id}}">✖</button>
+            {{/unless}}
+          </div>
+        {{/each}}
+            </div>
+    </section>
+    {{/if}}
   </div>
 
   <div class="crp-traits">
@@ -181,13 +203,16 @@
   </div>
 
   <div class="crp-bio-header">
-    <button type="button" class="crp-bio-edit" title="Edytuj biografię">
-      <i class="fa-solid fa-edit"></i>
-    </button>
+  <h2>Opis</h2>
   </div>
 
   <div class="crp-bio-content">
-    {{{system.bio.description}}}
+      {{formInput
+    description.field
+    value=description.value
+    enriched=description.enriched
+    toggled="true"
+  }}
   </div>
 
 </div>

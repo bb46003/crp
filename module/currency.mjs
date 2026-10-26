@@ -5,7 +5,7 @@ export const CRPCurrency = {
   kwartnik: 16,
   cwiercgrosz: 8,
   denar: 2,
-  obol: 1
+  obol: 1,
 };
 
 export function moneyToObols(money = {}) {
@@ -21,7 +21,6 @@ export function moneyToObols(money = {}) {
 }
 
 export function obolsToMoney(value = 0) {
-
   value = Math.max(0, Math.floor(value));
 
   const money = {
@@ -32,7 +31,7 @@ export function obolsToMoney(value = 0) {
     cwiercgrosz: 0,
     denar: 0,
     obol: 0,
-    total: value
+    total: value,
   };
 
   money.grzywna = Math.floor(value / CRPCurrency.grzywna);
@@ -59,17 +58,14 @@ export function obolsToMoney(value = 0) {
 }
 
 export function normalizeMoney(money = {}) {
-
   const normalized = {
-
     grzywna: Math.max(0, Number(money.grzywna) || 0),
     skojec: Math.max(0, Number(money.skojec) || 0),
     grosz: Math.max(0, Number(money.grosz) || 0),
     kwartnik: Math.max(0, Number(money.kwartnik) || 0),
     cwiercgrosz: Math.max(0, Number(money.cwiercgrosz) || 0),
     denar: Math.max(0, Number(money.denar) || 0),
-    obol: Math.max(0, Number(money.obol) || 0)
-
+    obol: Math.max(0, Number(money.obol) || 0),
   };
 
   normalized.total = moneyToObols(normalized);
@@ -77,9 +73,7 @@ export function normalizeMoney(money = {}) {
   return normalized;
 }
 
-
 export function canAfford(money = {}, cost = {}) {
-
   const available = moneyToObols(money);
   const required = moneyToObols(cost);
 
@@ -87,7 +81,6 @@ export function canAfford(money = {}, cost = {}) {
 }
 
 export function payMoney(money = {}, cost = {}) {
-
   const available = moneyToObols(money);
   const required = moneyToObols(cost);
 
@@ -101,7 +94,6 @@ export function payMoney(money = {}, cost = {}) {
 }
 
 export function addMoney(money = {}, added = {}) {
-
   const currentValue = moneyToObols(money);
   const addedValue = moneyToObols(added);
 
@@ -111,11 +103,7 @@ export function addMoney(money = {}, added = {}) {
 }
 
 export function formatMoney(money = {}, options = {}) {
-
-  const {
-    empty = "—",
-    short = true
-  } = options;
+  const { empty = "—", short = true } = options;
 
   const parts = [];
 
@@ -127,7 +115,7 @@ export function formatMoney(money = {}, options = {}) {
         kwartnik: "kw.",
         cwiercgrosz: "ćw.",
         denar: "den.",
-        obol: "ob."
+        obol: "ob.",
       }
     : {
         grzywna: "grzywien",
@@ -136,11 +124,10 @@ export function formatMoney(money = {}, options = {}) {
         kwartnik: "kwartników",
         cwiercgrosz: "ćwierćgroszy",
         denar: "denarów",
-        obol: "oboli"
+        obol: "oboli",
       };
 
   for (const [key, label] of Object.entries(labels)) {
-
     const value = money[key] ?? 0;
 
     if (value > 0) {
@@ -148,7 +135,5 @@ export function formatMoney(money = {}, options = {}) {
     }
   }
 
-  return parts.length
-    ? parts.join(" ")
-    : empty;
+  return parts.length ? parts.join(" ") : empty;
 }

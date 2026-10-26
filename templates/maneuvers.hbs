@@ -1,28 +1,30 @@
 <div class="crp-maneuver-dialog">
-    <h1>Nowa runda: Wybierz manewry</h1>
+  <h1>Nowa runda: Wybierz manewry</h1>
 
-<div class="crp-maneuver-list">
-  {{#each actors}}
-    <div class="crp-actor-block">
+  <div class="crp-maneuver-list">
+    {{#each actors}}
+      <div class="crp-actor-block">
 
-      <div class="crp-header">
-        <img src="{{this.img}}" class="crp-portrait" />
-        <div class="crp-name">{{this.name}}</div>
+        <div class="crp-header">
+          <img src="{{this.img}}" class="crp-portrait" />
+          <div class="crp-name">{{this.name}}</div>
+        </div>
+
       </div>
 
-    </div>
-
-    {{#unless @last}}
-      <hr class="crp-separator" />
-    {{/unless}}
-  {{/each}}
-</div>
+      {{#unless @last}}
+        <hr class="crp-separator" />
+      {{/unless}}
+    {{/each}}
+  </div>
   <div class="crp-footer">
 
     <button class="crp-close">Zamknij</button>
 
     <div class="crp-timer-box">
-      ⏳ <span class="crp-timer">10</span> sek.
+      ⏳
+      <span class="crp-timer">10</span>
+      sek.
     </div>
 
   </div>

@@ -62,7 +62,7 @@
         "description": "Zamiast zadawać rany, postać wytrąca broń z dłoni przeciwnika, jeśli osiągnie sukces w teście walki."
       }
     },
-    "ui":{
+    "ui": {
       "dialog": {
         "changeTokenName": {
           "title": "Zmiana nazwy tokena",
@@ -73,6 +73,11 @@
           "content": "Czy na pewno chcesz zmienić obraz tokena na {name}?"
         }
       }
+    },
+    "role": {
+      "unassigned": "Nieprzydzielony",
+      "native": "Ojczysty",
+      "foreign": "Obcy"
     }
   },
   "TYPES": {

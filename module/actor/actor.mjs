@@ -1,10 +1,9 @@
 import { CRPRoll } from "../rolls/roll.mjs";
 import { CRPAdvancementWindow } from "../app/advancment.mjs";
- // module/actor/actor.mjs
+// module/actor/actor.mjs
 
 const ARMOR_PENALIZED_SKILLS = new Set(["athletics", "stealth", "survival"]);
 const CRP_NPC_ACTOR_TYPES = new Set(["npc", "npc-knecht", "npc-rycerz"]);
-
 
 function isNPCActor(actor) {
   return CRP_NPC_ACTOR_TYPES.has(actor?.type);
@@ -12,7 +11,6 @@ function isNPCActor(actor) {
 
 export class CRPActor extends Actor {
   prepareDerivedData() {
-
     super.prepareDerivedData();
 
     const system = this.system;
@@ -41,7 +39,11 @@ export class CRPActor extends Actor {
       derived.health.max = maxHealth;
     }
 
-    if (isNPC && (!Number.isFinite(Number(derived.health.value)) || derived.health.value < 1)) {
+    if (
+      isNPC &&
+      (!Number.isFinite(Number(derived.health.value)) ||
+        derived.health.value < 1)
+    ) {
       derived.health.value = maxHealth;
     }
 
@@ -55,16 +57,18 @@ export class CRPActor extends Actor {
       const armorId = equipment.armor?.id;
       const armor = armorId ? this.items.get(armorId) : null;
       const shields = ["rightHand", "leftHand"]
-        .map(slot => {
+        .map((slot) => {
           const id = equipment[slot]?.id;
           return id ? this.items.get(id) : null;
         })
-        .filter(item => item?.type === "shield");
+        .filter((item) => item?.type === "shield");
 
       system.npc.protection = [
         armor?.type === "armor" ? armor : null,
-        ...shields
-      ].filter(Boolean).reduce((sum, item) => sum + (Number(item.system.protection) || 0), 0);
+        ...shields,
+      ]
+        .filter(Boolean)
+        .reduce((sum, item) => sum + (Number(item.system.protection) || 0), 0);
     }
 
     // PUNKTY MANEWRU
@@ -74,14 +78,12 @@ export class CRPActor extends Actor {
       attr.agility.skills.oneHanded.value,
       attr.agility.skills.lightWeapons.value,
       attr.strength.skills.shield.value,
-      attr.perception.skills.ranged.value
+      attr.perception.skills.ranged.value,
     ];
 
     const bestCombatSkill = Math.max(...combatSkills);
 
-    const maxManeuver =
-      attr.perception.value +
-      attr.reason.value;
+    const maxManeuver = attr.perception.value + attr.reason.value;
 
     derived.maneuver.max = maxManeuver;
 
@@ -112,180 +114,179 @@ export class CRPActor extends Actor {
     }
 
     system.derived.woundState = woundState;
-  
   }
 
   async rollSkill(attrKey, skillKey) {
+    return await CRPRoll.skill(this, attrKey, skillKey);
+  }
 
+  _mapSkillToAttribute(skillKey) {
+    const map = {
+      // STR
+      twoHanded: "strength",
+      brawl: "strength",
+      endurance: "strength",
+      shield: "strength",
+      intimidate: "strength",
 
-    
-  return await CRPRoll.skill(this, attrKey, skillKey);
+      // AGI
+      oneHanded: "agility",
+      lightWeapons: "agility",
+      athletics: "agility",
+      craft: "agility",
+      stealth: "agility",
 
-  
-}
+      // PER
+      ranged: "perception",
+    };
 
-_mapSkillToAttribute(skillKey) {
+    return map[skillKey];
+  }
 
-  const map = {
-    // STR
-    twoHanded: "strength",
-    brawl: "strength",
-    endurance: "strength",
-    shield: "strength",
-    intimidate: "strength",
+  getWeaponInitiativeModifier(item) {
+    if (!item || item.type !== "weapon") return 4;
+    if (item.system.range === "ranged" || item.system.skill === "ranged")
+      return -3;
+    if (item.system.skill === "lightWeapons") return 2;
+    if (item.system.skill === "twoHanded") return -2;
+    return 0;
+  }
 
-    // AGI
-    oneHanded: "agility",
-    lightWeapons: "agility",
-    athletics: "agility",
-    craft: "agility",
-    stealth: "agility",
+  getInitiativeWeaponModifier() {
+    const equipment = this.system.equipment ?? {};
 
-    // PER
-    ranged: "perception"
-  };
-
-  return map[skillKey];
-}
-
-getWeaponInitiativeModifier(item) {
-  if (!item || item.type !== "weapon") return 4;
-  if (item.system.range === "ranged" || item.system.skill === "ranged") return -3;
-  if (item.system.skill === "lightWeapons") return 2;
-  if (item.system.skill === "twoHanded") return -2;
-  return 0;
-}
-
-getInitiativeWeaponModifier() {
-  const equipment = this.system.equipment ?? {};
-
-  const modifiers = ["rightHand", "leftHand"].map(slot => {
-    const id = equipment[slot]?.id;
-    const item = id ? this.items.get(id) : null;
-
-    return this.getWeaponInitiativeModifier(item);
-  });
-
-  return Math.min(...modifiers);
-}
-
-getInitiativeArmorModifier() {
-  const item = this.getEquippedArmor();
-
-  return item?.type === "armor"
-    ? -(item.system.protection ?? 0)
-    : 0;
-}
-
-getEquippedArmor() {
-  const equipment = this.system.equipment ?? {};
-  const id = equipment.armor?.id;
-
-  return id ? this.items.get(id) : null;
-}
-
-getArmorSkillPenalty(skillKey) {
-  if (!ARMOR_PENALIZED_SKILLS.has(skillKey)) return 0;
-
-  const armor = this.getEquippedArmor();
-  if (armor?.type !== "armor") return 0;
-
-  return Math.max(0, Number(armor.system.protection) || 0);
-}
-
-getEquippedWeapon(skillKey = null) {
-  const equipment = this.system.equipment ?? {};
-  const handWeapons = ["rightHand", "leftHand"]
-    .map(slot => {
+    const modifiers = ["rightHand", "leftHand"].map((slot) => {
       const id = equipment[slot]?.id;
-      return id ? this.items.get(id) : null;
-    })
-    .filter(item => item?.type === "weapon");
+      const item = id ? this.items.get(id) : null;
 
-  const equippedWeapons = this.items
-    .filter(item => item.type === "weapon" && item.system.equipped);
+      return this.getWeaponInitiativeModifier(item);
+    });
 
-  const candidates = [...handWeapons, ...equippedWeapons]
-    .filter((item, index, array) => array.findIndex(i => i.id === item.id) === index)
-    .filter(item => !skillKey || item.system.skill === skillKey);
-
-  return candidates.sort((a, b) =>
-    (b.system.damage ?? 0) - (a.system.damage ?? 0)
-  )[0] ?? null;
-}
-
-
-async opposedTest(targetActor, attrA, skillA, attrB, skillB, options = {}) {
-  return await CRPRoll.opposed(
-    this, attrA, skillA,
-    targetActor, attrB, skillB,
-    options
-  );
-}
-
-async spendFate(amount = 1) {
-
-  const current = this.system.resources.fate.value;
-
-  if (current < amount) {
-    ui.notifications.warn("Brak punktów Doli!");
-    return false;
+    return Math.min(...modifiers);
   }
 
-  await this.update({
-    "system.resources.fate.value": current - amount
-  });
+  getInitiativeArmorModifier() {
+    const item = this.getEquippedArmor();
 
-  return true;
-}
-
-async applyWoundsState() {
-  const hp = this.system.derived.health.value;
-
-  const update = {};
-
-  if (hp <= 0 && !this.system.state.bleeding) {
-    update["system.state.bleeding"] = true;
+    return item?.type === "armor" ? -(item.system.protection ?? 0) : 0;
   }
 
-  if (hp > 0 && this.system.state.bleeding) {
-    update["system.state.bleeding"] = false;
+  getEquippedArmor() {
+    const equipment = this.system.equipment ?? {};
+    const id = equipment.armor?.id;
+
+    return id ? this.items.get(id) : null;
   }
 
-  if (Object.keys(update).length) {
-    await this.update(update);
+  getArmorSkillPenalty(skillKey) {
+    if (!ARMOR_PENALIZED_SKILLS.has(skillKey)) return 0;
+
+    const armor = this.getEquippedArmor();
+    if (armor?.type !== "armor") return 0;
+
+    return Math.max(0, Number(armor.system.protection) || 0);
   }
-}
 
-async clearWoundsState() {
-  await this.update({
-    "system.state.bleeding": false,
-    "system.state.unconscious": false,
-    "system.state.life": "alive"
-  });
-}
+  getEquippedWeapon(skillKey = null) {
+    const equipment = this.system.equipment ?? {};
+    const handWeapons = ["rightHand", "leftHand"]
+      .map((slot) => {
+        const id = equipment[slot]?.id;
+        return id ? this.items.get(id) : null;
+      })
+      .filter((item) => item?.type === "weapon");
 
-async applyDamage(amount) {
+    const equippedWeapons = this.items.filter(
+      (item) => item.type === "weapon" && item.system.equipped,
+    );
 
-  if (amount <= 0) return;
+    const candidates = [...handWeapons, ...equippedWeapons]
+      .filter(
+        (item, index, array) =>
+          array.findIndex((i) => i.id === item.id) === index,
+      )
+      .filter((item) => !skillKey || item.system.skill === skillKey);
 
-  const hp = this.system.derived.health.value;
-  const max = this.system.derived.health.max;
+    return (
+      candidates.sort(
+        (a, b) => (b.system.damage ?? 0) - (a.system.damage ?? 0),
+      )[0] ?? null
+    );
+  }
 
-  const currentHp = Number(hp) || 0;
-  const newHp = Math.max(-max, currentHp - amount);
+  async opposedTest(targetActor, attrA, skillA, attrB, skillB, options = {}) {
+    return await CRPRoll.opposed(
+      this,
+      attrA,
+      skillA,
+      targetActor,
+      attrB,
+      skillB,
+      options,
+    );
+  }
 
-  await this.update({
-    "system.derived.health.value": newHp
-  });
+  async spendFate(amount = 1) {
+    const current = this.system.resources.fate.value;
 
-  await this.applyWoundsState();
-}
-//rzeczy do zrobienia przed stworzeniem Aktora
-async _preCreate(data, options, user) {
-  await super._preCreate(data, options, user);
-  const actor = this;
-  if (!["character", ...CRP_NPC_ACTOR_TYPES].includes(actor.type)) return;
+    if (current < amount) {
+      ui.notifications.warn("Brak punktów Doli!");
+      return false;
+    }
+
+    await this.update({
+      "system.resources.fate.value": current - amount,
+    });
+
+    return true;
+  }
+
+  async applyWoundsState() {
+    const hp = this.system.derived.health.value;
+
+    const update = {};
+
+    if (hp <= 0 && !this.system.state.bleeding) {
+      update["system.state.bleeding"] = true;
+    }
+
+    if (hp > 0 && this.system.state.bleeding) {
+      update["system.state.bleeding"] = false;
+    }
+
+    if (Object.keys(update).length) {
+      await this.update(update);
+    }
+  }
+
+  async clearWoundsState() {
+    await this.update({
+      "system.state.bleeding": false,
+      "system.state.unconscious": false,
+      "system.state.life": "alive",
+    });
+  }
+
+  async applyDamage(amount) {
+    if (amount <= 0) return;
+
+    const hp = this.system.derived.health.value;
+    const max = this.system.derived.health.max;
+
+    const currentHp = Number(hp) || 0;
+    const newHp = Math.max(-max, currentHp - amount);
+
+    await this.update({
+      "system.derived.health.value": newHp,
+    });
+
+    await this.applyWoundsState();
+  }
+  //rzeczy do zrobienia przed stworzeniem Aktora
+  async _preCreate(data, options, user) {
+    await super._preCreate(data, options, user);
+    const actor = this;
+    if (!["character", ...CRP_NPC_ACTOR_TYPES].includes(actor.type)) return;
     const reasonValue = this?.system?.attributes?.reason?.value ?? 4;
     // TOKEN DEFAULT
     await this.updateSource({
@@ -294,75 +295,73 @@ async _preCreate(data, options, user) {
         displayName: CONST.TOKEN_DISPLAY_MODES.ALWAYS,
         displayBars: CONST.TOKEN_DISPLAY_MODES.ALWAYS,
         bar1: {
-          ttribute: "derived.health"
-        }
+          ttribute: "derived.health",
+        },
       },
-      ["system.resources.advantageUses.value"]: reasonValue
+      ["system.resources.advantageUses.value"]: reasonValue,
     });
   }
-//rzeczy do zrobienia przy updacie Aktora
- async _onUpdate(data, options, user) {
-  const  changeName = data?.name ?? false
-   const actor = this;
-  if(changeName && this.type === "character"){
-    const tokenName = data.name
-    const dialog =  await foundry.applications.api.DialogV2.confirm({
-      title: game.i18n.localize("CRP.ui.dialog.changeTokenName.title"),
-      content: `<p>${game.i18n.format("CRP.ui.dialog.changeTokenName.content", { name: tokenName })}</p>`,
-    });         
-    if (dialog) {
-     
-      await actor.prototypeToken.update({ name: tokenName });
-      const dependedTokens = actor.getDependentTokens();
-      for (const token of dependedTokens) {                      
-        await token.update({ name: tokenName });
+  //rzeczy do zrobienia przy updacie Aktora
+  async _onUpdate(data, options, user) {
+    const changeName = data?.name ?? false;
+    const actor = this;
+    if (changeName && this.type === "character") {
+      const tokenName = data.name;
+      const dialog = await foundry.applications.api.DialogV2.confirm({
+        title: game.i18n.localize("CRP.ui.dialog.changeTokenName.title"),
+        content: `<p>${game.i18n.format("CRP.ui.dialog.changeTokenName.content", { name: tokenName })}</p>`,
+      });
+      if (dialog) {
+        await actor.prototypeToken.update({ name: tokenName });
+        const dependedTokens = actor.getDependentTokens();
+        for (const token of dependedTokens) {
+          await token.update({ name: tokenName });
+        }
       }
     }
-  }
-  const tokenImg = data?.prototypeToken?.texture?.src ?? false;
-  if(tokenImg && this.type === "character"){
-    const tokenName = data.name
-    const dialog =  await foundry.applications.api.DialogV2.confirm({
-      title: game.i18n.localize("CRP.ui.dialog.changeTokenImage.title"),
-      content: `<p>${game.i18n.format("CRP.ui.dialog.changeTokenImage.content", { name: tokenName })}</p>`,
-    });
-    if (dialog) {
-      await actor.prototypeToken.update({ name: tokenName });
-      const dependedTokens = actor.getDependentTokens();
-      for (const token of dependedTokens) {                      
-        await token.update({ ["texture.src"]: tokenImg });
+    const tokenImg = data?.prototypeToken?.texture?.src ?? false;
+    if (tokenImg && this.type === "character") {
+      const tokenName = data.name;
+      const dialog = await foundry.applications.api.DialogV2.confirm({
+        title: game.i18n.localize("CRP.ui.dialog.changeTokenImage.title"),
+        content: `<p>${game.i18n.format("CRP.ui.dialog.changeTokenImage.content", { name: tokenName })}</p>`,
+      });
+      if (dialog) {
+        await actor.prototypeToken.update({ name: tokenName });
+        const dependedTokens = actor.getDependentTokens();
+        for (const token of dependedTokens) {
+          await token.update({ ["texture.src"]: tokenImg });
+        }
       }
     }
-  }
 
     const hasExperienceChange = [
-    "system.resources.experience",
-    "system.resources.experience.value",
-    "system.resources.experience.free",
-    "system.resources.experience.log"
-  ].some(path => hasChangedPath(data, path));
-  const hasManeuverChange = [
-    "system.derived.maneuver",
-    "system.derived.maneuver.value",
-    "system.derived.maneuver.max"
-  ].some(path => hasChangedPath(data, path));
+      "system.resources.experience",
+      "system.resources.experience.value",
+      "system.resources.experience.free",
+      "system.resources.experience.log",
+    ].some((path) => hasChangedPath(data, path));
+    const hasManeuverChange = [
+      "system.derived.maneuver",
+      "system.derived.maneuver.value",
+      "system.derived.maneuver.max",
+    ].some((path) => hasChangedPath(data, path));
 
-  if (hasExperienceChange && hasManeuverChange){
-  if (hasExperienceChange) {
-    CRPAdvancementWindow.refreshForActor(actor);
+    if (hasExperienceChange && hasManeuverChange) {
+      if (hasExperienceChange) {
+        CRPAdvancementWindow.refreshForActor(actor);
+      }
+    }
+    const mountedChanged = hasChangedPath(data, "system.equipment.mounted");
+
+    if (mountedChanged) refreshMountedActorUnderlays(actor);
   }
-}
-    const mountedChanged =
-    hasChangedPath(data, "system.equipment.mounted");
-
-  if (mountedChanged) refreshMountedActorUnderlays(actor);
-
- }
- 
 }
 
 function hasChangedPath(changed, path) {
-  return foundry.utils.hasProperty(changed, path) || Object.hasOwn(changed, path);
+  return (
+    foundry.utils.hasProperty(changed, path) || Object.hasOwn(changed, path)
+  );
 }
 
 function refreshMountedActorUnderlays(actor) {
@@ -392,7 +391,6 @@ function getMountedActorTokens(actor) {
   return [...tokens];
 }
 async function refreshMountedTokenUnderlay(token) {
-
   const mounted = !!token?.actor?.system?.equipment?.mounted;
 
   if (!mounted) {
@@ -406,7 +404,6 @@ async function refreshMountedTokenUnderlay(token) {
 
   // jeśli sprite istnieje → NIE robimy async ani nie tworzymy nowego
   if (!sprite || sprite.destroyed) {
-
     const texture = await foundry.canvas.loadTexture(CRP_MOUNT_UNDERLAY);
     if (!texture) return;
 
@@ -418,10 +415,10 @@ async function refreshMountedTokenUnderlay(token) {
     token._crpMountUnderlay = sprite;
 
     for (const child of token.mesh.parent.children) {
-    if (child.name === "crp-mounted-underlay" && child !== sprite) {
-      child.destroy();
+      if (child.name === "crp-mounted-underlay" && child !== sprite) {
+        child.destroy();
+      }
     }
-  }
   }
 
   const parent = token.mesh.parent;

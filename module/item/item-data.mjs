@@ -1,84 +1,78 @@
-// module/item/item-data.mjs 
+// module/item/item-data.mjs
 
 function commonItemSchema() {
-
   return {
-
     price: new SchemaField({
-
       grzywna: new NumberField({
         initial: 0,
         min: 0,
-        integer: true
+        integer: true,
       }),
 
       skojec: new NumberField({
         initial: 0,
         min: 0,
-        integer: true
+        integer: true,
       }),
 
       grosz: new NumberField({
         initial: 0,
         min: 0,
-        integer: true
+        integer: true,
       }),
 
       kwartnik: new NumberField({
         initial: 0,
         min: 0,
-        integer: true
+        integer: true,
       }),
 
       cwiercgrosz: new NumberField({
         initial: 0,
         min: 0,
-        integer: true
+        integer: true,
       }),
 
       denar: new NumberField({
         initial: 0,
         min: 0,
-        integer: true
+        integer: true,
       }),
 
       obol: new NumberField({
         initial: 0,
         min: 0,
-        integer: true
+        integer: true,
       }),
 
       total: new NumberField({
         initial: 0,
         min: 0,
-        integer: true
-      })
-
+        integer: true,
+      }),
     }),
 
     weight: new StringField({
       initial: "Ś",
-      choices: ["M", "Ś", "D", "W"]
+      choices: ["M", "Ś", "D", "W"],
     }),
 
     durability: new SchemaField({
       value: new NumberField({
         initial: 1,
-        min: 0
+        min: 0,
       }),
 
       max: new NumberField({
         initial: 1,
-        min: 0
-      })
+        min: 0,
+      }),
     }),
 
     description: new StringField({
-      initial: ""
-    })
-
+      initial: "",
+    }),
   };
-
 }
 
 function migrateCommonItemData(source) {
@@ -88,13 +82,8 @@ function migrateCommonItemData(source) {
 }
 
 const { TypeDataModel } = foundry.abstract;
-const {
-  SchemaField,
-  NumberField,
-  StringField,
-  BooleanField,
-  ArrayField
-} = foundry.data.fields;
+const { SchemaField, NumberField, StringField, BooleanField, ArrayField } =
+  foundry.data.fields;
 
 export class CRPWeaponData extends TypeDataModel {
   static migrateData(source) {
@@ -104,20 +93,18 @@ export class CRPWeaponData extends TypeDataModel {
 
   static defineSchema() {
     return {
-
-  ...commonItemSchema(),
+      ...commonItemSchema(),
 
       // MECHANIKA
       // damage: new NumberField({ initial: 1, min: 0 }),
 
-      skill: new StringField({ initial: "oneHanded" }), 
+      skill: new StringField({ initial: "oneHanded" }),
       // KLUCZ: musi matchować config.skills
 
       range: new StringField({ initial: "melee" }), // melee / ranged
 
       // TAGI SYSTEMOWE
       equipped: new BooleanField({ initial: false }),
-
     };
   }
 }
@@ -132,7 +119,6 @@ export class CRPArmorData extends TypeDataModel {
     return {
       ...commonItemSchema(),
       protection: new NumberField({ initial: 0 }),
-
     };
   }
 }
@@ -147,7 +133,6 @@ export class CRPShieldData extends TypeDataModel {
     return {
       ...commonItemSchema(),
       protection: new NumberField({ initial: 0 }),
-
     };
   }
 }
@@ -161,7 +146,6 @@ export class CRPStuffData extends TypeDataModel {
   static defineSchema() {
     return {
       ...commonItemSchema(),
-
     };
   }
 }
@@ -184,13 +168,18 @@ export class CRPLanguageData extends TypeDataModel {
     return {
       alphabet: new StringField({
         initial: "none",
-        choices: ["latin", "cyrillic", "arabic", "none"]
+        choices: ["latin", "cyrillic", "arabic", "none"],
       }),
       description: new StringField({ initial: "" }),
       role: new StringField({
         initial: "unassigned",
-        choices: ["unassigned", "native", "foreign"]
-      })
+        choices: {
+          unassigned: "CRP.role.unassigned",
+          native: "CRP.role.native",
+          foreign: "CRP.role.foreign",
+        },
+        require: true,
+      }),
     };
   }
 }
@@ -213,19 +202,22 @@ export class CRPOriginData extends TypeDataModel {
     return {
       bonusAttribute: new StringField({
         initial: "strength",
-        choices: ["strength", "agility", "perception", "character", "reason"]
+        choices: ["strength", "agility", "perception", "character", "reason"],
       }),
-      skills: new ArrayField(new SchemaField({
-        key: new StringField(),
-        level: new NumberField({
-          initial: 1,
-          min: 1,
-          max: 3,
-          integer: true
-        })
-      }), { initial: [] }),
+      skills: new ArrayField(
+        new SchemaField({
+          key: new StringField(),
+          level: new NumberField({
+            initial: 1,
+            min: 1,
+            max: 3,
+            integer: true,
+          }),
+        }),
+        { initial: [] },
+      ),
       language: new StringField({ initial: "none" }),
-      description: new StringField({ initial: "" })
+      description: new StringField({ initial: "" }),
     };
   }
 }
@@ -245,9 +237,9 @@ export class CRPTraitData extends TypeDataModel {
     return {
       category: new StringField({
         initial: "advantage",
-        choices: ["advantage", "flaw"]
+        choices: ["advantage", "flaw"],
       }),
-      description: new StringField({ initial: "" })
+      description: new StringField({ initial: "" }),
     };
   }
 }

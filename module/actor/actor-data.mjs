@@ -1,13 +1,15 @@
 // module/actor/actor-data.mjs
 
+import { moneyToObols } from "../currency.mjs";
+
 const { TypeDataModel } = foundry.abstract;
-const { 
-  SchemaField, 
+const {
+  SchemaField,
   NumberField,
   StringField,
   BooleanField,
   HTMLField,
-  ArrayField
+  ArrayField,
 } = foundry.data.fields;
 
 export class CRPActorData extends TypeDataModel {
@@ -18,7 +20,7 @@ export class CRPActorData extends TypeDataModel {
       const maneuver = source.derived.maneuver;
       source.derived.maneuver = {
         value: maneuver,
-        max: maneuver
+        max: maneuver,
       };
     }
 
@@ -28,7 +30,7 @@ export class CRPActorData extends TypeDataModel {
       !Object.hasOwn(source.resources, "advantageUses")
     ) {
       source.resources.advantageUses = {
-        value: source.attributes.reason?.value ?? 4
+        value: source.attributes.reason?.value ?? 4,
       };
     }
 
@@ -37,63 +39,112 @@ export class CRPActorData extends TypeDataModel {
 
   static defineSchema() {
     return {
-
       // ATRYBUTY + SKILLE
       attributes: new SchemaField({
         strength: new SchemaField({
           value: new NumberField({ initial: 3, min: 0, max: 10 }),
           skills: new SchemaField({
-            twoHanded: new SchemaField({ value: new NumberField({ initial: 0, min: 0, max: 10 }) }),
-            endurance: new SchemaField({ value: new NumberField({ initial: 0, min: 0, max: 10 }) }),
-            shield: new SchemaField({ value: new NumberField({ initial: 0, min: 0, max: 10 }) }),
-            brawl: new SchemaField({ value: new NumberField({ initial: 0, min: 0, max: 10 }) }),
-            intimidate: new SchemaField({ value: new NumberField({ initial: 0, min: 0, max: 10 }) })
-          })
+            twoHanded: new SchemaField({
+              value: new NumberField({ initial: 0, min: 0, max: 10 }),
+            }),
+            endurance: new SchemaField({
+              value: new NumberField({ initial: 0, min: 0, max: 10 }),
+            }),
+            shield: new SchemaField({
+              value: new NumberField({ initial: 0, min: 0, max: 10 }),
+            }),
+            brawl: new SchemaField({
+              value: new NumberField({ initial: 0, min: 0, max: 10 }),
+            }),
+            intimidate: new SchemaField({
+              value: new NumberField({ initial: 0, min: 0, max: 10 }),
+            }),
+          }),
         }),
 
         agility: new SchemaField({
           value: new NumberField({ initial: 3, min: 0, max: 10 }),
           skills: new SchemaField({
-            athletics: new SchemaField({ value: new NumberField({ initial: 0, min: 0, max: 10 }) }),
-            oneHanded: new SchemaField({ value: new NumberField({ initial: 0, min: 0, max: 10 }) }),
-            lightWeapons: new SchemaField({ value: new NumberField({ initial: 0, min: 0, max: 10 }) }),
-            craft: new SchemaField({ value: new NumberField({ initial: 0, min: 0, max: 10 }) }),
-            stealth: new SchemaField({ value: new NumberField({ initial: 0, min: 0, max: 10 }) })
-          })
+            athletics: new SchemaField({
+              value: new NumberField({ initial: 0, min: 0, max: 10 }),
+            }),
+            oneHanded: new SchemaField({
+              value: new NumberField({ initial: 0, min: 0, max: 10 }),
+            }),
+            lightWeapons: new SchemaField({
+              value: new NumberField({ initial: 0, min: 0, max: 10 }),
+            }),
+            craft: new SchemaField({
+              value: new NumberField({ initial: 0, min: 0, max: 10 }),
+            }),
+            stealth: new SchemaField({
+              value: new NumberField({ initial: 0, min: 0, max: 10 }),
+            }),
+          }),
         }),
 
         perception: new SchemaField({
           value: new NumberField({ initial: 3, min: 0, max: 10 }),
           skills: new SchemaField({
-            empathy: new SchemaField({ value: new NumberField({ initial: 0, min: 0, max: 10 }) }),
-            disguise: new SchemaField({ value: new NumberField({ initial: 0, min: 0, max: 10 }) }),
-            survival: new SchemaField({ value: new NumberField({ initial: 0, min: 0, max: 10 }) }),
-            awareness: new SchemaField({ value: new NumberField({ initial: 0, min: 0, max: 10 }) }),
-            ranged: new SchemaField({ value: new NumberField({ initial: 0, min: 0, max: 10 }) })
-          })
+            empathy: new SchemaField({
+              value: new NumberField({ initial: 0, min: 0, max: 10 }),
+            }),
+            disguise: new SchemaField({
+              value: new NumberField({ initial: 0, min: 0, max: 10 }),
+            }),
+            survival: new SchemaField({
+              value: new NumberField({ initial: 0, min: 0, max: 10 }),
+            }),
+            awareness: new SchemaField({
+              value: new NumberField({ initial: 0, min: 0, max: 10 }),
+            }),
+            ranged: new SchemaField({
+              value: new NumberField({ initial: 0, min: 0, max: 10 }),
+            }),
+          }),
         }),
 
         character: new SchemaField({
           value: new NumberField({ initial: 3, min: 0, max: 10 }),
           skills: new SchemaField({
-            charisma: new SchemaField({ value: new NumberField({ initial: 0, min: 0, max: 10 }) }),
-            animals: new SchemaField({ value: new NumberField({ initial: 0, min: 0, max: 10 }) }),
-            carousing: new SchemaField({ value: new NumberField({ initial: 0, min: 0, max: 10 }) }),
-            gossip: new SchemaField({ value: new NumberField({ initial: 0, min: 0, max: 10 }) }),
-            willpower: new SchemaField({ value: new NumberField({ initial: 0, min: 0, max: 10 }) })
-          })
+            charisma: new SchemaField({
+              value: new NumberField({ initial: 0, min: 0, max: 10 }),
+            }),
+            animals: new SchemaField({
+              value: new NumberField({ initial: 0, min: 0, max: 10 }),
+            }),
+            carousing: new SchemaField({
+              value: new NumberField({ initial: 0, min: 0, max: 10 }),
+            }),
+            gossip: new SchemaField({
+              value: new NumberField({ initial: 0, min: 0, max: 10 }),
+            }),
+            willpower: new SchemaField({
+              value: new NumberField({ initial: 0, min: 0, max: 10 }),
+            }),
+          }),
         }),
 
         reason: new SchemaField({
           value: new NumberField({ initial: 3, min: 0, max: 10 }),
           skills: new SchemaField({
-            literacy: new SchemaField({ value: new NumberField({ initial: 0, min: 0, max: 10 }) }),
-            languages: new SchemaField({ value: new NumberField({ initial: 0, min: 0, max: 10 }) }),
-            medicine: new SchemaField({ value: new NumberField({ initial: 0, min: 0, max: 10 }) }),
-            politics: new SchemaField({ value: new NumberField({ initial: 0, min: 0, max: 10 }) }),
-            knowledge: new SchemaField({ value: new NumberField({ initial: 0, min: 0, max: 10 }) })
-          })
-        })
+            literacy: new SchemaField({
+              value: new NumberField({ initial: 0, min: 0, max: 10 }),
+            }),
+            languages: new SchemaField({
+              value: new NumberField({ initial: 0, min: 0, max: 10 }),
+            }),
+            medicine: new SchemaField({
+              value: new NumberField({ initial: 0, min: 0, max: 10 }),
+            }),
+            politics: new SchemaField({
+              value: new NumberField({ initial: 0, min: 0, max: 10 }),
+            }),
+            knowledge: new SchemaField({
+              value: new NumberField({ initial: 0, min: 0, max: 10 }),
+            }),
+          }),
+        }),
       }),
 
       // WSPÓŁCZYNNIKI POCHODNE
@@ -105,153 +156,163 @@ export class CRPActorData extends TypeDataModel {
 
         health: new SchemaField({
           value: new NumberField({ initial: 8 }),
-          max: new NumberField({ initial: 8, min: 1 })
+          max: new NumberField({ initial: 8, min: 1 }),
         }),
 
         maneuver: new SchemaField({
           value: new NumberField({ initial: 0, min: 0 }),
-          max: new NumberField({ initial: 0, min: 0 })
+          max: new NumberField({ initial: 0, min: 0 }),
         }),
         woundState: new StringField({
-          initial: "healthy"
-        })
+          initial: "healthy",
+        }),
       }),
 
       npc: new SchemaField({
         attributes: new NumberField({ initial: 8, min: 0, integer: true }),
-        protection: new NumberField({ initial: 0, min: 0, integer: true })
+        protection: new NumberField({ initial: 0, min: 0, integer: true }),
       }),
 
       // ZASOBY
       resources: new SchemaField({
         fate: new SchemaField({
           value: new NumberField({ initial: 2, min: 0 }),
-          max: new NumberField({ initial: 2, min: 2 })
+          max: new NumberField({ initial: 2, min: 2 }),
         }),
         experience: new SchemaField({
           value: new NumberField({ initial: 0, min: 0 }),
           free: new NumberField({ initial: 0, min: 0 }),
-          log: new ArrayField(new SchemaField({
-            date: new StringField(),
-            text: new StringField()
-          }), { initial: [] })
+          log: new ArrayField(
+            new SchemaField({
+              date: new StringField(),
+              text: new StringField(),
+            }),
+            { initial: [] },
+          ),
         }),
         advantageUses: new SchemaField({
           value: new NumberField({
             initial: 4,
             min: 0,
-            integer: true
-          })
-        })
+            integer: true,
+          }),
+        }),
       }),
 
       // WALUTA
-money: new SchemaField({
+      money: new SchemaField({
+        grzywna: new NumberField({
+          initial: 0,
+          min: 0,
+          integer: true,
+        }),
 
-  grzywna: new NumberField({
-    initial: 0,
-    min: 0,
-    integer: true
-  }),
+        skojec: new NumberField({
+          initial: 0,
+          min: 0,
+          integer: true,
+        }),
 
-  skojec: new NumberField({
-    initial: 0,
-    min: 0,
-    integer: true
-  }),
+        grosz: new NumberField({
+          initial: 0,
+          min: 0,
+          integer: true,
+        }),
 
-  grosz: new NumberField({
-    initial: 0,
-    min: 0,
-    integer: true
-  }),
+        kwartnik: new NumberField({
+          initial: 0,
+          min: 0,
+          integer: true,
+        }),
 
-  kwartnik: new NumberField({
-    initial: 0,
-    min: 0,
-    integer: true
-  }),
+        cwiercgrosz: new NumberField({
+          initial: 0,
+          min: 0,
+          integer: true,
+        }),
 
-  cwiercgrosz: new NumberField({
-    initial: 0,
-    min: 0,
-    integer: true
-  }),
+        denar: new NumberField({
+          initial: 0,
+          min: 0,
+          integer: true,
+        }),
 
-  denar: new NumberField({
-    initial: 0,
-    min: 0,
-    integer: true
-  }),
+        obol: new NumberField({
+          initial: 0,
+          min: 0,
+          integer: true,
+        }),
 
-  obol: new NumberField({
-    initial: 0,
-    min: 0,
-    integer: true
-  }),
-
-  // Łączna wartość w obolach (cache/helper)
-  total: new NumberField({
-    initial: 0,
-    min: 0,
-    integer: true
-  })
-}),
-
-
+        // Łączna wartość w obolach (cache/helper)
+        total: new NumberField({
+          initial: 0,
+          min: 0,
+          integer: true,
+        }),
+      }),
 
       // STANY
       state: new SchemaField({
         life: new StringField({
           initial: "alive",
-          choices: ["alive", "dead"]
+          choices: ["alive", "dead"],
         }),
         bleeding: new BooleanField({ initial: false }),
-        unconscious: new BooleanField({ initial: false })
+        unconscious: new BooleanField({ initial: false }),
       }),
 
       equipment: new SchemaField({
-  rightHand: new SchemaField({
-    id: new StringField({ nullable: true }),
-    name: new StringField({ nullable: true }),
-    img: new StringField({ nullable: true })
-  }),
+        rightHand: new SchemaField({
+          id: new StringField({ nullable: true }),
+          name: new StringField({ nullable: true }),
+          img: new StringField({ nullable: true }),
+        }),
 
-  leftHand: new SchemaField({
-    id: new StringField({ nullable: true }),
-    name: new StringField({ nullable: true }),
-    img: new StringField({ nullable: true })
-  }),
+        leftHand: new SchemaField({
+          id: new StringField({ nullable: true }),
+          name: new StringField({ nullable: true }),
+          img: new StringField({ nullable: true }),
+        }),
 
-  armor: new SchemaField({
-    id: new StringField({ nullable: true }),
-    name: new StringField({ nullable: true }),
-    img: new StringField({ nullable: true })
-  }),
+        armor: new SchemaField({
+          id: new StringField({ nullable: true }),
+          name: new StringField({ nullable: true }),
+          img: new StringField({ nullable: true }),
+        }),
 
-  mounted: new BooleanField({ initial: false })
-}),
+        mounted: new BooleanField({ initial: false }),
+      }),
 
-bio: new SchemaField({
-  description: new HTMLField({ initial: "" }),
-  origin: new SchemaField({
-    id: new StringField({ nullable: true }),
-    name: new StringField({ nullable: true }),
-    img: new StringField({ nullable: true })
-  }),
-  crest: new StringField({ initial: "" }),
-  crestDescription: new StringField({ initial: "" })
-}),
-
+      bio: new SchemaField({
+        description: new HTMLField({ initial: "" }),
+        origin: new SchemaField({
+          id: new StringField({ nullable: true }),
+          name: new StringField({ nullable: true }),
+          img: new StringField({ nullable: true }),
+        }),
+        crest: new StringField({ initial: "" }),
+        crestDescription: new StringField({ initial: "" }),
+      }),
     };
-
-
-    
   }
   prepareDerivedData() {
     super.prepareDerivedData();
+    this._prepareOrigin();
+    this._prepareTotalMoney();
   }
-
+  _prepareOrigin() {
+    const originItem = this.parent.items.find((i) => i.type === "origin");
+    if (originItem) {
+      this.bio.origin = {
+        id: originItem.id,
+        name: originItem.name,
+        img: originItem.img,
+      };
+    }
+  }
+  _prepareTotalMoney() {
+    this.money.total = moneyToObols(this.money);
+  }
 }
 
 export class CRPNPCKnechtData extends CRPActorData {}

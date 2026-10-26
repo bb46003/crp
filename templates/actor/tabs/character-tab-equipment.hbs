@@ -1,156 +1,200 @@
-  <section class="crp-content crp-tab tab {{tabs.equipment.cssClass}}"
+<section
+  class="crp-content crp-tab tab {{tabs.equipment.cssClass}}"
   action-data="tab"
   data-group="items"
-  data-tab="equipment">
+  data-tab="equipment"
+>
 
+  <div class="crp-money-panel">
 
-    <div class="crp-money-panel"> 
+    <div class="crp-money-header">
 
-<div class="crp-money-header">
+      <div class="crp-money-title">
+        <img src="systems/crp/assets/sakiewka.webp" class="crp-item-img" />
+        <span><strong>Sakiewka</strong>:</span>
 
-  <div class="crp-money-title">
-    <img src="systems/crp/assets/sakiewka.webp" class="crp-item-img">
-    <span><strong>Sakiewka</strong>:</span>
+        <span class="crp-money-summary">
+          {{formattedMoney}}
+        </span>
+      </div>
 
-    <span class="crp-money-summary">
-      {{formattedMoney}}
-    </span>
+      <button type="button" class="crp-money-clear" data-action="clearMoney">
+        Opróżnij sakiewkę
+      </button>
+
+    </div>
+    <div class="crp-money-grid">
+
+      <div class="crp-money-row">
+        <label>Grosze</label>
+        <input
+          type="number"
+          min="0"
+          value="{{system.money.grosz}}"
+          name="system.money.grosz"
+        />
+      </div>
+
+      <div class="crp-money-row">
+        <label>Kwartniki</label>
+        <input
+          type="number"
+          min="0"
+          value="{{system.money.kwartnik}}"
+          name="system.money.kwartnik"
+        />
+      </div>
+
+      <div class="crp-money-row">
+        <label>Ćwierćgrosze</label>
+        <input
+          type="number"
+          min="0"
+          value="{{system.money.cwiercgrosz}}"
+          name="system.money.cwiercgrosz"
+        />
+      </div>
+
+      <div class="crp-money-row">
+        <label>Denary</label>
+        <input
+          type="number"
+          min="0"
+          value="{{system.money.denar}}"
+          name="system.money.denar"
+        />
+      </div>
+
+      <div class="crp-money-row">
+        <label>Obole</label>
+        <input
+          type="number"
+          min="0"
+          value="{{system.money.obol}}"
+          name="system.money.obol"
+        />
+      </div>
+
+    </div>
+
   </div>
 
-  <button
-    type="button"
-    class="crp-money-clear"
-    data-action="clearMoney">
-    Opróżnij sakiewkę
-  </button>
-
-</div>
-  <div class="crp-money-grid">
-
-    <div class="crp-money-row">
-      <label>Grosze</label>
-      <input
-        type="number"
-        min="0"
-        value="{{system.money.grosz}}"
-        name="system.money.grosz">
-    </div>
-
-    <div class="crp-money-row">
-      <label>Kwartniki</label>
-      <input
-        type="number"
-        min="0"
-        value="{{system.money.kwartnik}}"
-        name="system.money.kwartnik">
-    </div>
-
-    <div class="crp-money-row">
-      <label>Ćwierćgrosze</label>
-      <input
-        type="number"
-        min="0"
-        value="{{system.money.cwiercgrosz}}"
-        name="system.money.cwiercgrosz">
-    </div>
-
-    <div class="crp-money-row">
-      <label>Denary</label>
-      <input
-        type="number"
-        min="0"
-        value="{{system.money.denar}}"
-        name="system.money.denar">
-    </div>
-
-    <div class="crp-money-row">
-      <label>Obole</label>
-      <input
-        type="number"
-        min="0"
-        value="{{system.money.obol}}"
-        name="system.money.obol">
-    </div>
-
-  </div>
-
-
-
-</div>
-
-<div class="crp-fullwidth-duo">
-
-  <div class="crp-inventory-section">
-    
-    <h2 class="crp-section-header">Broń</h2>
-    <div class="crp-item-list">
-      {{#each items as |item|}}
-        {{#if (eq item.type "weapon")}}
-          <div class="crp-item-row" draggable="true" data-item-id="{{item.id}}">
-            <img src="{{item.img}}" class="crp-item-img">
-            <div class="crp-item-name">{{item.name}}</div>
-              <button type="button" class="crp-item-delete" data-action="deleteItem" data-item-id="{{item.id}}">
-    ✖
-  </button>
-          </div>
-        {{/if}}
-      {{/each}}
-    </div>
-  </div>
-
-  <div class="crp-inventory-section">
-    <h2 class="crp-section-header">Zbroja</h2>
-    <div class="crp-item-list">
-      {{#each items as |item|}}
-        {{#if (eq item.type "armor")}}
-          <div class="crp-item-row" draggable="true" data-item-id="{{item.id}}">
-            <img src="{{item.img}}" class="crp-item-img">
-            <div class="crp-item-name">{{item.name}}</div>
-              <button type="button" class="crp-item-delete" data-action="deleteItem" data-item-id="{{item.id}}">
-    ✖
-  </button>
-          </div>
-        {{/if}}
-      {{/each}}
-    </div>
-  </div>
+  <div class="crp-fullwidth-duo">
 
     <div class="crp-inventory-section">
-    <h2 class="crp-section-header">Tarcza</h2>
-    <div class="crp-item-list">
-      {{#each items as |item|}}
-        {{#if (eq item.type "shield")}}
-          <div class="crp-item-row" draggable="true" data-item-id="{{item.id}}">
-            <img src="{{item.img}}" class="crp-item-img">
-            <div class="crp-item-name">{{item.name}}</div>
-              <button type="button" class="crp-item-delete" data-action="deleteItem" data-item-id="{{item.id}}">
-    ✖
-  </button>
-          </div>
-        {{/if}}
-      {{/each}}
+
+      <h2 class="crp-section-header">Broń</h2>
+      <div class="crp-item-list">
+        {{#each items as |item|}}
+          {{#if (eq item.type "weapon")}}
+            <div
+              class="crp-item-row"
+              draggable="true"
+              data-item-id="{{item.id}}"
+            >
+              <img src="{{item.img}}" class="crp-item-img" />
+              <div class="crp-item-name">{{item.name}}</div>
+              <button
+                type="button"
+                class="crp-item-delete"
+                data-action="deleteItem"
+                data-item-id="{{item.id}}"
+              >
+                ✖
+              </button>
+            </div>
+          {{/if}}
+        {{/each}}
+      </div>
     </div>
+
+    <div class="crp-inventory-section">
+      <h2 class="crp-section-header">Zbroja</h2>
+      <div class="crp-item-list">
+        {{#each items as |item|}}
+          {{#if (eq item.type "armor")}}
+            <div
+              class="crp-item-row"
+              draggable="true"
+              data-item-id="{{item.id}}"
+            >
+              <img src="{{item.img}}" class="crp-item-img" />
+              <div class="crp-item-name">{{item.name}}</div>
+              <button
+                type="button"
+                class="crp-item-delete"
+                data-action="deleteItem"
+                data-item-id="{{item.id}}"
+              >
+                ✖
+              </button>
+            </div>
+          {{/if}}
+        {{/each}}
+      </div>
+    </div>
+
+    <div class="crp-inventory-section">
+      <h2 class="crp-section-header">Tarcza</h2>
+      <div class="crp-item-list">
+        {{#each items as |item|}}
+          {{#if (eq item.type "shield")}}
+            <div
+              class="crp-item-row"
+              draggable="true"
+              data-item-id="{{item.id}}"
+            >
+              <img src="{{item.img}}" class="crp-item-img" />
+              <div class="crp-item-name">{{item.name}}</div>
+              <button
+                type="button"
+                class="crp-item-delete"
+                data-action="deleteItem"
+                data-item-id="{{item.id}}"
+              >
+                ✖
+              </button>
+            </div>
+          {{/if}}
+        {{/each}}
+      </div>
+    </div>
+
+    <div class="crp-inventory-section">
+      <h2 class="crp-section-header">Inne</h2>
+      <div class="crp-item-list">
+        {{#each items as |item|}}
+          {{#unless
+            (or
+              (eq item.type "weapon")
+              (eq item.type "armor")
+              (eq item.type "shield")
+              (eq item.type "language")
+              (eq item.type "origin")
+              (eq item.type "trait")
+            )
+          }}
+            <div
+              class="crp-item-row"
+              draggable="true"
+              data-item-id="{{item.id}}"
+            >
+              <img src="{{item.img}}" class="crp-item-img" />
+              <div class="crp-item-name">{{item.name}}</div>
+              <button
+                type="button"
+                class="crp-item-delete"
+                data-action="deleteItem"
+                data-item-id="{{item.id}}"
+              >
+                ✖
+              </button>
+            </div>
+          {{/unless}}
+        {{/each}}
+      </div>
+    </div>
+
   </div>
 
-
-  <div class="crp-inventory-section">
-    <h2 class="crp-section-header">Inne</h2>
-    <div class="crp-item-list">
-      {{#each items as |item|}}
-        {{#unless (or (eq item.type "weapon") (eq item.type "armor") (eq item.type "shield") (eq item.type "language") (eq item.type "origin") (eq item.type "trait"))}}
-          <div class="crp-item-row" draggable="true" data-item-id="{{item.id}}">
-            <img src="{{item.img}}" class="crp-item-img">
-            <div class="crp-item-name">{{item.name}}</div>
-              <button type="button" class="crp-item-delete" data-action="deleteItem" data-item-id="{{item.id}}">
-    ✖
-  </button>
-          </div>
-        {{/unless}}
-      {{/each}}
-    </div>
-  </div>
-
-</div>
-
-
-  </section>
+</section>

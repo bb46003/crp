@@ -7,7 +7,7 @@ CRP.attributes = Object.freeze({
   agility: "Zręczność",
   perception: "Percepcja",
   character: "Charakter",
-  reason: "Rozum"
+  reason: "Rozum",
 });
 
 CRP.skills = Object.freeze({
@@ -33,27 +33,20 @@ CRP.skills = Object.freeze({
   animals: "Doglądanie zwierząt",
   carousing: "Hulanka",
   gossip: "Plotkowanie",
-  willpower: "Siła woli", 
+  willpower: "Siła woli",
 
   literacy: "Czytanie i pisanie",
   languages: "Języki obce",
   medicine: "Leczenie",
   politics: "Polityka",
   knowledge: "Wiedza",
-
-  
 });
 
-CRP.combatSkills = [
-  "oneHanded",
-  "twoHanded",
-  "lightWeapons",
-  "ranged"
-];
+CRP.combatSkills = ["oneHanded", "twoHanded", "lightWeapons", "ranged"];
 
 CRP.itemWeights = Object.freeze({
-  "M": "M",
-  "Ś": "Ś",
-  "D": "D",
-  "W": "W"
+  M: "M",
+  Ś: "Ś",
+  D: "D",
+  W: "W",
 });

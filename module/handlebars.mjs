@@ -31,7 +31,7 @@ export function registerHandlebarsHelpers() {
     const isGM = game.user.isGM;
     return isGM;
   });
- 
+
   Handlebars.registerHelper("range", function (start, end) {
     start = Number(start);
     end = Number(end);
@@ -40,5 +40,5 @@ export function registerHandlebarsHelpers() {
       result.push(i);
     }
     return result;
-  }); 
+  });
 }

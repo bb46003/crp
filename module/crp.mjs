@@ -1,7 +1,11 @@
 // module/crp.mjs
 
 import { CRPActor } from "./actor/actor.mjs";
-import { CRPActorData, CRPNPCKnechtData, CRPNPCRycerzData } from "./actor/actor-data.mjs";
+import {
+  CRPActorData,
+  CRPNPCKnechtData,
+  CRPNPCRycerzData,
+} from "./actor/actor-data.mjs";
 import { CRP } from "./config.mjs";
 import { CRPRoll } from "./rolls/roll.mjs";
 import { CRPActorSheet } from "./actor/actor-sheet.mjs";
@@ -10,8 +14,24 @@ import { CRPNPCKnechtSheet } from "./actor/npc-knecht-sheet.mjs";
 import { CRPNPCRycerzSheet } from "./actor/npc-rycerz-sheet.mjs";
 import { CRPGMPanel } from "./gm-panel.mjs";
 import { CRPItem } from "./item/item.mjs";
-import { CRPWeaponData, CRPArmorData, CRPShieldData, CRPStuffData, CRPLanguageData, CRPOriginData, CRPTraitData } from "./item/item-data.mjs";
-import { CRPWeaponSheet, CRPArmorSheet, CRPShieldSheet, CRPStuffSheet, CRPLanguageSheet, CRPOriginSheet, CRPTraitSheet } from "./item/item-sheet.mjs";
+import {
+  CRPWeaponData,
+  CRPArmorData,
+  CRPShieldData,
+  CRPStuffData,
+  CRPLanguageData,
+  CRPOriginData,
+  CRPTraitData,
+} from "./item/item-data.mjs";
+import {
+  CRPWeaponSheet,
+  CRPArmorSheet,
+  CRPShieldSheet,
+  CRPStuffSheet,
+  CRPLanguageSheet,
+  CRPOriginSheet,
+  CRPTraitSheet,
+} from "./item/item-sheet.mjs";
 import { CRPCombat } from "./combat.mjs";
 import { registerHandlebarsHelpers } from "./handlebars.mjs";
 
@@ -19,12 +39,17 @@ const CRP_MOUNT_UNDERLAY = "systems/crp/assets/wierzchowiec.webp";
 const CRP_PENDING_INITIATIVE_UPDATES = new Map();
 
 function hasChangedPath(changed, path) {
-  return foundry.utils.hasProperty(changed, path) || Object.hasOwn(changed, path);
+  return (
+    foundry.utils.hasProperty(changed, path) || Object.hasOwn(changed, path)
+  );
 }
 
-
 function getInitiativeTotal(actor) {
-  return Number(actor?.system?.derived?.initiativeTotal ?? actor?.system?.derived?.initiative ?? 0);
+  return Number(
+    actor?.system?.derived?.initiativeTotal ??
+      actor?.system?.derived?.initiative ??
+      0,
+  );
 }
 
 async function refreshCombatInitiativeForActor(actor, previousBase = null) {
@@ -34,7 +59,8 @@ async function refreshCombatInitiativeForActor(actor, previousBase = null) {
   const currentBase = getInitiativeTotal(actor);
 
   for (const combatant of combat.combatants) {
-    if (combatant.actor?.id !== actor.id || combatant.initiative === null) continue;
+    if (combatant.actor?.id !== actor.id || combatant.initiative === null)
+      continue;
 
     const storedRoll = combatant.getFlag("crp", "initiativeRoll");
     let initiative = null;
@@ -51,16 +77,21 @@ async function refreshCombatInitiativeForActor(actor, previousBase = null) {
   }
 }
 
-
-
 async function flushPendingCombatInitiatives(combat) {
-  if (!game.user.isGM || !combat?.started || !CRP_PENDING_INITIATIVE_UPDATES.size) return;
+  if (
+    !game.user.isGM ||
+    !combat?.started ||
+    !CRP_PENDING_INITIATIVE_UPDATES.size
+  )
+    return;
 
   const pending = Array.from(CRP_PENDING_INITIATIVE_UPDATES.entries());
   CRP_PENDING_INITIATIVE_UPDATES.clear();
 
   for (const [actorUuid, previousBase] of pending) {
-    let actor = combat.combatants.find(c => c.actor?.uuid === actorUuid)?.actor;
+    let actor = combat.combatants.find(
+      (c) => c.actor?.uuid === actorUuid,
+    )?.actor;
     actor ??= await fromUuid(actorUuid);
     if (!actor) continue;
 
@@ -73,23 +104,32 @@ async function clearCombatManeuverFlags(combat) {
 
   const actors = [
     ...new Set(
-      combat.combatants
-        .map(combatant => combatant.actor)
-        .filter(Boolean)
-    )
+      combat.combatants.map((combatant) => combatant.actor).filter(Boolean),
+    ),
   ];
 
   await Promise.all(
-    actors.flatMap(actor => [
+    actors.flatMap((actor) => [
       actor.unsetFlag("crp", "aimedAttack"),
-      actor.unsetFlag("crp", "defensiveAttack")
-    ])
+      actor.unsetFlag("crp", "defensiveAttack"),
+    ]),
   );
 }
 
-function renderDamageControls({ messageId, defenderUuid, damage, hasFate, resolved = false, status = "" } = {}) {
+function renderDamageControls({
+  messageId,
+  defenderUuid,
+  damage,
+  hasFate,
+  resolved = false,
+  status = "",
+} = {}) {
   const disabled = resolved || !hasFate ? "disabled" : "";
-  const note = status || (!hasFate ? "Brak Doli - obrażenia przyjęte automatycznie." : "Obrońca może przyjąć albo anulować obrażenia wydając punkt Doli.");
+  const note =
+    status ||
+    (!hasFate
+      ? "Brak Doli - obrażenia przyjęte automatycznie."
+      : "Obrońca może przyjąć albo anulować obrażenia wydając punkt Doli.");
 
   return `
 <!-- CRP_DAMAGE_CONTROL_START -->
@@ -121,10 +161,15 @@ function renderDamageControls({ messageId, defenderUuid, damage, hasFate, resolv
 `;
 }
 
-async function applyPendingDamageChoice(defender, { messageId, damage, action } = {}) {
+async function applyPendingDamageChoice(
+  defender,
+  { messageId, damage, action } = {},
+) {
   if (!defender) return null;
 
-  const resolvedDamage = foundry.utils.deepClone(defender.getFlag("crp", "resolvedDamage") ?? {});
+  const resolvedDamage = foundry.utils.deepClone(
+    defender.getFlag("crp", "resolvedDamage") ?? {},
+  );
   if (messageId && resolvedDamage[messageId]) return null;
 
   const amount = Math.max(0, Number(damage) || 0);
@@ -152,7 +197,7 @@ async function applyPendingDamageChoice(defender, { messageId, damage, action } 
       damage: amount,
       status,
       userId: game.user.id,
-      time: Date.now()
+      time: Date.now(),
     };
 
     await defender.setFlag("crp", "resolvedDamage", resolvedDamage);
@@ -163,14 +208,20 @@ async function applyPendingDamageChoice(defender, { messageId, damage, action } 
   return { action, amount, status };
 }
 
-async function updateDamageMessage({ messageId, defenderUuid, action, amount, status } = {}) {
+async function updateDamageMessage({
+  messageId,
+  defenderUuid,
+  action,
+  amount,
+  status,
+} = {}) {
   const msg = game.messages.get(messageId);
   if (!msg) return false;
 
   await msg.setFlag("crp", "damageResolved", {
     action,
     defenderUuid,
-    damage: amount
+    damage: amount,
   });
 
   const replacement = renderDamageControls({
@@ -179,12 +230,12 @@ async function updateDamageMessage({ messageId, defenderUuid, action, amount, st
     damage: amount,
     hasFate: false,
     resolved: true,
-    status
+    status,
   });
 
   const content = msg.content.replace(
     /<!-- CRP_DAMAGE_CONTROL_START -->[\s\S]*?<!-- CRP_DAMAGE_CONTROL_END -->/,
-    replacement
+    replacement,
   );
 
   await msg.update({ content });
@@ -192,9 +243,18 @@ async function updateDamageMessage({ messageId, defenderUuid, action, amount, st
   return true;
 }
 
-async function resolvePendingDamage({ messageId, defenderUuid, damage, action } = {}) {
+async function resolvePendingDamage({
+  messageId,
+  defenderUuid,
+  damage,
+  action,
+} = {}) {
   const defender = await fromUuid(defenderUuid);
-  const result = await applyPendingDamageChoice(defender, { messageId, damage, action });
+  const result = await applyPendingDamageChoice(defender, {
+    messageId,
+    damage,
+    action,
+  });
   if (!result) return false;
 
   try {
@@ -203,7 +263,7 @@ async function resolvePendingDamage({ messageId, defenderUuid, damage, action } 
       defenderUuid,
       action: result.action,
       amount: result.amount,
-      status: result.status
+      status: result.status,
     });
   } catch (err) {
     console.warn("CRP | Nie udało się zaktualizować wiadomości obrażeń", err);
@@ -221,10 +281,10 @@ function canUserResolveDamage(defender, user) {
     defender.baseActor,
     defender.token?.baseActor,
     defender.token?.actor,
-    game.actors.get(defender.id)
+    game.actors.get(defender.id),
   ].filter(Boolean);
 
-  return candidates.some(actor => actor.testUserPermission?.(user, "OWNER"));
+  return candidates.some((actor) => actor.testUserPermission?.(user, "OWNER"));
 }
 
 function removeMountedTokenUnderlay(token) {
@@ -235,7 +295,6 @@ function removeMountedTokenUnderlay(token) {
 }
 
 async function refreshMountedTokenUnderlay(token) {
-
   const mounted = !!token?.actor?.system?.equipment?.mounted;
 
   if (!mounted) {
@@ -249,7 +308,6 @@ async function refreshMountedTokenUnderlay(token) {
 
   // jeśli sprite istnieje → NIE robimy async ani nie tworzymy nowego
   if (!sprite || sprite.destroyed) {
-
     const texture = await foundry.canvas.loadTexture(CRP_MOUNT_UNDERLAY);
     if (!texture) return;
 
@@ -261,10 +319,10 @@ async function refreshMountedTokenUnderlay(token) {
     token._crpMountUnderlay = sprite;
 
     for (const child of token.mesh.parent.children) {
-    if (child.name === "crp-mounted-underlay" && child !== sprite) {
-      child.destroy();
+      if (child.name === "crp-mounted-underlay" && child !== sprite) {
+        child.destroy();
+      }
     }
-  }
   }
 
   const parent = token.mesh.parent;
@@ -303,8 +361,6 @@ async function refreshMountedTokenUnderlay(token) {
   }
 }
 
-
-
 function refreshMountedActorUnderlays(actor) {
   const tokens = getMountedActorTokens(actor);
 
@@ -332,11 +388,11 @@ function getMountedActorTokens(actor) {
 }
 function refreshCharacterSheetLocks(locked) {
   for (const sheet of document.querySelectorAll(".crp-sheet")) {
-    sheet.querySelectorAll(
-      ".crp-attr-value, .crp-skill-value, .crp-pd-value"
-    ).forEach(input => {
-      input.disabled = locked;
-    });
+    sheet
+      .querySelectorAll(".crp-attr-value, .crp-skill-value, .crp-pd-value")
+      .forEach((input) => {
+        input.disabled = locked;
+      });
   }
 
   for (const actor of game.actors?.contents ?? []) {
@@ -350,7 +406,7 @@ Hooks.once("init", () => {
     config: false,
     type: Boolean,
     default: false,
-    onChange: refreshCharacterSheetLocks
+    onChange: refreshCharacterSheetLocks,
   });
 
   // NAJPIERW MODELE ITEMÓW (PRZED WSZYSTKIM)
@@ -365,7 +421,7 @@ Hooks.once("init", () => {
     language: CRPLanguageData,
     origin: CRPOriginData,
     trait: CRPTraitData,
-    flaw: CRPTraitData
+    flaw: CRPTraitData,
   };
 
   CONFIG.Actor.documentClass = CRPActor;
@@ -375,97 +431,97 @@ Hooks.once("init", () => {
     npc: CRPActorData,
     "npc-knecht": CRPNPCKnechtData,
     "npc-rycerz": CRPNPCRycerzData,
-    creature: CRPActorData
+    creature: CRPActorData,
   };
 
   CONFIG.CRP = CRP;
   CONFIG.Combat.documentClass = CRPCombat;
   foundry.documents.collections.Actors.registerSheet("crp", CRPActorSheet, {
-  types: ["character"],
-  makeDefault: true
+    types: ["character"],
+    makeDefault: true,
   });
 
-  foundry.documents.collections.Actors.registerSheet("crp", CRPNPCCommonerSheet, {
-  types: ["npc"],
-  makeDefault: true
-  });
+  foundry.documents.collections.Actors.registerSheet(
+    "crp",
+    CRPNPCCommonerSheet,
+    {
+      types: ["npc"],
+      makeDefault: true,
+    },
+  );
 
   foundry.documents.collections.Actors.registerSheet("crp", CRPNPCKnechtSheet, {
-  types: ["npc-knecht"],
-  makeDefault: true
+    types: ["npc-knecht"],
+    makeDefault: true,
   });
 
   foundry.documents.collections.Actors.registerSheet("crp", CRPNPCRycerzSheet, {
-  types: ["npc-rycerz"],
-  makeDefault: true
+    types: ["npc-rycerz"],
+    makeDefault: true,
   });
 
-foundry.documents.collections.Items.registerSheet("crp", CRPWeaponSheet, {
-  types: ["weapon"],
-  makeDefault: true
-});
+  foundry.documents.collections.Items.registerSheet("crp", CRPWeaponSheet, {
+    types: ["weapon"],
+    makeDefault: true,
+  });
 
-foundry.documents.collections.Items.registerSheet("crp", CRPArmorSheet, {
-  types: ["armor"],
-  makeDefault: true
-});
+  foundry.documents.collections.Items.registerSheet("crp", CRPArmorSheet, {
+    types: ["armor"],
+    makeDefault: true,
+  });
 
-foundry.documents.collections.Items.registerSheet("crp", CRPShieldSheet, {
-  types: ["shield"],
-  makeDefault: true
-});
+  foundry.documents.collections.Items.registerSheet("crp", CRPShieldSheet, {
+    types: ["shield"],
+    makeDefault: true,
+  });
 
-foundry.documents.collections.Items.registerSheet("crp", CRPStuffSheet, {
-  types: ["stuff"],
-  makeDefault: true
-});
+  foundry.documents.collections.Items.registerSheet("crp", CRPStuffSheet, {
+    types: ["stuff"],
+    makeDefault: true,
+  });
 
-foundry.documents.collections.Items.registerSheet("crp", CRPLanguageSheet, {
-  types: ["language"],
-  makeDefault: true
-});
+  foundry.documents.collections.Items.registerSheet("crp", CRPLanguageSheet, {
+    types: ["language"],
+    makeDefault: true,
+  });
 
-foundry.documents.collections.Items.registerSheet("crp", CRPOriginSheet, {
-  types: ["origin"],
-  makeDefault: true
-});
+  foundry.documents.collections.Items.registerSheet("crp", CRPOriginSheet, {
+    types: ["origin"],
+    makeDefault: true,
+  });
 
-foundry.documents.collections.Items.registerSheet("crp", CRPTraitSheet, {
-  types: ["trait", "flaw"],
-  makeDefault: true
-});
+  foundry.documents.collections.Items.registerSheet("crp", CRPTraitSheet, {
+    types: ["trait", "flaw"],
+    makeDefault: true,
+  });
 
-CONFIG.Combat = CONFIG.Combat || {};
+  CONFIG.Combat = CONFIG.Combat || {};
 
-// ======================
-// OVERRIDE INITIATIVE ROLL
-// ======================
+  // ======================
+  // OVERRIDE INITIATIVE ROLL
+  // ======================
 
-CONFIG.Combat.initiative = {
-  formula: "1d6",
-  decimals: 0
-};
-registerHandlebarsHelpers();
-Combat.prototype.rollInitiative = async function(ids, options = {}) {
+  CONFIG.Combat.initiative = {
+    formula: "1d6",
+    decimals: 0,
+  };
+  registerHandlebarsHelpers();
+  Combat.prototype.rollInitiative = async function (ids, options = {}) {
+    ids = typeof ids === "string" ? [ids] : ids;
 
-  ids = typeof ids === "string" ? [ids] : ids;
+    for (const id of ids) {
+      const combatant = this.combatants.get(id);
+      if (!combatant) continue;
 
-  for (const id of ids) {
+      const actor = combatant.actor;
+      if (!actor) continue;
 
-    const combatant = this.combatants.get(id);
-    if (!combatant) continue;
+      // NASZ SYSTEM
+      await CRPRoll.initiative(actor, { combatant });
+    }
 
-    const actor = combatant.actor;
-    if (!actor) continue;
-
-    // NASZ SYSTEM
-    await CRPRoll.initiative(actor, { combatant });
-
-  }
-
-  return this;
-};
-
+    return this;
+  };
 });
 
 Hooks.on("updateItem", async (item, changed) => {
@@ -493,26 +549,25 @@ Hooks.on("updateItem", async (item, changed) => {
   actorSheet.render(false);
 });
 
-
 Hooks.on("canvasReady", () => {
   for (const token of canvas.tokens?.placeables ?? []) {
     refreshMountedTokenUnderlay(token);
   }
 });
 
-Hooks.on("drawToken", token => {
+Hooks.on("drawToken", (token) => {
   refreshMountedTokenUnderlay(token);
 });
 
-Hooks.on("refreshToken", token => {
+Hooks.on("refreshToken", (token) => {
   refreshMountedTokenUnderlay(token);
 });
 
-Hooks.on("deleteToken", tokenDocument => {
+Hooks.on("deleteToken", (tokenDocument) => {
   removeMountedTokenUnderlay(tokenDocument?.object);
 });
 
-Hooks.on("crpMountedChanged", actor => {
+Hooks.on("crpMountedChanged", (actor) => {
   refreshMountedActorUnderlays(actor);
 });
 
@@ -520,26 +575,22 @@ Hooks.on("updateToken", (tokenDocument, changed) => {
   const mountedChanged = [
     "actorData.system.equipment.mounted",
     "delta.system.equipment.mounted",
-    "system.equipment.mounted"
-  ].some(path => hasChangedPath(changed, path));
+    "system.equipment.mounted",
+  ].some((path) => hasChangedPath(changed, path));
 
   if (mountedChanged) refreshMountedTokenUnderlay(tokenDocument?.object);
 });
 
-
 Hooks.on("renderChatMessageHTML", (message, html) => {
-
   const buttons = html.querySelectorAll(".crp-use-fate");
   if (!buttons.length) return;
 
   for (const button of buttons) {
-
     //  zabezpieczenie przed wielokrotnym bindem
     if (button.dataset.bound) continue;
     button.dataset.bound = "true";
 
-    button.addEventListener("click", async ev => {
-
+    button.addEventListener("click", async (ev) => {
       ev.preventDefault();
       ev.stopPropagation();
 
@@ -589,15 +640,13 @@ Hooks.on("renderChatMessageHTML", (message, html) => {
       }
 
       //  reroll (bez nowej wiadomości)
-let result;
+      let result;
 
-  result = await CRPRoll.skill(actor, attrKey, skillKey, {
-    chat: false,
-    modifier,
-    displayModifier: modifier
-  });
-
-
+      result = await CRPRoll.skill(actor, attrKey, skillKey, {
+        chat: false,
+        modifier,
+        displayModifier: modifier,
+      });
 
       if (!result) {
         button.disabled = false;
@@ -606,35 +655,30 @@ let result;
       }
 
       //  generujemy nowy HTML
-const newContent = CRPRoll.renderRollHTML(
-  
-  actor,
-  attrKey,
-  skillKey,
-  result,
-  {
-    usedFate: true,
-    allowFate: false
-  }
-);
+      const newContent = CRPRoll.renderRollHTML(
+        actor,
+        attrKey,
+        skillKey,
+        result,
+        {
+          usedFate: true,
+          allowFate: false,
+        },
+      );
 
       //  KLUCZ: aktualizujemy TĘ wiadomość
       await message.update({
-        content: newContent
+        content: newContent,
       });
 
       button.innerText = "✔ Dola użyta";
-button.classList.add("used");
-button.disabled = true;
-
+      button.classList.add("used");
+      button.disabled = true;
     });
-
   }
-
 });
 
 Hooks.on("renderChatMessageHTML", (message, html) => {
-
   const buttons = html.querySelectorAll(".crp-damage-choice");
   if (!buttons.length) return;
 
@@ -643,14 +687,15 @@ Hooks.on("renderChatMessageHTML", (message, html) => {
     button.dataset.bound = "true";
 
     const defenderUuid = button.dataset.defender;
-    const defender = typeof fromUuidSync === "function" ? fromUuidSync(defenderUuid) : null;
+    const defender =
+      typeof fromUuidSync === "function" ? fromUuidSync(defenderUuid) : null;
     const canResolve = canUserResolveDamage(defender, game.user);
 
     if (!canResolve || message.getFlag("crp", "damageResolved")) {
       button.disabled = true;
     }
 
-    button.addEventListener("click", async ev => {
+    button.addEventListener("click", async (ev) => {
       ev.preventDefault();
       ev.stopPropagation();
 
@@ -663,7 +708,7 @@ Hooks.on("renderChatMessageHTML", (message, html) => {
         defenderUuid,
         damage: Number(button.dataset.damage) || 0,
         action: button.dataset.action,
-        userId: game.user.id
+        userId: game.user.id,
       };
 
       const choices = Array.from(html.querySelectorAll(".crp-damage-choice"));
@@ -676,7 +721,9 @@ Hooks.on("renderChatMessageHTML", (message, html) => {
 
         if (!resolved) {
           for (const choice of choices) choice.disabled = false;
-          ui.notifications.warn("Te obrażenia zostały już rozliczone albo nie można znaleźć postaci.");
+          ui.notifications.warn(
+            "Te obrażenia zostały już rozliczone albo nie można znaleźć postaci.",
+          );
           return;
         }
 
@@ -689,7 +736,7 @@ Hooks.on("renderChatMessageHTML", (message, html) => {
             damage: resolved.amount,
             hasFate: false,
             resolved: true,
-            status: resolved.status
+            status: resolved.status,
           }).trim();
 
           control.replaceWith(wrapper.firstElementChild);
@@ -698,7 +745,7 @@ Hooks.on("renderChatMessageHTML", (message, html) => {
         if (!game.user.isGM) {
           game.socket.emit("system.crp", {
             ...data,
-            type: "damageChoiceSync"
+            type: "damageChoiceSync",
           });
         }
       } catch (err) {
@@ -712,29 +759,31 @@ Hooks.on("renderChatMessageHTML", (message, html) => {
 
 Handlebars.registerHelper("eq", (a, b) => a === b);
 
-
 Hooks.on("updateCombat", async (combat, changed) => {
-
   if (changed.started === false) {
     await clearCombatManeuverFlags(combat);
     return;
   }
 
-  if (!combat.started || (changed.turn === undefined && changed.round === undefined)) return;
+  if (
+    !combat.started ||
+    (changed.turn === undefined && changed.round === undefined)
+  )
+    return;
 
   if (changed.round !== undefined) {
     await flushPendingCombatInitiatives(combat);
   }
 
   // RESET FLAG
-if (game.user.isGM) {
-  await Promise.all(
-    combat.combatants
-      .map(c => c.actor)
-      .filter(Boolean)
-      .map(actor => actor.setFlag("crp", "processedTurn", false))
-  );
-}
+  if (game.user.isGM) {
+    await Promise.all(
+      combat.combatants
+        .map((c) => c.actor)
+        .filter(Boolean)
+        .map((actor) => actor.setFlag("crp", "processedTurn", false)),
+    );
+  }
 
   // AKTUALNY COMBATANT
   const combatant = combat.combatant;
@@ -767,9 +816,7 @@ Hooks.on("deleteCombat", async (combat) => {
   await clearCombatManeuverFlags(combat);
 });
 
-
 Hooks.on("renderActorDirectory", (app, html) => {
-
   if (!game.user.isGM) return;
 
   if (html.querySelector(".crp-btn")) return;
@@ -783,308 +830,306 @@ Hooks.on("renderActorDirectory", (app, html) => {
   });
 
   html.querySelector(".directory-header").appendChild(btn);
-
 });
 
 Hooks.on("renderChatMessageHTML", (message, html) => {
-
   const buttons = html.querySelectorAll(".crp-defense-choice button");
 
-// BLOKADA PAROWANIA W UI (RUNTIME)
-for (const btn of buttons) {
-  const container = btn.closest(".crp-defense-choice");
-const itemType = container.dataset.itemType;
-const range = container.dataset.range;
-const defenderMounted = container.dataset.defenderMounted === "true";
-
-  if (btn.dataset.defense !== "parry") continue;
-
-if (itemType === "unarmed") {
-  btn.disabled = false;
-  continue;
-}
-
-if (range === "ranged") {
-  btn.disabled = true;
-}
-}
-
-if (!buttons.length) return;
-
-for (const btn of buttons) {
-
-  if (btn.dataset.bound) continue;
-  btn.dataset.bound = "true";
-
-  btn.addEventListener("click", async ev => {
-
+  // BLOKADA PAROWANIA W UI (RUNTIME)
+  for (const btn of buttons) {
     const container = btn.closest(".crp-defense-choice");
-    const messageId = container.dataset.messageId;
+    const itemType = container.dataset.itemType;
+    const range = container.dataset.range;
+    const defenderMounted = container.dataset.defenderMounted === "true";
 
-    const attackerUuid = container.dataset.attacker;
-    const defenderUuid = container.dataset.defender;
-    const defenseType = btn.dataset.defense;
-    const skill = container.dataset.skill;
-const itemType = container.dataset.itemType;
-const range = container.dataset.range;
-const attackModifier = Number(container.dataset.attackModifier) || 0;
-const selectedAttackModifier = Number(container.dataset.selectedAttackModifier) || 0;
-const attackerMounted = container.dataset.attackerMounted === "true";
-const defenderMounted = container.dataset.defenderMounted === "true";
+    if (btn.dataset.defense !== "parry") continue;
 
-    const attacker = await fromUuid(attackerUuid);
-    const defender = await fromUuid(defenderUuid);
-
-    if (!attacker || !defender) return;
-
-    //  uprawnienia
-    const isGM = game.user.isGM;
-    const ownsDefender = defender.isOwner;
-
-    if (!isGM && !ownsDefender) {
-      ui.notifications.warn("Nie kontrolujesz tej postaci");
-      return;
+    if (itemType === "unarmed") {
+      btn.disabled = false;
+      continue;
     }
 
-    let defSkill;
-    const mountedDefenseModifier = defenderMounted && !attackerMounted ? 2 : 0;
-    let defenseModifier = mountedDefenseModifier;
-
-    const getCombatModifier = ({ item = null, skill = null, unarmed = false } = {}) => {
-      if (unarmed) return -3;
-      if (!item || item.type !== "weapon") return 0;
-      if (item.system.range === "ranged" || skill === "ranged") return 2;
-      if (skill === "lightWeapons") return -1;
-      if (skill === "twoHanded") return 3;
-      return 1;
-    };
-
-    if (defenseType === "parry") {
-
-  // BLOKADA PAROWANIA VS RANGED
-  if (itemType === "weapon" && range === "ranged") {
-    ui.notifications.warn("Nie można parować ataku dystansowego");
-    return;
-  }
-
-  const eq = defender.system.equipment;
-
-  const getTotal = (skill) => {
-    if (!skill) return -999;
-
-    const attr = defender._mapSkillToAttribute(skill);
-    if (!attr) return -999;
-
-    const attrVal = defender.system.attributes[attr]?.value ?? 0;
-    const skillVal = defender.system.attributes[attr]?.skills?.[skill]?.value ?? 0;
-
-    return attrVal + skillVal;
-  };
-
-const getParryCandidate = (slot) => {
-  const id = eq[slot]?.id;
-  if (!id) return null;
-
-  const item = defender.items.get(id);
-  if (!item) return null;
-
-  // tylko broń
-  if (item.type !== "weapon") return null;
-
-  // broń dystansowa nie paruje
-  if (item.system.range === "ranged") return null;
-
-  return {
-    skill: item.system.skill,
-    modifier: getCombatModifier({ item, skill: item.system.skill })
-  };
-};
-
-const parryCandidates = [
-  getParryCandidate("rightHand"),
-  getParryCandidate("leftHand")
-].filter(Boolean);
-
-  if (itemType === "unarmed") {
-    const hasEmptyHand = !eq.rightHand?.id || !eq.leftHand?.id;
-
-    if (hasEmptyHand) {
-      parryCandidates.push({
-        skill: "brawl",
-        modifier: getCombatModifier({ unarmed: true })
-      });
-    }
-
-    const best = parryCandidates
-      .sort((a, b) => (getTotal(b.skill) + b.modifier) - (getTotal(a.skill) + a.modifier))[0];
-
-    defSkill = best?.skill;
-    defenseModifier = mountedDefenseModifier + (best?.modifier ?? 0);
-
-    if (!defSkill) {
-      ui.notifications.warn("Brak wolnej ręki lub broni do parowania");
-      return;
-    }
-  } else {
-    const best = parryCandidates
-      .sort((a, b) => (getTotal(b.skill) + b.modifier) - (getTotal(a.skill) + a.modifier))[0];
-
-    if (!best) {
-      ui.notifications.warn("Brak broni do parowania");
-      return;
-    }
-
-    defSkill = best.skill;
-    defenseModifier = mountedDefenseModifier + best.modifier;
-  }
-}
-    if (defenseType === "dodge") {
-      defSkill = "athletics";
-      defenseModifier = defenderMounted ? -2 : mountedDefenseModifier;
-    }
-    
-    if (defenseType === "shield") {
-
-  const eq = defender.system.equipment;
-
-  const right = eq.rightHand?.id
-    ? defender.items.get(eq.rightHand.id)
-    : null;
-
-  const left = eq.leftHand?.id
-    ? defender.items.get(eq.leftHand.id)
-    : null;
-
-  const hasShield =
-    right?.type === "shield" ||
-    left?.type === "shield";
-
-  if (!hasShield) {
-    ui.notifications.warn("Brak tarczy");
-    return;
-  }
-
-  defSkill = "shield";
-  defenseModifier = mountedDefenseModifier + 1;
-}
-
-const combat = game.combat;
-const combatant = combat?.combatants.find(combatant => combatant.actor?.id === defender.id);
-const defensiveAttack = defender.getFlag("crp", "defensiveAttack");
-const defensiveAttackBonus =
-  defensiveAttack?.oneTime
-    ? Number(defensiveAttack.bonus) || 3
-    : combat?.started &&
-      defensiveAttack?.combatId === combat.id &&
-      defensiveAttack?.combatantId === combatant?.id
-      ? Number(defensiveAttack.bonus) || 3
-      : 0;
-
-if (defensiveAttackBonus) {
-  defenseModifier += defensiveAttackBonus;
-
-  if (defensiveAttack.oneTime) {
-    await defender.unsetFlag("crp", "defensiveAttack");
-  }
-}
-
-const result = await attacker.opposedTest(
-  defender,
-  attacker._mapSkillToAttribute(skill),
-  skill,
-  defender._mapSkillToAttribute(defSkill),
-  defSkill,
-  {
-    actorAOptions: {
-      modifier: attackModifier,
-      displayModifier: selectedAttackModifier
-    },
-    actorBOptions: {
-      modifier: defenseModifier,
-      displayModifier: defenseType === "dodge" && defenderMounted ? -2 : null
+    if (range === "ranged") {
+      btn.disabled = true;
     }
   }
-);
 
-// =====================
-// OBRAŻENIA
-// =====================
-if (result?.winner === "A") {
+  if (!buttons.length) return;
 
-  const marginA = result.rollA?.margin ?? 0;
-  const marginB = result.rollB?.margin ?? 0;
+  for (const btn of buttons) {
+    if (btn.dataset.bound) continue;
+    btn.dataset.bound = "true";
 
-const baseDamage = Math.max(0, marginA - marginB);
+    btn.addEventListener("click", async (ev) => {
+      const container = btn.closest(".crp-defense-choice");
+      const messageId = container.dataset.messageId;
 
-// =====================
-// SYMBOLE – ATAK
-// =====================
-const attackEagles = result.rollA?.eagles ?? 0;
-const attackShields = result.rollA?.shields ?? 0;
+      const attackerUuid = container.dataset.attacker;
+      const defenderUuid = container.dataset.defender;
+      const defenseType = btn.dataset.defense;
+      const skill = container.dataset.skill;
+      const itemType = container.dataset.itemType;
+      const range = container.dataset.range;
+      const attackModifier = Number(container.dataset.attackModifier) || 0;
+      const selectedAttackModifier =
+        Number(container.dataset.selectedAttackModifier) || 0;
+      const attackerMounted = container.dataset.attackerMounted === "true";
+      const defenderMounted = container.dataset.defenderMounted === "true";
 
-let damage = baseDamage
-  + attackEagles
-  - attackShields;
+      const attacker = await fromUuid(attackerUuid);
+      const defender = await fromUuid(defenderUuid);
 
-damage = Math.max(0, damage);
+      if (!attacker || !defender) return;
 
-// =====================
-// REDUKCJA OBRAŻEŃ
-// =====================
-const eq = defender.system.equipment;
+      //  uprawnienia
+      const isGM = game.user.isGM;
+      const ownsDefender = defender.isOwner;
 
-// --- ARMOR ---
-let armorProtection = 0;
+      if (!isGM && !ownsDefender) {
+        ui.notifications.warn("Nie kontrolujesz tej postaci");
+        return;
+      }
 
-if (eq.armor?.id) {
-  const armorItem = defender.items.get(eq.armor.id);
-  armorProtection = armorItem?.system?.protection ?? 0;
-}
+      let defSkill;
+      const mountedDefenseModifier =
+        defenderMounted && !attackerMounted ? 2 : 0;
+      let defenseModifier = mountedDefenseModifier;
 
-// --- SHIELD ---
-let shieldProtection = 0;
+      const getCombatModifier = ({
+        item = null,
+        skill = null,
+        unarmed = false,
+      } = {}) => {
+        if (unarmed) return -3;
+        if (!item || item.type !== "weapon") return 0;
+        if (item.system.range === "ranged" || skill === "ranged") return 2;
+        if (skill === "lightWeapons") return -1;
+        if (skill === "twoHanded") return 3;
+        return 1;
+      };
 
-const rightShield = eq.rightHand?.id
-  ? defender.items.get(eq.rightHand.id)
-  : null;
+      if (defenseType === "parry") {
+        // BLOKADA PAROWANIA VS RANGED
+        if (itemType === "weapon" && range === "ranged") {
+          ui.notifications.warn("Nie można parować ataku dystansowego");
+          return;
+        }
 
-const leftShield = eq.leftHand?.id
-  ? defender.items.get(eq.leftHand.id)
-  : null;
+        const eq = defender.system.equipment;
 
-const getShieldProtection = item =>
-  item?.type === "shield"
-    ? Number(item.system?.protection) || 0
-    : 0;
+        const getTotal = (skill) => {
+          if (!skill) return -999;
 
-shieldProtection = defenseType === "shield"
-  ? Math.max(
-      getShieldProtection(rightShield),
-      getShieldProtection(leftShield)
-    )
-  : 0;
+          const attr = defender._mapSkillToAttribute(skill);
+          if (!attr) return -999;
 
-// =====================
-// SYMBOLE – OBRONA
-// =====================
-const defenseEagles = result.rollB?.eagles ?? 0;
-const defenseShields = result.rollB?.shields ?? 0;
+          const attrVal = defender.system.attributes[attr]?.value ?? 0;
+          const skillVal =
+            defender.system.attributes[attr]?.skills?.[skill]?.value ?? 0;
 
-let reduction =
-  armorProtection +
-  shieldProtection +
-  defenseEagles -
-  defenseShields;
+          return attrVal + skillVal;
+        };
 
-reduction = Math.max(0, reduction);
+        const getParryCandidate = (slot) => {
+          const id = eq[slot]?.id;
+          if (!id) return null;
 
-// najpierw odejmujemy
-damage = damage - reduction;
+          const item = defender.items.get(id);
+          if (!item) return null;
 
-// dopiero potem clamp
-damage = Math.max(0, damage);
+          // tylko broń
+          if (item.type !== "weapon") return null;
 
-const reductionText = `
+          // broń dystansowa nie paruje
+          if (item.system.range === "ranged") return null;
+
+          return {
+            skill: item.system.skill,
+            modifier: getCombatModifier({ item, skill: item.system.skill }),
+          };
+        };
+
+        const parryCandidates = [
+          getParryCandidate("rightHand"),
+          getParryCandidate("leftHand"),
+        ].filter(Boolean);
+
+        if (itemType === "unarmed") {
+          const hasEmptyHand = !eq.rightHand?.id || !eq.leftHand?.id;
+
+          if (hasEmptyHand) {
+            parryCandidates.push({
+              skill: "brawl",
+              modifier: getCombatModifier({ unarmed: true }),
+            });
+          }
+
+          const best = parryCandidates.sort(
+            (a, b) =>
+              getTotal(b.skill) + b.modifier - (getTotal(a.skill) + a.modifier),
+          )[0];
+
+          defSkill = best?.skill;
+          defenseModifier = mountedDefenseModifier + (best?.modifier ?? 0);
+
+          if (!defSkill) {
+            ui.notifications.warn("Brak wolnej ręki lub broni do parowania");
+            return;
+          }
+        } else {
+          const best = parryCandidates.sort(
+            (a, b) =>
+              getTotal(b.skill) + b.modifier - (getTotal(a.skill) + a.modifier),
+          )[0];
+
+          if (!best) {
+            ui.notifications.warn("Brak broni do parowania");
+            return;
+          }
+
+          defSkill = best.skill;
+          defenseModifier = mountedDefenseModifier + best.modifier;
+        }
+      }
+      if (defenseType === "dodge") {
+        defSkill = "athletics";
+        defenseModifier = defenderMounted ? -2 : mountedDefenseModifier;
+      }
+
+      if (defenseType === "shield") {
+        const eq = defender.system.equipment;
+
+        const right = eq.rightHand?.id
+          ? defender.items.get(eq.rightHand.id)
+          : null;
+
+        const left = eq.leftHand?.id
+          ? defender.items.get(eq.leftHand.id)
+          : null;
+
+        const hasShield = right?.type === "shield" || left?.type === "shield";
+
+        if (!hasShield) {
+          ui.notifications.warn("Brak tarczy");
+          return;
+        }
+
+        defSkill = "shield";
+        defenseModifier = mountedDefenseModifier + 1;
+      }
+
+      const combat = game.combat;
+      const combatant = combat?.combatants.find(
+        (combatant) => combatant.actor?.id === defender.id,
+      );
+      const defensiveAttack = defender.getFlag("crp", "defensiveAttack");
+      const defensiveAttackBonus = defensiveAttack?.oneTime
+        ? Number(defensiveAttack.bonus) || 3
+        : combat?.started &&
+            defensiveAttack?.combatId === combat.id &&
+            defensiveAttack?.combatantId === combatant?.id
+          ? Number(defensiveAttack.bonus) || 3
+          : 0;
+
+      if (defensiveAttackBonus) {
+        defenseModifier += defensiveAttackBonus;
+
+        if (defensiveAttack.oneTime) {
+          await defender.unsetFlag("crp", "defensiveAttack");
+        }
+      }
+
+      const result = await attacker.opposedTest(
+        defender,
+        attacker._mapSkillToAttribute(skill),
+        skill,
+        defender._mapSkillToAttribute(defSkill),
+        defSkill,
+        {
+          actorAOptions: {
+            modifier: attackModifier,
+            displayModifier: selectedAttackModifier,
+          },
+          actorBOptions: {
+            modifier: defenseModifier,
+            displayModifier:
+              defenseType === "dodge" && defenderMounted ? -2 : null,
+          },
+        },
+      );
+
+      // =====================
+      // OBRAŻENIA
+      // =====================
+      if (result?.winner === "A") {
+        const marginA = result.rollA?.margin ?? 0;
+        const marginB = result.rollB?.margin ?? 0;
+
+        const baseDamage = Math.max(0, marginA - marginB);
+
+        // =====================
+        // SYMBOLE – ATAK
+        // =====================
+        const attackEagles = result.rollA?.eagles ?? 0;
+        const attackShields = result.rollA?.shields ?? 0;
+
+        let damage = baseDamage + attackEagles - attackShields;
+
+        damage = Math.max(0, damage);
+
+        // =====================
+        // REDUKCJA OBRAŻEŃ
+        // =====================
+        const eq = defender.system.equipment;
+
+        // --- ARMOR ---
+        let armorProtection = 0;
+
+        if (eq.armor?.id) {
+          const armorItem = defender.items.get(eq.armor.id);
+          armorProtection = armorItem?.system?.protection ?? 0;
+        }
+
+        // --- SHIELD ---
+        let shieldProtection = 0;
+
+        const rightShield = eq.rightHand?.id
+          ? defender.items.get(eq.rightHand.id)
+          : null;
+
+        const leftShield = eq.leftHand?.id
+          ? defender.items.get(eq.leftHand.id)
+          : null;
+
+        const getShieldProtection = (item) =>
+          item?.type === "shield" ? Number(item.system?.protection) || 0 : 0;
+
+        shieldProtection =
+          defenseType === "shield"
+            ? Math.max(
+                getShieldProtection(rightShield),
+                getShieldProtection(leftShield),
+              )
+            : 0;
+
+        // =====================
+        // SYMBOLE – OBRONA
+        // =====================
+        const defenseEagles = result.rollB?.eagles ?? 0;
+        const defenseShields = result.rollB?.shields ?? 0;
+
+        let reduction =
+          armorProtection + shieldProtection + defenseEagles - defenseShields;
+
+        reduction = Math.max(0, reduction);
+
+        // najpierw odejmujemy
+        damage = damage - reduction;
+
+        // dopiero potem clamp
+        damage = Math.max(0, damage);
+
+        const reductionText = `
   🛡 Redukcja: ${reduction}
   (${armorProtection} pancerz
    ${shieldProtection ? ` + ${shieldProtection} tarcza` : ""}
@@ -1093,45 +1138,47 @@ const reductionText = `
   )
 `;
 
-let attackModText = "";
+        let attackModText = "";
 
-if (attackEagles !== 0 || attackShields !== 0) {
-  attackModText = `
+        if (attackEagles !== 0 || attackShields !== 0) {
+          attackModText = `
     ⚔ Modyfikator ataku:
     ${attackEagles ? `+${attackEagles} 🦅 ` : ""}
     ${attackShields ? `-${attackShields} 🛡️` : ""}
   `;
-}
+        }
 
-// =====================
-// APPLY DAMAGE
-// =====================
-const defenderFate = defender.system.resources.fate.value ?? 0;
-const needsDamageChoice = damage > 0 && defenderFate > 0;
-const autoDamage = damage > 0 && defenderFate < 1;
+        // =====================
+        // APPLY DAMAGE
+        // =====================
+        const defenderFate = defender.system.resources.fate.value ?? 0;
+        const needsDamageChoice = damage > 0 && defenderFate > 0;
+        const autoDamage = damage > 0 && defenderFate < 1;
 
-if (autoDamage) {
-  await defender.applyDamage(damage);
-}
+        if (autoDamage) {
+          await defender.applyDamage(damage);
+        }
 
-// =====================
-// UPDATE WIADOMOŚCI PO ID
-// =====================
-if (result?.messageId) {
+        // =====================
+        // UPDATE WIADOMOŚCI PO ID
+        // =====================
+        if (result?.messageId) {
+          const msg = game.messages.get(result.messageId);
 
-  const msg = game.messages.get(result.messageId);
+          if (msg) {
+            const damageControls =
+              damage > 0
+                ? renderDamageControls({
+                    messageId: result.messageId,
+                    defenderUuid: defender.uuid,
+                    damage,
+                    hasFate: needsDamageChoice,
+                  })
+                : "";
 
-  if (msg) {
-const damageControls = damage > 0
-  ? renderDamageControls({
-      messageId: result.messageId,
-      defenderUuid: defender.uuid,
-      damage,
-      hasFate: needsDamageChoice
-    })
-  : "";
-
-const newContent = msg.content + `
+            const newContent =
+              msg.content +
+              `
   <div class="crp-damage">
     💥 Obrażenia bazowe: <b>${baseDamage}</b><br>
     ${reductionText}<br>
@@ -1141,48 +1188,44 @@ const newContent = msg.content + `
   </div>
 `;
 
-    await msg.update({ content: newContent });
+            await msg.update({ content: newContent });
 
-    if (autoDamage) {
-      await msg.setFlag("crp", "damageResolved", {
-        action: "auto",
-        defenderUuid: defender.uuid,
-        damage
-      });
-    }
-  }
-}
+            if (autoDamage) {
+              await msg.setFlag("crp", "damageResolved", {
+                action: "auto",
+                defenderUuid: defender.uuid,
+                damage,
+              });
+            }
+          }
+        }
+      }
 
-}
+      const defenseLabel =
+        {
+          parry: "Parowanie",
+          dodge: "Unik",
+          shield: "Tarcza",
+        }[defenseType] ?? defenseType;
 
-const defenseLabel = {
-  parry: "Parowanie",
-  dodge: "Unik",
-  shield: "Tarcza"
-}[defenseType] ?? defenseType;
-
-// lokalna podmiana tylko u tego gracza
-for (const b of container.querySelectorAll("button")) {
-  b.disabled = true;
-}
-container.innerHTML = `
+      // lokalna podmiana tylko u tego gracza
+      for (const b of container.querySelectorAll("button")) {
+        b.disabled = true;
+      }
+      container.innerHTML = `
   <div class="crp-defense-result">
     🛡 Wybrałeś: <b>${defenseLabel}</b>
   </div>
 `;
-
-  });
-}
-
+    });
+  }
 });
 
 // =====================
 // SOCKET → GM UPDATE
 // =====================
 Hooks.once("ready", () => {
-
   game.socket.on("system.crp", async (data) => {
-
     if (!game.user.isGM) return;
 
     if (data.type === "damageChoiceSync") {
@@ -1197,10 +1240,13 @@ Hooks.once("ready", () => {
             defenderUuid: data.defenderUuid,
             action: resolved.action,
             amount: resolved.damage,
-            status: resolved.status
+            status: resolved.status,
           });
         } catch (err) {
-          console.warn("CRP | Nie udało się zsynchronizować wiadomości obrażeń", err);
+          console.warn(
+            "CRP | Nie udało się zsynchronizować wiadomości obrażeń",
+            err,
+          );
         }
       }
 
@@ -1217,7 +1263,7 @@ Hooks.once("ready", () => {
           requestId: data.requestId,
           userId: data.userId,
           ok,
-          message
+          message,
         });
       };
 
@@ -1228,7 +1274,12 @@ Hooks.once("ready", () => {
 
       try {
         const resolved = await resolvePendingDamage(data);
-        respond(!!resolved, resolved ? "" : "Te obrażenia zostały już rozliczone albo wiadomość nie istnieje.");
+        respond(
+          !!resolved,
+          resolved
+            ? ""
+            : "Te obrażenia zostały już rozliczone albo wiadomość nie istnieje.",
+        );
       } catch (err) {
         console.error("CRP | Błąd rozliczania obrażeń przez socket", err);
         respond(false, "Błąd rozliczania obrażeń po stronie MG.");
@@ -1242,37 +1293,37 @@ Hooks.once("ready", () => {
     const msg = game.messages.get(data.messageId);
     if (!msg) return;
 
-    const defenseLabel = {
-      parry: "Parowanie",
-      dodge: "Unik",
-      shield: "Tarcza"
-    }[data.defenseType] ?? data.defenseType;
+    const defenseLabel =
+      {
+        parry: "Parowanie",
+        dodge: "Unik",
+        shield: "Tarcza",
+      }[data.defenseType] ?? data.defenseType;
 
     await msg.update({
       content: `
         <div class="crp-defense-result">
           🛡 Wybrana obrona: <b>${defenseLabel}</b>
         </div>
-      `
+      `,
     });
-
   });
-
 });
 Hooks.once("diceSoNiceReady", async (dice3d) => {
-  dice3d.addSystem({ id: "crp", name: "Corona Regni Poloniae" }, 'preferred');
+  dice3d.addSystem({ id: "crp", name: "Corona Regni Poloniae" }, "preferred");
 
-  dice3d.addColorset({
-    name: "crp",
-    description: "Corona Regni Poloniae",
-    category: "Colors",
-    foreground: "#ffffff",
-    background: "#000000",
-    outline: "gray",
-    texture: "none",
-    
-  },
-  'preferred');
+  dice3d.addColorset(
+    {
+      name: "crp",
+      description: "Corona Regni Poloniae",
+      category: "Colors",
+      foreground: "#ffffff",
+      background: "#000000",
+      outline: "gray",
+      texture: "none",
+    },
+    "preferred",
+  );
 
   dice3d.addDicePreset(
     {
@@ -1287,12 +1338,11 @@ Hooks.once("diceSoNiceReady", async (dice3d) => {
         "7",
         "8",
         "9",
-        "systems/crp/assets/tarcza_kostka.webp"
+        "systems/crp/assets/tarcza_kostka.webp",
       ],
       system: "crp",
       labelScale: 0.5,
     },
     "d10",
   );
-
-})
+});
