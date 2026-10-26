@@ -1,5 +1,5 @@
 import { CRPRoll } from "../rolls/roll.mjs";
-import { CRPAdvancementWindow } from "./actor-sheet.mjs";
+import { CRPAdvancementWindow } from "../app/advancment.mjs";
  // module/actor/actor.mjs
 
 const ARMOR_PENALIZED_SKILLS = new Set(["athletics", "stealth", "survival"]);

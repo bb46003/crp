@@ -1,209 +1,10 @@
 import { CRPRoll } from "../rolls/roll.mjs";
 import { formatMoney, normalizeMoney, obolsToMoney } from "../currency.mjs";
+import {CRPAdvancementWindow} from "../app/advancment.mjs"
 
-const { ApplicationV2, DocumentSheetV2, HandlebarsApplicationMixin } = foundry.applications.api;
 const CRP_NPC_ACTOR_TYPES = new Set(["npc", "npc-knecht", "npc-rycerz"]);
 const { api, sheets } = foundry.applications;
-export class CRPAdvancementWindow extends HandlebarsApplicationMixin(ApplicationV2) {
-  static openWindows = new Map();
 
-  static DEFAULT_OPTIONS = {
-    classes: ["crp", "advancement"],
-    window: {
-      title: "Rozwój postaci",
-      resizable: true
-    },
-    position: {
-      width: 520,
-      height: "auto"
-    }
-  };
-
-  static PARTS = {
-    body: {
-      template: "systems/crp/templates/advancement.hbs"
-    }
-  };
-
-  constructor(actor) {
-    super({
-      id: `crp-advancement-${actor.id}`
-    });
-
-    this.actor = actor;
-    CRPAdvancementWindow.openWindows.set(actor.id, this);
-  }
-
-  static refreshForActor(actor) {
-    const window = CRPAdvancementWindow.openWindows.get(actor.id);
-    if (!window) return;
-
-    window._rememberScrollPosition();
-    window.render({ force: true });
-  }
-
-  async close(options = {}) {
-    CRPAdvancementWindow.openWindows.delete(this.actor.id);
-    return super.close(options);
-  }
-
-  _getScrollContainers() {
-    const root = this.element;
-    const containers = [
-      root?.closest?.(".window-content"),
-      root?.querySelector?.(".window-content"),
-      root?.querySelector?.(".crp-adv-panel"),
-      root
-    ].filter(el => el && typeof el.scrollTop === "number");
-
-    return [...new Set(containers)];
-  }
-
-  _rememberScrollPosition() {
-    const containers = this._getScrollContainers();
-    const scrolled = containers.find(el => el.scrollTop > 0);
-
-    this._pendingScrollState = {
-      main: scrolled?.scrollTop ?? containers[0]?.scrollTop ?? 0,
-      log: this.element.querySelector(".crp-adv-log-entries")?.scrollTop ?? 0
-    };
-  }
-
-  _restoreScrollPosition() {
-    if (!this._pendingScrollState) return;
-
-    const restore = () => {
-      for (const container of this._getScrollContainers()) {
-        container.scrollTop = this._pendingScrollState.main;
-      }
-
-      const log = this.element.querySelector(".crp-adv-log-entries");
-      if (log) log.scrollTop = this._pendingScrollState.log;
-    };
-
-    restore();
-    requestAnimationFrame(restore);
-  }
-
-  _prepareContext() {
-    const system = this.actor.system;
-    const config = CONFIG.CRP;
-    const attributesList = [];
-    const freeExperience = system.resources.experience.free ?? 0;
-    const fateValue = system.resources.fate.value ?? 0;
-    const fateMax = system.resources.fate.max ?? 2;
-    const fateCost = (fateMax + 1) * 3;
-
-    for (const key of Object.keys(config.attributes)) {
-      const attrData = system.attributes?.[key];
-      const attrValue = attrData?.value ?? 0;
-      const attrCost = (attrValue + 1) * 4;
-
-      attributesList.push({
-        key,
-        label: String(config.attributes[key]),
-        value: attrValue,
-        cost: attrCost,
-        disabled: attrValue >= 10 || attrCost > freeExperience,
-        skills: Object.keys(attrData?.skills ?? {}).map(sk => {
-          const skillValue = attrData.skills[sk].value ?? 0;
-          const skillCost = getSkillAdvancementCost(skillValue, attrValue);
-
-          return {
-            key: sk,
-            label: String(config.skills[sk]),
-            value: skillValue,
-            total: skillValue + attrValue,
-            cost: skillCost,
-            disabled: skillValue >= 10 || skillCost > freeExperience
-          };
-        })
-      });
-    }
-
-    return {
-      actor: this.actor,
-      system,
-      config,
-      experience: system.resources.experience,
-      fate: {
-        value: fateValue,
-        max: fateMax,
-        cost: fateCost,
-        disabled: fateCost > freeExperience
-      },
-      advancementLog: [...(system.resources.experience.log ?? [])].reverse(),
-      attributesList
-    };
-  }
-
-  _onRender(context, options) {
-    super._onRender(context, options);
-    this._restoreScrollPosition();
-
-    this.element.querySelectorAll("[data-advancement-type]").forEach(button => {
-      button.addEventListener("click", async () => {
-        if (button.disabled) return;
-
-        const type = button.dataset.advancementType;
-        const attr = button.dataset.attr;
-        const skill = button.dataset.skill;
-        const freeExperience = this.actor.system.resources.experience.free ?? 0;
-        const fateMax = this.actor.system.resources.fate.max ?? 2;
-        const attrValue = this.actor.system.attributes?.[attr]?.value ?? 0;
-        const skillValue = this.actor.system.attributes?.[attr]?.skills?.[skill]?.value ?? 0;
-        const cost = type === "fate"
-          ? (fateMax + 1) * 3
-          : type === "attribute"
-            ? (attrValue + 1) * 4
-            : getSkillAdvancementCost(skillValue, attrValue);
-
-        if (freeExperience < cost) return;
-        if (type === "attribute" && attrValue >= 10) return;
-        if (type === "skill" && skillValue >= 10) return;
-
-        button.disabled = true;
-
-        const path = type === "fate"
-          ? "system.resources.fate.max"
-          : type === "attribute"
-            ? `system.attributes.${attr}.value`
-            : `system.attributes.${attr}.skills.${skill}.value`;
-        const nextValue = type === "fate"
-          ? fateMax + 1
-          : type === "attribute" ? attrValue + 1 : skillValue + 1;
-        const label = type === "fate"
-          ? "Dolę"
-          : type === "attribute"
-            ? String(CONFIG.CRP.attributes[attr])
-            : String(CONFIG.CRP.skills[skill]);
-        const log = [...(this.actor.system.resources.experience.log ?? []), {
-          date: new Date().toLocaleString("pl-PL"),
-          text: `Zwiększono ${label} do ${nextValue} (koszt: ${cost} PD).`
-        }];
-
-        this._rememberScrollPosition();
-
-        try {
-          const updates = {
-            [path]: nextValue,
-            "system.resources.experience.free": freeExperience - cost,
-            "system.resources.experience.log": log
-          };
-
-          if (type === "attribute" && attr === "reason") {
-            const advantageUses = this.actor.system.resources.advantageUses?.value ?? 0;
-            updates["system.resources.advantageUses.value"] = advantageUses + 1;
-          }
-
-          await this.actor.update(updates);
-        } finally {
-          this.render({ force: true });
-        }
-      });
-    });
-  }
-}
 
 export class CRPActorSheet extends api.HandlebarsApplicationMixin(sheets.ActorSheetV2,) {
 
@@ -226,6 +27,8 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(sheets.ActorSh
     actions:{
       clearMoney: CRPActorSheet.#clearMoney,
       deleteItem: CRPActorSheet.#deleteItem,
+      addAdvantageUses: CRPActorSheet.#addAdvantageUses,
+      useAdvantageUses: CRPActorSheet.#useAdvantageUses,
     },
     form: {
       submitOnChange: true,
@@ -263,353 +66,8 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(sheets.ActorSh
   };
   
 
-  _getRootElement() {
-    return this.element instanceof HTMLElement
-      ? this.element
-      : this.element?.[0];
-  }
 
-  _getScrollContainers(root = this._getRootElement()) {
-    const containers = [
-      root?.closest?.(".window-content"),
-      root?.querySelector(".window-content"),
-      root?.querySelector(".crp-sheet"),
-      root
-    ].filter(el => el && typeof el.scrollTop === "number");
 
-    return [...new Set(containers)];
-  }
-
-  _getScrollTop() {
-    const containers = this._getScrollContainers();
-    const scrolled = containers.find(el => el.scrollTop > 0);
-
-    return scrolled?.scrollTop ?? containers[0]?.scrollTop ?? 0;
-  }
-
-  _rememberScrollPosition() {
-    this._pendingScrollTop = this._getScrollTop();
-  }
-
-  _restoreScrollPosition(scrollTop = this._pendingScrollTop) {
-    if (scrollTop === undefined) return;
-
-    const restore = () => {
-      for (const container of this._getScrollContainers()) {
-        container.scrollTop = scrollTop;
-      }
-    };
-
-    restore();
-    requestAnimationFrame(restore);
-    setTimeout(restore, 0);
-  }
-
-  async _openBioEditor() {
-    const current = this.document.system.bio?.description ?? "";
-    const value = foundry.utils.escapeHTML(current);
-
-    const content = `
-      <div class="crp-bio-dialog">
-        <prose-mirror
-          name="bio"
-          value="${value}">
-        </prose-mirror>
-      </div>
-    `;
-
-    const result = await foundry.applications.api.DialogV2.wait({
-      window: {
-        title: `Biografia: ${this.document.name}`,
-        icon: "fa-solid fa-feather"
-      },
-      position: {
-        width: 760
-      },
-      content,
-      buttons: [
-        {
-          action: "save",
-          label: "Zapisz",
-          icon: "fa-solid fa-save",
-          default: true,
-          callback: (_event, _button, dialog) =>
-            dialog.element.querySelector("prose-mirror[name='bio']")?.value ?? ""
-        },
-        {
-          action: "cancel",
-          label: "Anuluj",
-          icon: "fa-solid fa-times",
-          callback: () => null
-        }
-      ],
-      render: (_event, dialog) => {
-        dialog.element.querySelector("prose-mirror[name='bio']")?.focus();
-      }
-    });
-
-    if (result === null) return;
-
-    await this.document.update({
-      "system.bio.description": result
-    });
-
-    this.render(false);
-  }
-
-  _getForeignLanguageLimit() {
-    const value = Number(
-      this.document.system.attributes?.reason?.skills?.languages?.value ?? 0
-    );
-
-    if (value >= 10) return 4;
-    if (value >= 9) return 3;
-    if (value >= 6) return 2;
-    if (value >= 3) return 1;
-    return 0;
-  }
-
-  async _assignLanguage(item, role) {
-    if (item.type !== "language") {
-      ui.notifications.warn("W tym miejscu można umieszczać tylko przedmioty typu Język.");
-      return;
-    }
-
-    const sourceActor = item.parent?.documentName === "Actor" ? item.parent : null;
-    const belongsToActor = sourceActor?.id === this.document.id;
-    const duplicate = this.document.items.find(candidate =>
-      candidate.type === "language" &&
-      candidate.id !== item.id &&
-      candidate.name.trim().toLocaleLowerCase() === item.name.trim().toLocaleLowerCase() &&
-      String(candidate.system.alphabet).trim().toLocaleLowerCase() ===
-        String(item.system.alphabet).trim().toLocaleLowerCase()
-    );
-
-    if (duplicate) {
-      ui.notifications.warn("Postać zna już ten język.");
-      return;
-    }
-
-    const foreignLanguages = this.document.items.filter(candidate =>
-      candidate.type === "language" &&
-      candidate.system.role === "foreign" &&
-      candidate.id !== item.id
-    );
-
-    if (role === "foreign" && foreignLanguages.length >= this._getForeignLanguageLimit()) {
-      ui.notifications.warn("Postać nie może znać więcej języków obcych.");
-      return;
-    }
-
-    if (sourceActor && !belongsToActor && !sourceActor.isOwner && !game.user.isGM) {
-      ui.notifications.warn("Brak uprawnień do przeniesienia języka z aktora źródłowego.");
-      return;
-    }
-
-    const previousNative = role === "native"
-      ? this.document.items.find(candidate =>
-          candidate.type === "language" &&
-          candidate.system.role === "native" &&
-          candidate.id !== item.id
-        )
-      : null;
-
-    let assigned = item;
-
-    if (belongsToActor) {
-      if (item.system.role !== role) {
-        this._rememberScrollPosition();
-        await item.update({ "system.role": role });
-      }
-    } else {
-      const itemData = item.toObject();
-      delete itemData._id;
-      foundry.utils.setProperty(itemData, "system.role", role);
-
-      this._rememberScrollPosition();
-      [assigned] = await this.document.createEmbeddedDocuments("Item", [itemData]);
-    }
-
-    if (previousNative) {
-      this._rememberScrollPosition();
-      await this.document.deleteEmbeddedDocuments("Item", [previousNative.id]);
-    }
-
-    if (sourceActor && !belongsToActor) {
-      await sourceActor.deleteEmbeddedDocuments("Item", [item.id]);
-      sourceActor.sheet?.render(false);
-    }
-
-    assigned?.sheet?.rendered && assigned.sheet.render(false);
-  }
-
-  async _assignOriginLanguage(origin) {
-    const hasNativeLanguage = this.document.items.some(item =>
-      item.type === "language" && item.system.role === "native"
-    );
-    const languageUuid = origin.system.language;
-
-    if (hasNativeLanguage || !languageUuid || languageUuid === "none") return;
-
-    const sourceLanguage = await fromUuid(languageUuid);
-    if (!sourceLanguage || sourceLanguage.type !== "language") {
-      ui.notifications.warn("Nie udało się odnaleźć języka przypisanego do Pochodzenia.");
-      return;
-    }
-
-    const normalizedName = sourceLanguage.name.trim().toLocaleLowerCase();
-    const normalizedAlphabet = String(sourceLanguage.system.alphabet)
-      .trim()
-      .toLocaleLowerCase();
-    const existingLanguage = this.document.items.find(item =>
-      item.type === "language" &&
-      (
-        item.uuid === sourceLanguage.uuid ||
-        (
-          item.name.trim().toLocaleLowerCase() === normalizedName &&
-          String(item.system.alphabet).trim().toLocaleLowerCase() === normalizedAlphabet
-        )
-      )
-    );
-
-    if (existingLanguage) {
-      if (existingLanguage.system.role !== "native") {
-        this._rememberScrollPosition();
-        await existingLanguage.update({ "system.role": "native" });
-      }
-      return;
-    }
-
-    const languageData = sourceLanguage.toObject();
-    delete languageData._id;
-    foundry.utils.setProperty(languageData, "system.role", "native");
-
-    this._rememberScrollPosition();
-    await this.document.createEmbeddedDocuments("Item", [languageData]);
-  }
-
-  async _assignOrigin(item) {
-    if (item.type !== "origin") {
-      ui.notifications.warn("W tym miejscu można umieścić tylko przedmiot typu Pochodzenie.");
-      return;
-    }
-
-    const sourceActor = item.parent?.documentName === "Actor" ? item.parent : null;
-    const belongsToActor = sourceActor?.id === this.document.id;
-
-    if (sourceActor && !belongsToActor && !sourceActor.isOwner && !game.user.isGM) {
-      ui.notifications.warn("Brak uprawnień do przeniesienia Pochodzenia z aktora źródłowego.");
-      return;
-    }
-
-    let assigned = item;
-
-    if (!belongsToActor) {
-      const itemData = item.toObject();
-      delete itemData._id;
-
-      this._rememberScrollPosition();
-      [assigned] = await this.document.createEmbeddedDocuments("Item", [itemData]);
-    }
-
-    const previousOriginId = this.document.system.bio?.origin?.id;
-
-    this._rememberScrollPosition();
-    await this.document.update({
-      "system.bio.origin": {
-        id: assigned.id,
-        name: assigned.name,
-        img: assigned.img
-      }
-    });
-
-    await this._assignOriginLanguage(assigned);
-
-    if (previousOriginId && previousOriginId !== assigned.id) {
-      const previousOrigin = this.document.items.get(previousOriginId);
-      if (previousOrigin?.type === "origin") {
-        this._rememberScrollPosition();
-        await this.document.deleteEmbeddedDocuments("Item", [previousOriginId]);
-      }
-    }
-
-    if (sourceActor && !belongsToActor) {
-      if (sourceActor.system.bio?.origin?.id === item.id) {
-        await sourceActor.update({
-          "system.bio.origin": {
-            id: null,
-            name: null,
-            img: null
-          }
-        });
-      }
-
-      await sourceActor.deleteEmbeddedDocuments("Item", [item.id]);
-      sourceActor.sheet?.render(false);
-    }
-  }
-
-  async _assignTrait(item, category) {
-    if (item.type !== "trait") {
-      ui.notifications.warn("W tym miejscu można umieszczać tylko przedmioty typu Wada/Zaleta.");
-      return;
-    }
-
-    if (item.system.category !== category) {
-      const expected = category === "advantage" ? "Zaletę" : "Wadę";
-      ui.notifications.warn(`W tym slocie można umieścić tylko ${expected}.`);
-      return;
-    }
-
-    const limits = {
-      advantage: 2,
-      flaw: 1
-    };
-    const assignedTraits = this.document.items.filter(candidate =>
-      candidate.type === "trait" &&
-      candidate.system.category === category &&
-      candidate.id !== item.id
-    );
-
-    if (assignedTraits.length >= limits[category]) {
-      ui.notifications.warn(
-        category === "advantage"
-          ? "Postać może posiadać maksymalnie dwie Zalety."
-          : "Postać może posiadać maksymalnie jedną Wadę."
-      );
-      return;
-    }
-
-    const duplicate = assignedTraits.some(candidate =>
-      candidate.name.trim().toLocaleLowerCase() === item.name.trim().toLocaleLowerCase()
-    );
-
-    if (duplicate) {
-      ui.notifications.warn("Ten przedmiot jest już przypisany do postaci.");
-      return;
-    }
-
-    const sourceActor = item.parent?.documentName === "Actor" ? item.parent : null;
-    const belongsToActor = sourceActor?.id === this.document.id;
-
-    if (belongsToActor) return;
-
-    if (sourceActor && !sourceActor.isOwner && !game.user.isGM) {
-      ui.notifications.warn("Brak uprawnień do przeniesienia przedmiotu z aktora źródłowego.");
-      return;
-    }
-
-    const itemData = item.toObject();
-    delete itemData._id;
-
-    this._rememberScrollPosition();
-    await this.document.createEmbeddedDocuments("Item", [itemData]);
-
-    if (sourceActor) {
-      await sourceActor.deleteEmbeddedDocuments("Item", [item.id]);
-      sourceActor.sheet?.render(false);
-    }
-  }
 
   //  JEDYNE źródło danych dla template
 async _preparePartContext(partId, context) {
@@ -632,19 +90,9 @@ hp.percent = hp.max > 0
   ? Math.floor((hp.value / hp.max) * 100)
   : 0;
 
-const nativeLanguage = this.document.items.find(item =>
-  item.type === "language" && item.system.role === "native"
-) ?? null;
-const foreignLanguages = this.document.items.filter(item =>
-  item.type === "language" && item.system.role === "foreign"
-);
-const foreignLanguageLimit = this._getForeignLanguageLimit();
-const advantages = this.document.items.filter(item =>
-  item.type === "trait" && item.system.category === "advantage"
-);
-const flaws = this.document.items.filter(item =>
-  item.type === "trait" && item.system.category === "flaw"
-);
+
+
+
 const equippedArmor = system.equipment.armor?.id
   ? this.document.items.get(system.equipment.armor.id)
   : null;
@@ -684,26 +132,7 @@ return {
   npcSheetLocked: !!this.document.getFlag("crp", "npcSheetLocked"),
   tokenImg,
   characterSheetsLocked: game.settings.get("crp", "characterSheetsLocked"),
-  languages: {
-    native: nativeLanguage,
-    foreign: foreignLanguages,
-    used: foreignLanguages.length,
-    remaining: Math.max(0, foreignLanguageLimit - foreignLanguages.length),
-    limit: foreignLanguageLimit,
-    alphabets: {
-      latin: "Łaciński",
-      cyrillic: "Cyrylica",
-      arabic: "Arabski",
-      none: "Brak"
-    }
-  },
-  traits: {
-    advantages,
-    flaws,
-    advantagesRemaining: Math.max(0, 2 - advantages.length),
-    flawsRemaining: Math.max(0, 1 - flaws.length),
-    advantageUses: system.resources.advantageUses?.value ?? 0
-  }
+
 };
 
   }
@@ -720,6 +149,8 @@ return {
       formattedMoney: formatMoney(obolsToMoney(system.money.total)),
       items: this.actor.items,
       woundPenalty: this._preparewoundPenalty(),
+      traits: this._prepareTraits(),
+      languages: this._prepareLanguages()
     });
    
     return context;
@@ -736,15 +167,15 @@ return {
         skills: Object.keys(attrData?.skills ?? {}).map(sk => {
           const skillValue = attrData.skills[sk].value ?? 0;
           const attrValue = attrData?.value ?? 0;
-          const armorPenalty = this.document.getArmorSkillPenalty?.(sk) ?? 0;
+          const armorPenalty = this.actor.getArmorSkillPenalty?.(sk) ?? 0;
             return {
               key: sk,
               label: String(config.skills[sk]),
               value: skillValue,
               total: Math.max(
                 0,
-              isNPCActor(this.document)
-                ? (Number(system.npc?.attributes) || 0) - armorPenalty
+              isNPCActor(this.actor)
+                ? (Number(this.actor.system.npc?.attributes) || 0) - armorPenalty
                 : skillValue + attrValue - armorPenalty
               ),
             armorPenalty
@@ -782,6 +213,43 @@ return {
     }
     return penalty
  }
+ _prepareTraits(){
+  const flaws = this.document.items.filter(item =>
+    item.type === "trait" && item.system.category === "flaw"
+  );
+  const advantages = this.document.items.filter(item =>
+    item.type === "trait" && item.system.category === "advantage"
+  );
+ return {
+    flaws: flaws,
+    advantages: advantages,
+    advantagesRemaining: Math.max(0, 2 - advantages.length),
+    flawsRemaining: Math.max(0, 1 - flaws.length),
+    advantageUses: this.actor.system.resources.advantageUses?.value ?? 0
+ }
+}
+_prepareLanguages(){
+  const nativeLanguage = this.actor.items.find(item =>
+  item.type === "language" && item.system.role === "native"
+) ?? null;
+const foreignLanguages = this.actor.items.filter(item =>
+  item.type === "language" && item.system.role === "foreign"
+);
+const foreignLanguageLimit = this._getForeignLanguageLimit();
+  return {
+    native: nativeLanguage,
+    foreign: foreignLanguages,
+    used: foreignLanguages.length,
+    remaining: Math.max(0, foreignLanguageLimit - foreignLanguages.length),
+    limit: foreignLanguageLimit,
+    alphabets: {
+      latin: "Łaciński",
+      cyrillic: "Cyrylica",
+      arabic: "Arabski",
+      none: "Brak"
+    }
+  }
+}
 _onRender(context, options) {
   const scrollTop = this._pendingScrollTop ?? this._getScrollTop();
   super._onRender(context, options);
@@ -1518,46 +986,16 @@ html.querySelector(".crp-crest-clear")?.addEventListener("click", async ev => {
   await this.document.update({ "system.bio.crest": "" });
 });
 
-html.querySelector(".crp-use-advantage")?.addEventListener("click", async ev => {
-  ev.preventDefault();
-  ev.stopPropagation();
-
-  const current = this.document.system.resources.advantageUses?.value ?? 0;
-
-  if (current <= 0) {
-    ui.notifications.warn("Brak dostępnych użyć Zalet.");
-    return;
-  }
-
-  this._rememberScrollPosition();
-  await this.document.update({
-    "system.resources.advantageUses.value": Math.max(0, current - 1)
-  });
-});
-
-html.querySelector(".crp-add-advantage-use")?.addEventListener("click", async ev => {
-  ev.preventDefault();
-  ev.stopPropagation();
-
-  const current = this.document.system.resources.advantageUses?.value ?? 0;
-
-  this._rememberScrollPosition();
-  await this.document.update({
-    "system.resources.advantageUses.value": current + 1
-  });
-});
-
-
 }
-  _processFormData(event, form, formData) {
-    return super._processFormData(event, form, formData);
-  }
+_processFormData(event, form, formData) {
+  return super._processFormData(event, form, formData);
+}
 async _onDrop(event) {
   super._onDrop(event);
   const data = event.dataTransfer;
   const toElement = event.toElement;
   const parent = toElement.closest(".crp-eq-slot")
-  if(toElement.classList.value.includes("slot") || parent.classList.value.includes("slot")){
+  if(toElement.classList.value.includes("slot") || parent?.classList?.value.includes("slot")){
       let updateData = {};
     const droppedItem = JSON.parse(data.getData("text/plain"))
     const itemDoc = await fromUuid(droppedItem.uuid);
@@ -1633,15 +1071,11 @@ async _onDrop(event) {
   await this.actor.update({
     "system.money": emptyMoney
   });
+  this.render({force:true})
   }
   static async #deleteItem(ev){
  const btn = ev.target.closest(".crp-item-delete");
-
   if (!btn) return;
-
-  ev.preventDefault();
-  ev.stopPropagation();
-
   if (
     btn.closest(".crp-bio") &&
     game.settings.get("crp", "characterSheetsLocked")
@@ -1701,22 +1135,142 @@ async _onDrop(event) {
   }
 
   this._rememberScrollPosition();
-  await this.document.deleteEmbeddedDocuments("Item", [itemId]);
+  await this.actor.deleteEmbeddedDocuments("Item", [itemId]);
 
   if (Object.keys(updates).length) {
     this._rememberScrollPosition();
-    await this.document.update(updates);
+    await this.actor.update(updates);
   }
+  this.render({force:true})
+  }
+  static async #addAdvantageUses(){
+    const current = this.actor.system.resources.advantageUses?.value ?? 0;
+    await this.actor.update({
+      "system.resources.advantageUses.value": current + 1
+    });
+    this.render({force:true})
+}
+static async #useAdvantageUses(){
+  const current = this.actor.system.resources.advantageUses?.value ?? 0;
+  if (current <= 0) {
+    ui.notifications.warn("Brak dostępnych użyć Zalet.");
+    return;
+  }
+  await this.actor.update({
+    "system.resources.advantageUses.value": Math.max(0, current - 1)
+  });
+  this.render({force:true})
+}
+    _getRootElement() {
+    return this.element instanceof HTMLElement
+      ? this.element
+      : this.element?.[0];
+  }
+
+  _getScrollContainers(root = this._getRootElement()) {
+    const containers = [
+      root?.closest?.(".window-content"),
+      root?.querySelector(".window-content"),
+      root?.querySelector(".crp-sheet"),
+      root
+    ].filter(el => el && typeof el.scrollTop === "number");
+
+    return [...new Set(containers)];
+  }
+
+  _getScrollTop() {
+    const containers = this._getScrollContainers();
+    const scrolled = containers.find(el => el.scrollTop > 0);
+
+    return scrolled?.scrollTop ?? containers[0]?.scrollTop ?? 0;
+  }
+
+  _rememberScrollPosition() {
+    this._pendingScrollTop = this._getScrollTop();
+  }
+
+  _restoreScrollPosition(scrollTop = this._pendingScrollTop) {
+    if (scrollTop === undefined) return;
+
+    const restore = () => {
+      for (const container of this._getScrollContainers()) {
+        container.scrollTop = scrollTop;
+      }
+    };
+
+    restore();
+    requestAnimationFrame(restore);
+    setTimeout(restore, 0);
+  }
+
+  async _openBioEditor() {
+    const current = this.document.system.bio?.description ?? "";
+    const value = foundry.utils.escapeHTML(current);
+
+    const content = `
+      <div class="crp-bio-dialog">
+        <prose-mirror
+          name="bio"
+          value="${value}">
+        </prose-mirror>
+      </div>
+    `;
+
+    const result = await foundry.applications.api.DialogV2.wait({
+      window: {
+        title: `Biografia: ${this.document.name}`,
+        icon: "fa-solid fa-feather"
+      },
+      position: {
+        width: 760
+      },
+      content,
+      buttons: [
+        {
+          action: "save",
+          label: "Zapisz",
+          icon: "fa-solid fa-save",
+          default: true,
+          callback: (_event, _button, dialog) =>
+            dialog.element.querySelector("prose-mirror[name='bio']")?.value ?? ""
+        },
+        {
+          action: "cancel",
+          label: "Anuluj",
+          icon: "fa-solid fa-times",
+          callback: () => null
+        }
+      ],
+      render: (_event, dialog) => {
+        dialog.element.querySelector("prose-mirror[name='bio']")?.focus();
+      }
+    });
+
+    if (result === null) return;
+
+    await this.document.update({
+      "system.bio.description": result
+    });
+
+    this.render(false);
+  }
+
+  _getForeignLanguageLimit() {
+    const value = Number(
+      this.actor.system.attributes?.reason?.skills?.languages?.value ?? 0
+    );
+    if (value >= 10) return 4;
+    if (value >= 9) return 3;
+    if (value >= 6) return 2;
+    if (value >= 3) return 1;
+    return 0;
   }
 }
 function isNPCActor(actor) {
   return CRP_NPC_ACTOR_TYPES.has(actor?.type);
 }
 
-function getSkillAdvancementCost(skillValue, attrValue) {
-  const baseCost = skillValue === 0 ? 2 : skillValue + 1;
-  return skillValue + 1 > attrValue ? baseCost * 2 : baseCost;
-}
+
 
 async function getAttackModifier(actor, { allowManeuvers = true } = {}) {
   const strikeText = text => [...text].map(character => `${character}\u0336`).join("");

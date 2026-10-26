@@ -45,7 +45,7 @@
     <div class="crp-stat">
     <label>Manewry</label>
     <div class="crp-stat-value">
-      {{system.maneuver.value}} / {{system.maneuver.max}}
+      {{system.derived.maneuver.value}} / {{system.derived.maneuver.max}}
     </div>
   </div>
 
@@ -90,8 +90,7 @@
     </div>
   <!-- TOKEN -->
   <div class="crp-token">
-    {{log actor}}
-    <img src="{{actor.tokenImg}}" data-action="editImage" data-edit="prototypeToken.texture.src">
+    <img src="{{actor.prototypeToken.texture.src}}" data-action="editImage" data-edit="prototypeToken.texture.src">
   </div>
 
 </header>
