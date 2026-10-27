@@ -5,9 +5,9 @@
 <div class="crp-bio">
 
   <div class="crp-bio-identity">
-    <section class="crp-bio-identity-section">
+    <div class="crp-bio-identity-section">
       <h2>Pochodzenie</h2>
-      <div class="crp-origin-drop">
+      <div class="crp-origin-drop" data-action="openItem" data-id="{{system.bio.origin.id}}">
         {{#if system.bio.origin.id}}
           <img src="{{system.bio.origin.img}}" class="crp-bio-identity-img">
           <div class="crp-bio-identity-details">
@@ -26,9 +26,9 @@
           </div>
         {{/if}}
       </div>
-    </section>
+    </div>
 
-    <section class="crp-bio-identity-section">
+    <div class="crp-bio-identity-section">
       <h2>Herb postaci</h2>
       <div class="crp-crest-slot">
         <textarea class="crp-crest-description"
@@ -47,17 +47,18 @@
           {{/if}}
         </div>
       </div>
-    </section>
+    </div>
   </div>
 
   <div class="crp-languages">
-    <section class="crp-language-section">
+    <div class="crp-language-section">
       <h2>Język ojczysty</h2>
       <div class="crp-language-drop" data-language-role="native">
         {{#if languages.native}}
           <div class="crp-item-row crp-language-row"
                draggable="true"
-               data-item-id="{{languages.native.id}}">
+               data-id="{{languages.native.id}}"
+               data-action="openItem">
             <img src="{{languages.native.img}}" class="crp-item-img">
             <div class="crp-language-details">
               <strong>{{languages.native.name}}</strong>
@@ -74,16 +75,17 @@
           <div class="crp-language-empty">Przeciągnij tutaj język ojczysty</div>
         {{/if}}
       </div>
-    </section>
+    </div>
 
-    <section class="crp-language-section">
+    <div class="crp-language-section">
       <h2>Języki obce {{languages.used}}/{{languages.limit}}</h2>
       <div class="crp-language-drop crp-language-foreign"
            data-language-role="foreign">
         {{#each languages.foreign as |language|}}
           <div class="crp-item-row crp-language-row"
                draggable="true"
-               data-item-id="{{language.id}}">
+               data-id="{{language.id}}"
+               data-action="openItem">
             <img src="{{language.img}}" class="crp-item-img">
             <div class="crp-language-details">
               <strong>{{language.name}}</strong>
@@ -106,9 +108,9 @@
           {{/unless}}
         {{/if}}
       </div>      
-    </section>
+    </div>
     {{#if languages.unassigned}}
-    <section class="crp-language-section">
+    <div class="crp-language-section">
       <h2>Języki obce nieprzypisane</h2>
             <div class="crp-language-drop crp-language-foreign" data-language-role="unassigned">
             {{#each languages.unassigned as |language|}}
@@ -130,12 +132,12 @@
           </div>
         {{/each}}
             </div>
-    </section>
+    </div>
     {{/if}}
   </div>
 
   <div class="crp-traits">
-    <section class="crp-trait-section">
+    <div class="crp-trait-section">
       <div class="crp-trait-header">
         <h2>Zalety: {{traits.advantageUses}}</h2>
         <div class="crp-trait-uses-actions">
@@ -158,7 +160,8 @@
         {{#each traits.advantages as |trait|}}
           <div class="crp-item-row crp-trait-row"
                draggable="true"
-               data-item-id="{{trait.id}}">
+               data-id="{{trait.id}}"
+               data-action="openItem">
             <img src="{{trait.img}}" class="crp-item-img">
             <div class="crp-item-name">{{trait.name}}</div>
             {{#unless ../characterSheetsLocked}}
@@ -174,16 +177,17 @@
           <div class="crp-trait-empty">Przeciągnij tutaj Zaletę</div>
         {{/if}}
       </div>
-    </section>
+    </div>
 
-    <section class="crp-trait-section">
+    <div class="crp-trait-section">
       <h2>Wada</h2>
       <div class="crp-trait-drop"
            data-trait-category="flaw">
         {{#each traits.flaws as |trait|}}
           <div class="crp-item-row crp-trait-row"
                draggable="true"
-               data-item-id="{{trait.id}}">
+               data-id="{{trait.id}}"
+               data-action="openItem">
             <img src="{{trait.img}}" class="crp-item-img">
             <div class="crp-item-name">{{trait.name}}</div>
             {{#unless ../characterSheetsLocked}}
@@ -199,7 +203,7 @@
           <div class="crp-trait-empty">Przeciągnij tutaj Wadę</div>
         {{/if}}
       </div>
-    </section>
+    </div>
   </div>
 
   <div class="crp-bio-header">
