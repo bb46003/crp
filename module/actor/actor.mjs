@@ -295,8 +295,9 @@ export class CRPActor extends Actor {
         displayName: CONST.TOKEN_DISPLAY_MODES.ALWAYS,
         displayBars: CONST.TOKEN_DISPLAY_MODES.ALWAYS,
         bar1: {
-          ttribute: "derived.health",
+          attribute: "derived.health",
         },
+        actorLink: actor.type === "character",
       },
       ["system.resources.advantageUses.value"]: reasonValue,
     });
@@ -317,6 +318,7 @@ export class CRPActor extends Actor {
         for (const token of dependedTokens) {
           await token.update({ name: tokenName });
         }
+        this.sheet.render({force:true})
       }
     }
     const tokenImg = data?.prototypeToken?.texture?.src ?? false;
@@ -332,9 +334,10 @@ export class CRPActor extends Actor {
         for (const token of dependedTokens) {
           await token.update({ ["texture.src"]: tokenImg });
         }
+        this.sheet.render({force:true})
       }
     }
-
+    this.sheet.render({force:true})
     const hasExperienceChange = [
       "system.resources.experience",
       "system.resources.experience.value",
@@ -355,6 +358,7 @@ export class CRPActor extends Actor {
     const mountedChanged = hasChangedPath(data, "system.equipment.mounted");
 
     if (mountedChanged) refreshMountedActorUnderlays(actor);
+
   }
 }
 

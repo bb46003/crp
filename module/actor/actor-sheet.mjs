@@ -40,7 +40,9 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
       rollInitiative: CRPActorSheet.#rollInitiative,
       advancement: CRPActorSheet.#advancement,
       crestSelect: CRPActorSheet.#crestSelect,
-      openItem: CRPActorSheet.#openItem
+      openItem: CRPActorSheet.#openItem,
+      clearHand: CRPActorSheet.#clearHand,
+      removeArmor : CRPActorSheet.#removeArmor
     },
     form: {
       submitOnChange: true,
@@ -225,7 +227,55 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
     event.dataTransfer.setData("text/plain", JSON.stringify(dragData));
     event.dataTransfer.effectAllowed = "move";
   }
+  static async #clearHand(ev){
+    const target = ev.target;
+    const element = target.closest(".crp-item-row");
+    const slot = element.dataset.slot;
+    const itemId = element.dataset.id;
+    const item = this.actor.items.get(itemId);
+    const hand = item.system.skill;
+    switch(hand){
+        case "twoHanded":
+        case "ranged":
+      await this.actor.update({
+        ["system.equipment.leftHand"]: {
+                id: "",
+                name: "",
+                img: "",
+              },
+                ["system.equipment.rightHand"]: {
+                id: "",
+                name: "",
+                img: "",
+              },
+      });
+      break;
+      case "oneHanded":
+        case "lightWeapons":
+              await this.actor.update({
+                [`system.equipment.${slot}`]: {
+                id: "",
+                name: "",
+                img: "",
+              },
+      });
+      break;
 
+    }
+    this.render({force:true})
+  }
+  static async #removeArmor(ev){
+    await this.actor.update({
+                    ["system.equipment.armor"]: {
+                id: "",
+                name:"",
+                img: "",
+              }
+    })
+    this.render({force:true})
+
+
+  }
   async _onDrop(event) {
 
     const data = event.dataTransfer;
@@ -266,17 +316,36 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
                 img: itemDoc.img,
               },
             };
-            break;
-          case "rightHand":
-            updateData = {
+            if(itemDoc.system.skill === "twoHanded" || itemDoc.system.skill ==="ranged"){
+              updateData = {
               ["system.equipment.rightHand"]: {
                 id: itemDoc.id,
                 name: itemDoc.name,
                 img: itemDoc.img,
               },
             };
+            }
+            break;
+          case "rightHand":
+            updateData = {...updateData,
+              ["system.equipment.rightHand"]: {
+                id: itemDoc.id,
+                name: itemDoc.name,
+                img: itemDoc.img,
+              },
+            };
+            if(itemDoc.system.skill === "twoHanded" || itemDoc.system.skill ==="ranged"){
+              updateData = {...updateData,
+              ["system.equipment.leftHand"]: {
+                id: itemDoc.id,
+                name: itemDoc.name,
+                img: itemDoc.img,
+              },
+            };
+            }
             break;
         }
+        
         await this.actor.update(updateData);
         this.render({ force: true });
       }
@@ -541,12 +610,6 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
       item.sheet.render({force:true})
     }
   }
-  _getRootElement() {
-    return this.element instanceof HTMLElement
-      ? this.element
-      : this.element?.[0];
-  }
-
   _getForeignLanguageLimit() {
     const value = Number(
       this.actor.system.attributes?.reason?.skills?.languages?.value ?? 0,

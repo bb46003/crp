@@ -572,6 +572,7 @@ Hooks.on("crpMountedChanged", (actor) => {
 });
 
 Hooks.on("updateToken", (tokenDocument, changed) => {
+  console.log(tokenDocument)
   const mountedChanged = [
     "actorData.system.equipment.mounted",
     "delta.system.equipment.mounted",

@@ -70,10 +70,10 @@
     <div class="crp-eq-header">Prawa ręka</div>
 
     {{#if system.equipment.rightHand.id}}
-      <div class="crp-item-row" data-slot="rightHand">
+      <div class="crp-item-row" data-slot="rightHand" data-action="openItem" data-id="{{system.equipment.rightHand.id}}">
         <img src="{{document.system.equipment.rightHand.img}}" class="crp-item-img" data-action="openItem" data-id="{{system.equipment.rightHand.id}}">
         <span>{{system.equipment.rightHand.name}}</span>
-            <button class="crp-slot-clear" data-slot="rightHand">
+            <button class="crp-slot-clear" data-slot="rightHand" data-action="clearHand">
       ✖
     </button>
       </div>
@@ -94,7 +94,7 @@
       <div class="crp-item-row" data-slot="leftHand" data-action="openItem" data-id="{{system.equipment.leftHand.id}}">
         <img src="{{document.system.equipment.leftHand.img}}" class="crp-item-img">
         <span>{{system.equipment.leftHand.name}}</span>
-            <button class="crp-slot-clear" data-slot="leftHand">
+            <button class="crp-slot-clear" data-slot="leftHand" data-action="clearHand">
       ✖
     </button>
       </div>
@@ -115,7 +115,7 @@
       <div class="crp-item-row">
         <img src="{{document.system.equipment.armor.img}}" class="crp-item-img" data-action="openItem" data-id="{{system.equipment.armor.id}}">
         <span>{{system.equipment.armor.name}}</span>
-            <button class="crp-slot-clear" data-slot="armor">
+            <button class="crp-slot-clear" data-slot="armor" data-action="removeArmor">
       ✖
     </button>
       </div>
