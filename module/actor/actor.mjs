@@ -518,39 +518,29 @@ const totalAttackModifier =
   mountedAdvantage +
   selectedAttackModifier +
   (startsAimedAttack || oneTimeAimedAttack ? 3 : aimedAttackBonus);
-
+  
 const msg = await ChatMessage.create({
-content: `
-  <div class="crp-defense-choice"
-    data-message-id=""
-    data-attacker="${this.uuid}"
-    data-defender="${targetActor.uuid}"
-    data-skill="${attackSkill}"
-data-item-type="${itemType}"
-data-range="${itemRange}"
-data-attack-modifier="${totalAttackModifier}"
-data-selected-attack-modifier="${selectedAttackModifier}"
-data-attacker-mounted="${attackerMounted ? "true" : "false"}"
-data-defender-mounted="${defenderMounted ? "true" : "false"}">
-
-    <p>Wybierz obronę:</p>
-
-<button 
-  data-defense="parry"
-  ${!canParry ? "disabled" : ""}
-  data-blocked-by-range="${isRangedAttack ? "true" : "false"}">
-  Parowanie
-</button>
-
-<button data-defense="dodge">Unik${defenderMounted ? " (-2)" : ""}</button>
-
-<button data-defense="shield" ${!hasShield ? "disabled" : ""}>
-  Tarcza
-</button>
-  </div>
-`
+  content: "",
+  flags: {
+    crp: {
+      defenseChoice: {
+        attacker: this.uuid,
+        defender: targetActor.uuid,
+        attackSkill,
+        itemType,
+        itemRange,
+        totalAttackModifier,
+        selectedAttackModifier,
+        attackerMounted,
+        defenderMounted,
+        canParry,
+        isRangedAttack,
+        hasShield,
+      },
+    },
+  },
 });
-
+await msg.regenerateAtakRollContent();
 await msg.update({
   content: msg.content.replace(
     'data-message-id=""',

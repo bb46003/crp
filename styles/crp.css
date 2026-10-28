@@ -2117,3 +2117,23 @@ nav.crp-tabs {
 .crp-stats.npc{
   a{text-align: center;}
 }
+.crp-chat,
+.crp-chat *:not(a):not(i) {
+  font-family: serif;
+  color: #4b3014;
+}
+
+.crp-chat {
+  border: 10px double rgba(75, 48, 20, 1);
+  background: url("../assets/parchment.png");
+  background-size: cover;
+  button{
+            width: 100%;
+        margin-bottom: 5px;
+        justify-content: center;
+        justify-self: center;
+  }
+  h3{
+        font-size: 1.2rem;
+  }
+}

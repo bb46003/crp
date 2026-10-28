@@ -1,0 +1,33 @@
+<div class="crp-defense-choice"
+     data-message-id="{{messageId}}"
+     data-attacker="{{attacker}}"
+     data-defender="{{defender}}"
+     data-skill="{{attackSkill}}"
+     data-item-type="{{itemType}}"
+     data-range="{{itemRange}}"
+     data-attack-modifier="{{totalAttackModifier}}"
+     data-selected-attack-modifier="{{selectedAttackModifier}}"
+     data-attacker-mounted="{{attackerMounted}}"
+     data-defender-mounted="{{defenderMounted}}">
+
+  <p>Wybierz obronę:</p>
+
+  <button
+    data-defense="parry"
+    data-action="defenseChoice"
+    {{#unless canParry}}disabled{{/unless}}
+    data-blocked-by-range="{{isRangedAttack}}">
+    Parowanie
+  </button>
+
+  <button data-defense="dodge" data-action="defenseChoice">
+    Unik{{#if defenderMounted}} (-2){{/if}}
+  </button>
+
+  <button
+    data-defense="shield" data-action="defenseChoice"
+    {{#unless hasShield}}disabled{{/unless}}>
+    Tarcza
+  </button>
+
+</div>

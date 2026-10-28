@@ -581,79 +581,6 @@ Hooks.on("renderChatMessageHTML", (message, html) => {
     });
   }
 });
-Hooks.on("updateCombat", async (combat, changed) => {
-  if (changed.started === false) {
-    await clearCombatManeuverFlags(combat);
-    return;
-  }
-
-  if (
-    !combat.started ||
-    (changed.turn === undefined && changed.round === undefined)
-  )
-    return;
-
-  if (changed.round !== undefined) {
-    await flushPendingCombatInitiatives(combat);
-  }
-
-  // RESET FLAG
-  if (game.user.isGM) {
-    await Promise.all(
-      combat.combatants
-        .map((c) => c.actor)
-        .filter(Boolean)
-        .map((actor) => actor.setFlag("crp", "processedTurn", false)),
-    );
-  }
-
-  // AKTUALNY COMBATANT
-  const combatant = combat.combatant;
-  if (!combatant) return;
-
-  const actor = combatant.actor;
-
-  if (game.user.isGM && actor) {
-    for (const flagName of ["aimedAttack", "defensiveAttack"]) {
-      const maneuver = actor.getFlag("crp", flagName);
-
-      if (
-        maneuver?.combatId === combat.id &&
-        maneuver?.combatantId === combatant.id &&
-        combat.round >= maneuver.expiresRound
-      ) {
-        await actor.unsetFlag("crp", flagName);
-      }
-    }
-  }
-
-  if (!actor) return;
-
-  if (actor.type !== "character") return;
-
-  await CRPRoll.processTurn(actor);
-});
-
-Hooks.on("deleteCombat", async (combat) => {
-  await clearCombatManeuverFlags(combat);
-});
-
-Hooks.on("renderActorDirectory", (app, html) => {
-  if (!game.user.isGM) return;
-
-  if (html.querySelector(".crp-btn")) return;
-
-  const btn = document.createElement("button");
-  btn.innerHTML = "👑 CRP Panel";
-  btn.classList.add("crp-btn");
-
-  btn.addEventListener("click", () => {
-    new CRPGMPanel().render(true);
-  });
-
-  html.querySelector(".directory-header").appendChild(btn);
-});
-
 Hooks.on("renderChatMessageHTML", (message, html) => {
   const buttons = html.querySelectorAll(".crp-defense-choice button");
 
@@ -1042,3 +969,76 @@ Hooks.on("renderChatMessageHTML", (message, html) => {
     });
   }
 });
+Hooks.on("updateCombat", async (combat, changed) => {
+  if (changed.started === false) {
+    await clearCombatManeuverFlags(combat);
+    return;
+  }
+
+  if (
+    !combat.started ||
+    (changed.turn === undefined && changed.round === undefined)
+  )
+    return;
+
+  if (changed.round !== undefined) {
+    await flushPendingCombatInitiatives(combat);
+  }
+
+  // RESET FLAG
+  if (game.user.isGM) {
+    await Promise.all(
+      combat.combatants
+        .map((c) => c.actor)
+        .filter(Boolean)
+        .map((actor) => actor.setFlag("crp", "processedTurn", false)),
+    );
+  }
+
+  // AKTUALNY COMBATANT
+  const combatant = combat.combatant;
+  if (!combatant) return;
+
+  const actor = combatant.actor;
+
+  if (game.user.isGM && actor) {
+    for (const flagName of ["aimedAttack", "defensiveAttack"]) {
+      const maneuver = actor.getFlag("crp", flagName);
+
+      if (
+        maneuver?.combatId === combat.id &&
+        maneuver?.combatantId === combatant.id &&
+        combat.round >= maneuver.expiresRound
+      ) {
+        await actor.unsetFlag("crp", flagName);
+      }
+    }
+  }
+
+  if (!actor) return;
+
+  if (actor.type !== "character") return;
+
+  await CRPRoll.processTurn(actor);
+});
+
+Hooks.on("deleteCombat", async (combat) => {
+  await clearCombatManeuverFlags(combat);
+});
+
+Hooks.on("renderActorDirectory", (app, html) => {
+  if (!game.user.isGM) return;
+
+  if (html.querySelector(".crp-btn")) return;
+
+  const btn = document.createElement("button");
+  btn.innerHTML = "👑 CRP Panel";
+  btn.classList.add("crp-btn");
+
+  btn.addEventListener("click", () => {
+    new CRPGMPanel().render(true);
+  });
+
+  html.querySelector(".directory-header").appendChild(btn);
+});
+

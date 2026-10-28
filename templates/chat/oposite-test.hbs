@@ -1,0 +1,108 @@
+
+{{!-- ========================================================= --}}
+{{!-- DOLA — ponowny rzut                                  --}}
+{{!-- ========================================================= --}}
+{{#if fate}}
+  <button
+    type="button"
+    class="crp-use-fate"
+    data-action="useFate"
+    data-actor-uuid="{{fate.actorUuid}}"
+    data-attr="{{fate.attr}}"
+    data-skill="{{fate.skill}}"
+    data-modifier="{{fate.modifier}}">
+    ✨ Użyj Doli
+  </button>
+{{/if}}
+
+{{!-- ========================================================= --}}
+{{!-- WYNIK WYBORU OBRONY                                    --}}
+{{!-- ========================================================= --}}
+{{#if defenseResult}}
+  <div class="crp-defense-result">
+    🛡 Wybrałeś: <b>{{defenseResult.label}}</b>
+  </div>
+{{/if}}
+
+
+{{!-- ========================================================= --}}
+{{!-- PODSUMOWANIE OBRAŻEŃ                                  --}}
+{{!-- ========================================================= --}}
+{{#if damage}}
+  <div class="crp-damage">
+    <p>
+      💥 Obrażenia bazowe: <b>{{damage.base}}</b>
+    </p>
+
+    <p>
+      🛡 Redukcja: {{damage.reduction}}
+      ({{damage.armorProtection}} pancerz
+      {{#if damage.shieldProtection}}
+        + {{damage.shieldProtection}} tarcza
+      {{/if}}
+      {{#if damage.defenseEagles}}
+        + {{damage.defenseEagles}} 🦅
+      {{/if}}
+      {{#if damage.defenseShields}}
+        - {{damage.defenseShields}} 🛡️
+      {{/if}})
+    </p>
+
+    {{#if damage.hasAttackModifiers}}
+      <p>
+        ⚔ Modyfikator ataku:
+        {{#if damage.attackEagles}}
+          +{{damage.attackEagles}} 🦅
+        {{/if}}
+        {{#if damage.attackShields}}
+          -{{damage.attackShields}} 🛡️
+        {{/if}}
+      </p>
+    {{/if}}
+
+    <p>
+      👉 Obrażenia końcowe: <b>{{damage.total}}</b>
+    </p>
+  </div>
+{{/if}}
+
+
+{{!-- ========================================================= --}}
+{{!-- KONTROLKI ROZLICZANIA OBRAŻEŃ                          --}}
+{{!-- ========================================================= --}}
+{{#if damageControls}}
+  <div
+    class="crp-damage-control"
+    data-message-id="{{damageControls.messageId}}"
+    data-defender="{{damageControls.defenderUuid}}"
+    data-damage="{{damageControls.damage}}">
+
+    <button
+      type="button"
+      class="crp-damage-choice"
+      data-action="damageChoice"
+      data-action-type="accept"
+      data-message-id="{{damageControls.messageId}}"
+      data-defender="{{damageControls.defenderUuid}}"
+      data-damage="{{damageControls.damage}}"
+      {{#if damageControls.disabled}}disabled{{/if}}>
+      Przyjmij obrażenia
+    </button>
+
+    <button
+      type="button"
+      class="crp-damage-choice"
+      data-action="damageChoice"
+      data-action-type="cancel"
+      data-message-id="{{damageControls.messageId}}"
+      data-defender="{{damageControls.defenderUuid}}"
+      data-damage="{{damageControls.damage}}"
+      {{#if damageControls.disabled}}disabled{{/if}}>
+      Anuluj obrażenia
+    </button>
+
+    <div class="crp-damage-status">
+      {{damageControls.status}}
+    </div>
+  </div>
+{{/if}}

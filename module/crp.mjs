@@ -34,7 +34,8 @@ import {
 import { CRPCombat } from "./combat.mjs";
 import { registerHandlebarsHelpers } from "./handlebars.mjs";
 import { CRPToken } from "./tokens.mjs";
-
+import { CRPChatMessage } from "./chat/chatMessage.mjs";
+import { CRPChatLog } from "./chat/chatLog.mjs";
 
 const CRP_PENDING_INITIATIVE_UPDATES = new Map();
 
@@ -143,8 +144,9 @@ Hooks.once("init", () => {
   // OVERRIDE INITIATIVE ROLL
   // ======================
 
-
-  registerHandlebarsHelpers();
+CONFIG.ChatMessage.documentClass = CRPChatMessage;
+   CONFIG.ui.chat = CRPChatLog;
+registerHandlebarsHelpers();
    
 });
 
