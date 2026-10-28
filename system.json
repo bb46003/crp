@@ -52,6 +52,7 @@
       "weapon": {}
     }
   },
+  "initiative": "1d6",
   "url": "https://trpg.pl",
   "manifest": "https://raw.githubusercontent.com/BZL23/CRP/main/system.json",
   "download": "https://github.com/BZL23/CRP/archive/refs/heads/main.zip"

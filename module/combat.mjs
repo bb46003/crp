@@ -1,3 +1,5 @@
+import { CRPRoll } from "./rolls/roll.mjs";
+
 export class CRPCombat extends Combat {
   async nextRound() {
     super.nextRound();
@@ -38,4 +40,21 @@ export class CRPCombat extends Combat {
       ),
     );
   }
+  async rollInitiative(ids, option){
+ids = typeof ids === "string" ? [ids] : ids;
+
+    for (const id of ids) {
+      const combatant = this.combatants.get(id);
+      if (!combatant) continue;
+
+      const actor = combatant.actor;
+      if (!actor) continue;
+
+      // NASZ SYSTEM
+      await CRPRoll.initiative(actor, { combatant });
+    }
+
+    return this;
+  };
+  
 }

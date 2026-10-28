@@ -155,8 +155,8 @@ export class CRPActorData extends TypeDataModel {
         initiativeTotal: new NumberField({ initial: 0 }),
 
         health: new SchemaField({
-          value: new NumberField({ initial: 8 }),
-          max: new NumberField({ initial: 8, min: 1 }),
+          value: new NumberField({required: true, integer: true, initial: 8, min: 0}),
+          max: new NumberField({ required: true, integer: true, initial: 8, min: 1}),
         }),
 
         maneuver: new SchemaField({
