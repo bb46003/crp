@@ -1,0 +1,113 @@
+  <section class="crp-content crp-tab {{tabs.bio.cssClass}} tab"
+  action-data="tab"
+  data-group="items"
+  data-tab="bio">
+<div class="crp-bio">
+
+  <div class="crp-bio-identity">
+    <div class="crp-bio-identity-section">
+      <h2>Herb postaci</h2>
+      <div class="crp-crest-slot">
+        <textarea class="crp-crest-description"
+                  name="system.bio.crestDescription"
+                  placeholder="Opis herbu">{{system.bio.crestDescription}}</textarea>
+
+        <div class="crp-crest-image-wrap">
+          {{#if system.bio.crest}}
+            <img src="{{system.bio.crest}}"
+                 class="crp-crest-select crp-crest-image"
+                 title="Kliknij, aby zmienić herb">
+          {{else}}
+            <button type="button" class="crp-crest-select crp-crest-empty" data-action="crestSelect">
+              Wybierz grafikę herbu
+            </button>
+          {{/if}}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="crp-traits">
+    <div class="crp-trait-section">
+      <div class="crp-trait-header">
+        <h2>Zalety: {{traits.advantageUses}}</h2>
+        <div class="crp-trait-uses-actions">
+          <button type="button"
+                  class="crp-add-advantage-use"
+                  data-action="addAdvantageUses"
+                  title="Dodaj użycie Zalety">
+            +
+          </button>
+          <button type="button"
+                  class="crp-use-advantage"
+                  data-action="useAdvantageUses"
+                  {{#unless traits.advantageUses}}disabled{{/unless}}>
+            Użyj
+          </button>
+        </div>
+      </div>
+      <div class="crp-trait-drop"
+           data-trait-category="advantage">
+        {{#each traits.advantages as |trait|}}
+          <div class="crp-item-row crp-trait-row"
+               draggable="true"
+               data-id="{{trait.id}}"
+               data-action="openItem">
+            <img src="{{trait.img}}" class="crp-item-img">
+            <div class="crp-item-name">{{trait.name}}</div>
+            {{#unless ../characterSheetsLocked}}
+              <button type="button"
+                      class="crp-item-delete"
+                      data-action="deleteItem"
+                      data-item-id="{{trait.id}}">✖</button>
+            {{/unless}}
+          </div>
+        {{/each}}
+
+        {{#if traits.advantagesRemaining}}
+          <div class="crp-trait-empty">Przeciągnij tutaj Zaletę</div>
+        {{/if}}
+      </div>
+    </div>
+
+    <div class="crp-trait-section">
+      <h2>Wada</h2>
+      <div class="crp-trait-drop"
+           data-trait-category="flaw">
+        {{#each traits.flaws as |trait|}}
+          <div class="crp-item-row crp-trait-row"
+               draggable="true"
+               data-id="{{trait.id}}"
+               data-action="openItem">
+            <img src="{{trait.img}}" class="crp-item-img">
+            <div class="crp-item-name">{{trait.name}}</div>
+            {{#unless ../characterSheetsLocked}}
+              <button type="button"
+                      class="crp-item-delete"
+                      data-action="deleteItem"
+                      data-item-id="{{trait.id}}">✖</button>
+            {{/unless}}
+          </div>
+        {{/each}}
+
+        {{#if traits.flawsRemaining}}
+          <div class="crp-trait-empty">Przeciągnij tutaj Wadę</div>
+        {{/if}}
+      </div>
+    </div>
+  </div>
+
+  <div class="crp-bio-header">
+  <h2>Opis</h2>
+  </div>
+
+  <div class="crp-bio-content">
+      {{formInput
+    description.field
+    value=description.value
+    enriched=description.enriched
+    toggled="true"
+  }}
+  </div>
+
+</div>
+  </section>

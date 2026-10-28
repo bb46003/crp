@@ -366,13 +366,7 @@ export class CRPActor extends Actor {
         CRPAdvancementWindow.refreshForActor(actor);
       }
     }
-    const mountedChanged = hasChangedPath(data, "system.equipment.mounted");
 
-    if (mountedChanged){
-        for (const token of dependedTokens) {
-          await token.object?.refreshMountedUnderlay();
-        }
-    };
   }
   async atackRoll(itemId){
 

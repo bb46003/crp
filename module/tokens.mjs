@@ -4,79 +4,156 @@ export class CRPToken extends foundry.canvas.placeables.Token {
   static UNDERLAY_NAME = "crp-mounted-underlay";
   static UNDERLAY_SCALE = 1.45;
 
-  /** @type {PIXI.Sprite|null} */
-  constructor(...args) {
-    super(...args);
+  static UNDERLAY_TEXTURE = null;
 
-  }
+  /** @type {PIXI.Sprite | null} */
+  _crpMountUnderlay = null;
+
+  /** @type {Promise<void> | null} */
+  _crpMountUnderlayPromise = null;
+
   /**
-   * Remove the mounted underlay.
+   * Return the cached mounted underlay texture.
+   * @returns {Promise<PIXI.Texture>}
+   */
+  static getUnderlayTexture() {
+    this.UNDERLAY_TEXTURE ??= foundry.canvas.loadTexture(CRP_MOUNT_UNDERLAY);
+    return this.UNDERLAY_TEXTURE;
+  }
+
+  /**
+   * Whether this token's actor is mounted.
+   * @returns {boolean}
+   */
+  isMounted() {
+    return this.actor?.system?.equipment?.mounted === true;
+  }
+
+  /**
+   * Remove the mounted underlay sprite.
    */
   removeMountedUnderlay() {
     const sprite = this._crpMountUnderlay;
-    if (!sprite) return;
-
     this._crpMountUnderlay = null;
 
-    sprite.destroy({ children: true });
+    if (sprite && !sprite.destroyed) {
+      sprite.removeFromParent();
+      sprite.destroy({ children: true });
+    }
   }
 
   /**
    * Create or refresh the mounted underlay.
    */
   async refreshMountedUnderlay() {
-    const mounted = this.actor?.system?.equipment?.mounted;
-
-    if (!mounted) {
+    if (!this.isMounted()) {
       this.removeMountedUnderlay();
       return;
     }
 
-    if (!canvas?.ready || !this.mesh?.parent) return;
+    if (!canvas?.ready || !this.mesh?.parent || this.destroyed) return;
 
-    let sprite = this._crpMountUnderlay;
+    // Prevent concurrent calls from creating duplicate sprites.
+    if (this._crpMountUnderlayPromise) {
+      await this._crpMountUnderlayPromise;
 
-    // Create the sprite only when necessary.
-    if (!sprite || sprite.destroyed) {
-      const texture = await foundry.canvas.loadTexture(CRP_MOUNT_UNDERLAY);
-      if (!texture || this.destroyed) return;
+      if (!this.isMounted() || this.destroyed) {
+        this.removeMountedUnderlay();
+        return;
+      }
 
-      // The token could have been unmounted while loading the texture.
-      if (!this.actor?.system?.equipment?.mounted) return;
-
-      sprite = PIXI.Sprite.from(texture);
-      sprite.name = CRPToken.UNDERLAY_NAME;
-      sprite.eventMode = "none";
-      sprite.interactive = false;
-
-      this._crpMountUnderlay = sprite;
-
-      // Remove duplicate underlays from the same container.
-      for (const child of this.mesh.parent.children) {
-        if (
-          child.name === CRPToken.UNDERLAY_NAME &&
-          child !== sprite
-        ) {
-          child.destroy();
-        }
+      if (this._crpMountUnderlay && !this._crpMountUnderlay.destroyed) {
+        this._refreshMountedUnderlayPosition();
+        this._refreshMountedUnderlayAppearance();
+        return;
       }
     }
 
-    const parent = this.mesh.parent;
+    let sprite = this._crpMountUnderlay;
 
-    // Move the sprite if the token's container changed.
-    if (sprite.parent && sprite.parent !== parent) {
-      sprite.parent.removeChild(sprite);
+    if (!sprite || sprite.destroyed) {
+      this._crpMountUnderlayPromise = (async () => {
+        const texture = await CRPToken.getUnderlayTexture();
+
+        // The token or mounted state may have changed while loading.
+        if (this.destroyed || !this.isMounted() || !canvas?.ready || !this.mesh?.parent) {
+          return;
+        }
+
+        // Another call may already have created the sprite.
+        if (this._crpMountUnderlay && !this._crpMountUnderlay.destroyed) {
+          return;
+        }
+
+        sprite = PIXI.Sprite.from(texture);
+        sprite.name = CRPToken.UNDERLAY_NAME;
+        sprite.eventMode = "none";
+        sprite.interactive = false;
+
+        this._crpMountUnderlay = sprite;
+
+        // Clean up any orphaned underlays left by previous renders.
+        for (const child of this.mesh.parent.children) {
+          if (child.name === CRPToken.UNDERLAY_NAME && child !== sprite) {
+            child.removeFromParent();
+            child.destroy({ children: true });
+          }
+        }
+
+        this._refreshMountedUnderlayPosition();
+        this._refreshMountedUnderlayAppearance();
+      })();
+
+      try {
+        await this._crpMountUnderlayPromise;
+      } catch (error) {
+        console.error("CRP | Failed to create mounted underlay", error);
+        this.removeMountedUnderlay();
+      } finally {
+        this._crpMountUnderlayPromise = null;
+      }
+    } else {
+      this._refreshMountedUnderlayPosition();
+      this._refreshMountedUnderlayAppearance();
+    }
+  }
+
+  /**
+   * Position the underlay immediately behind the token mesh.
+   */
+  _refreshMountedUnderlayPosition() {
+    const sprite = this._crpMountUnderlay;
+    const mesh = this.mesh;
+
+    if (!sprite || sprite.destroyed || !mesh?.parent || this.destroyed) return;
+
+    const parent = mesh.parent;
+
+    // Ensure the sprite and mesh belong to the same container.
+    if (sprite.parent !== parent) {
+      sprite.removeFromParent();
+      parent.addChild(sprite);
     }
 
-    // Keep the underlay immediately behind the token mesh.
-    if (!sprite.parent) {
-      const meshIndex = parent.getChildIndex(this.mesh);
-      parent.addChildAt(sprite, Math.max(0, meshIndex));
-    }
+    // Match the token's local position.
+    sprite.position.copyFrom(mesh.position);
 
-    // Synchronize transform and visibility.
-    sprite.position.copyFrom(this.mesh.position);
+    // Remove the sprite first, then insert it immediately before the mesh.
+    // This avoids index-shift errors when the sprite is already in the container.
+    sprite.removeFromParent();
+
+    const meshIndex = parent.getChildIndex(mesh);
+    parent.addChildAt(sprite, meshIndex);
+  }
+
+  /**
+   * Synchronize the underlay's size, rotation, opacity and visibility.
+   */
+  _refreshMountedUnderlayAppearance() {
+    const sprite = this._crpMountUnderlay;
+    const mesh = this.mesh;
+
+    if (!sprite || sprite.destroyed || !mesh || this.destroyed) return;
 
     const { width, height } = this.document.getSize();
 
@@ -86,66 +163,24 @@ export class CRPToken extends foundry.canvas.placeables.Token {
 
     sprite.angle = this.document.rotation ?? 0;
     sprite.alpha = this.document.alpha ?? 1;
-    sprite.visible = this.mesh.visible !== false;
-
-    // Restore the correct layer order if necessary.
-    const meshIndex = parent.getChildIndex(this.mesh);
-    const spriteIndex = parent.getChildIndex(sprite);
-
-    if (spriteIndex > meshIndex) {
-      parent.setChildIndex(sprite, Math.max(0, meshIndex));
-    }
-console.log({
-  meshPosition: this.mesh.position,
-  spritePosition: sprite.position,
-  meshWorld: this.mesh.getGlobalPosition(new PIXI.Point()),
-  spriteWorld: sprite.getGlobalPosition(new PIXI.Point()),
-  meshIndex: parent.getChildIndex(this.mesh),
-  spriteIndex: parent.getChildIndex(sprite),
-  spriteVisible: sprite.visible,
-  spriteAlpha: sprite.alpha,
-  spriteSize: {
-    width: sprite.width,
-    height: sprite.height,
-  },
-});
+    sprite.visible = mesh.visible !== false;
   }
-_refreshMountedUnderlayPosition() {
-  const sprite = this._crpMountUnderlay;
-  if (!sprite || sprite.destroyed || !this.mesh?.parent) return;
 
-  const parent = this.mesh.parent;
-
-if (sprite.parent !== parent) {
-  sprite.removeFromParent();
-  parent.addChild(sprite);
-}
-
-// Najpierw ustaw pozycję.
-sprite.position.copyFrom(this.mesh.position);
-
-// Następnie umieść sprite bezpośrednio przed meshem w kolejności dzieci,
-// czyli pod nim, jeśli mesh jest renderowany później.
-const meshIndex = parent.getChildIndex(this.mesh);
-parent.setChildIndex(sprite, meshIndex);
-  const spriteIndex = parent.getChildIndex(sprite);
-
-  if (spriteIndex > meshIndex) {
-    parent.setChildIndex(sprite, meshIndex);
-  }
-}
   /**
-   * Refresh the underlay after Foundry refreshes the token.
+   * Foundry calls refresh when the token needs its visual state updated.
    */
-refresh(...args) {
-  super.refresh(...args);
+  refresh(...args) {
+    super.refresh(...args);
 
-  this._refreshMountedUnderlayPosition();
-  void this.refreshMountedUnderlay();
-}
+    if (this.isMounted()) {
+      void this.refreshMountedUnderlay();
+    } else {
+      this.removeMountedUnderlay();
+    }
+  }
 
   /**
-   * Clean up when the placeable is destroyed.
+   * Remove the underlay when Foundry destroys this token object.
    */
   _destroy(options) {
     this.removeMountedUnderlay();
@@ -153,7 +188,9 @@ refresh(...args) {
   }
 
   /**
-   * Get all active canvas tokens belonging to an actor.
+   * Get all active and currently rendered tokens belonging to an actor.
+   * @param {Actor} actor
+   * @returns {Token[]}
    */
   static getMountedActorTokens(actor) {
     const tokens = new Set(actor?.getActiveTokens?.(false) ?? []);
@@ -176,7 +213,8 @@ refresh(...args) {
   }
 
   /**
-   * Refresh mounted underlays for all tokens belonging to an actor.
+   * Refresh underlays for every token belonging to an actor.
+   * @param {Actor} actor
    */
   static refreshMountedActorUnderlays(actor) {
     for (const token of this.getMountedActorTokens(actor)) {
@@ -187,7 +225,10 @@ refresh(...args) {
   }
 
   /**
-   * Check whether an update contains a mounted-state change.
+   * Detect changes to the mounted property in Foundry update data.
+   * Supports flattened and nested update objects.
+   * @param {object} changed
+   * @returns {boolean}
    */
   static hasMountedStateChanged(changed) {
     const paths = [
@@ -197,16 +238,13 @@ refresh(...args) {
     ];
 
     return paths.some((path) => {
-      // Foundry updates can contain flattened paths.
       if (Object.hasOwn(changed ?? {}, path)) return true;
-
-      // Also support nested update objects.
       return foundry.utils.getProperty(changed, path) !== undefined;
     });
   }
 
   /**
-   * Register the hooks that cannot be handled by the token's own lifecycle.
+   * Register the hooks required by the mounted underlay.
    */
   static initializeHooks() {
     Hooks.on("canvasReady", () => {
@@ -222,14 +260,21 @@ refresh(...args) {
         void token.refreshMountedUnderlay();
       }
     });
-Hooks.on("refreshToken", (token) => {
-  if (token instanceof CRPToken) {
-    token._refreshMountedUnderlayPosition();
-  }
-});
-    Hooks.on("deleteToken", (tokenDocument) => {
-      const token = tokenDocument?.object;
 
+    Hooks.on("refreshToken", (token) => {
+      if (!(token instanceof CRPToken)) return;
+
+      if (token.isMounted()) {
+        token._refreshMountedUnderlayPosition();
+        token._refreshMountedUnderlayAppearance();
+        void token.refreshMountedUnderlay();
+      } else {
+        token.removeMountedUnderlay();
+      }
+    });
+
+    Hooks.on("deleteToken", (tokenDocument) => {
+      const token = canvas.tokens?.get(tokenDocument.id);
       if (token instanceof CRPToken) {
         token.removeMountedUnderlay();
       }
@@ -239,10 +284,8 @@ Hooks.on("refreshToken", (token) => {
       CRPToken.refreshMountedActorUnderlays(actor);
     });
 
-    Hooks.on("updateToken", (tokenDocument, changed) => {
-      if (!CRPToken.hasMountedStateChanged(changed)) return;
-
-      const token = tokenDocument?.object;
+    Hooks.on("updateToken", (tokenDocument) => {
+      const token = canvas.tokens?.get(tokenDocument.id);
 
       if (token instanceof CRPToken) {
         void token.refreshMountedUnderlay();

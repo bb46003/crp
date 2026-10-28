@@ -83,7 +83,7 @@ Hooks.once("init", () => {
 
   foundry.documents.collections.Actors.registerSheet(
     "crp",
-    CRPNPCCommonerSheet,
+    CRPNPCKnechtSheet,
     {
       types: ["npc"],
       makeDefault: true,

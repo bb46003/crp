@@ -44,7 +44,8 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
       openItem: CRPActorSheet.#openItem,
       clearHand: CRPActorSheet.#clearHand,
       removeArmor : CRPActorSheet.#removeArmor,
-      atack : CRPActorSheet.#atack
+      atack : CRPActorSheet.#atack,
+      lockSheet: CRPActorSheet.#lockSheet
     },
     form: {
       submitOnChange: true,
@@ -83,6 +84,19 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
   async _prepareContext(options) {
     const context = await super._prepareContext(options);
     const system = this.actor.system;
+    const npcSheetLocked = this.actor.getFlag("crp", "npcSheetLocked")
+let tokenImg = null;
+let isToken = false
+if (this.actor.type !== "character") {
+  const parent = this.document.parent;
+
+  if (parent instanceof foundry.documents.TokenDocument) {
+    tokenImg = parent.texture.src;
+    isToken = true
+  }else{
+    tokenImg = this.actor.prototypeToken.texture.src;
+  }
+}
     Object.assign(context, {
       actor: this.actor,
       system: system,
@@ -100,6 +114,9 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
         enriched: await enrich(this.actor.system.bio.description),
         field: this.actor.system.schema.fields.bio.fields.description,
       },
+      npcSheetLocked: npcSheetLocked,
+      tokenImg: tokenImg,
+      isToken: isToken,
     });
 
     return context;
@@ -509,6 +526,13 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
     const itemId = element?.dataset?.id ?? "";
     await this.actor.atackRoll(itemId)
   }
+  static async #lockSheet(ev){
+    const locked = !!this.actor.getFlag("crp", "npcSheetLocked");
+    await this.actor.setFlag("crp", "npcSheetLocked", !locked);
+    const target = ev.target;
+    this.setY(target)
+     this.render({force:true})
+  }
   async _onDrop(event) {
 
     const data = event.dataTransfer;
@@ -636,12 +660,24 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
   _processFormData(event,form,formData){
     const target = event.target;
     this.setY(target)
+    if(formData?.object?.["document.parent.texture.src"]){
+       const parent = this.document.parent;
+       parent.update({["texture.src"]:formData?.object?.["document.parent.texture.src"]})
+    }
     return super._processFormData(event,form,formData)
   }
   setY(target){
-    const section = target.closest(".tab.active");
+    const section = this.element.querySelector(".tab.active");
     this.y = section.scrollTop;
   }
+  get isEditable() {
+    if(this.actor !== "character"){
+      const npcSheetLocked = this.actor.getFlag("crp", "npcSheetLocked")
+      return !npcSheetLocked
+    }else{
+    return super.isEditable;
+  }
+}
 }
 
 function isNPCActor(actor) {
