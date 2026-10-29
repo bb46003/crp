@@ -126,13 +126,14 @@ export class CRPRoll {
       armorPenalty,
       displayModifier,
     };
-
-    if (chat) {
-      const content = this.renderRollHTML(actor, attrKey, skillKey, result, {
+    const content = this.renderRollHTML(actor, attrKey, skillKey, result, {
         usedFate: false,
         allowFate: effectiveAllowFate,
         rollLabel,
       });
+    Object.assign(result, {content:content}) 
+    if (chat) {
+
 
       await ChatMessage.create({
         speaker: ChatMessage.getSpeaker({ actor }),

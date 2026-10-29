@@ -403,7 +403,7 @@ export class CRPActor extends Actor {
     if (!targetActor) return;
 
 const equipment = targetActor.system.equipment;
-const defenderMounted = !!equipment.mounted;
+const defenderMounted = equipment.mounted;
 
 const isValidParryWeapon = (item) => {
   if (!item) return false;
@@ -518,10 +518,30 @@ const totalAttackModifier =
   mountedAdvantage +
   selectedAttackModifier +
   (startsAimedAttack || oneTimeAimedAttack ? 3 : aimedAttackBonus);
-  
+const attr = this._mapSkillToAttribute(attackSkill)
+  const atackRoll = await CRPRoll.skill(
+  this,
+  attr,
+  attackSkill,{
+    chat:false,
+    allowFate: false,
+    modifier: totalAttackModifier,
+    displayModifier: selectedAttackModifier
+  })
+const penalty = this.system.derived.woundPenalty ?? 0;
+
+Object.assign(atackRoll,{
+  name: this.name,
+  skill:CONFIG.CRP.skills[attackSkill],
+  attr: CONFIG.CRP.attributes[attr],
+  displayModifier: selectedAttackModifier,
+  rany: penalty>0,
+  karaRany:penalty,
+  pancerz: atackRoll.armorPenalty > 0,
+}) 
 const msg = await ChatMessage.create({
   content: "",
-  flags: {
+  system: {
     crp: {
       defenseChoice: {
         attacker: this.uuid,
@@ -536,7 +556,9 @@ const msg = await ChatMessage.create({
         canParry,
         isRangedAttack,
         hasShield,
+        defenceChoice:true
       },
+      atackRoll: atackRoll
     },
   },
 });

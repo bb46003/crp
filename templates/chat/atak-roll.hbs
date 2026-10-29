@@ -1,33 +1,73 @@
-<div class="crp-defense-choice"
-     data-message-id="{{messageId}}"
-     data-attacker="{{attacker}}"
-     data-defender="{{defender}}"
-     data-skill="{{attackSkill}}"
-     data-item-type="{{itemType}}"
-     data-range="{{itemRange}}"
-     data-attack-modifier="{{totalAttackModifier}}"
-     data-selected-attack-modifier="{{selectedAttackModifier}}"
-     data-attacker-mounted="{{attackerMounted}}"
-     data-defender-mounted="{{defenderMounted}}">
-
+<div class="crp-defense-choice">
+  <p class="crp-atak-roll">
+    <strong>Atakujący: {{atackRoll.name}}</strong><br>
+    <label>Wynik Testu Ataku:</label><br>
+    {{atackRoll.skill}} ({{atackRoll.attr}})<br>
+    🎲 {{lookup atackRoll.dice 0}}, {{lookup atackRoll.dice 1}} = {{atackRoll.total}}<br>
+    Cel: {{atackRoll.target}}
+    {{#if (gte atackRoll.displayModifier 0)}}
+      (Modyfikator +{{atackRoll.displayModifier}})
+    {{else}}
+      (Modyfikator {{atackRoll.displayModifier}})
+    {{/if}}
+    <br>
+    {{#if atackRoll.rany}}
+    ⚠ Kara za rany: {{atackRoll.karaRany}}<br>
+    {{/if}}
+    {{#if atackRoll.pancerz}}
+    ⚠ Kara za pancerz: -{{atackRoll.armorPenaltyValue}}<br>
+    {{/if}}
+    Margin: {{atackRoll.margin}}<br>
+  </p>
+  {{log this}}
+ {{#if defenseChoice.defenceChoice}}
   <p>Wybierz obronę:</p>
 
   <button
     data-defense="parry"
     data-action="defenseChoice"
-    {{#unless canParry}}disabled{{/unless}}
-    data-blocked-by-range="{{isRangedAttack}}">
+    {{#if (or defenseChoice.canParry defenseChoice.isRangedAttack)}}disabled{{/if}}>
     Parowanie
   </button>
 
   <button data-defense="dodge" data-action="defenseChoice">
-    Unik{{#if defenderMounted}} (-2){{/if}}
+    Unik{{#if defenseChoice.defenderMounted}} (-2){{/if}}
   </button>
 
   <button
     data-defense="shield" data-action="defenseChoice"
-    {{#unless hasShield}}disabled{{/unless}}>
+    {{#if defenseChoice.hasShield}}disabled{{/if}}>
     Tarcza
   </button>
-
+{{else}}
+  <p class="crp-defence-roll">
+    <strong>Broniący: {{defenceRoll.name}}</strong><br>
+    <label>Wynik Testu Ataku:</label><br>
+    {{defenceRoll.skill}} ({{defenceRoll.attr}})<br>
+    🎲 {{lookup defenceRoll.dice 0}}, {{lookup defenceRoll.dice 1}} = {{defenceRoll.total}}<br>
+    Cel: {{defenceRoll.target}}
+    {{#if (gte defenceRoll.displayModifier 0)}}
+      (Modyfikator +{{defenceRoll.displayModifier}})
+    {{else}}
+      (Modyfikator {{defenceRoll.displayModifier}})
+    {{/if}}
+    <br>
+    {{#if defenceRoll.rany}}
+    ⚠ Kara za rany: {{defenceRoll.karaRany}}<br>
+    {{/if}}
+    {{#if defenceRoll.pancerz}}
+    ⚠ Kara za pancerz: -{{defenceRoll.armorPenaltyValue}}<br>
+    {{/if}}
+    Margin: {{defenceRoll.margin}}<br>
+  </p>
+  {{#if (eq winner "A")}}
+    <label class="crp-winner">👉 Wygrywa atakujący {{atackRoll.name}} </label>
+  {{else}}
+    {{#if (eq winner "B")}}
+      <label class="crp-winner">👉 Wygrywa broniący {{defenceRoll.name}} </label>
+    {{else}}
+      <label class="crp-winner">👉 Remis</label>
+    {{/if}}
+  {{/if}}
+  {{/if}}
 </div>

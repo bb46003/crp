@@ -1,3 +1,5 @@
+import { CRPRoll } from "../rolls/roll.mjs";
+
 export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
   static DEFAULT_OPTIONS = {
     ...super.DEFAULT_OPTIONS,
@@ -29,44 +31,35 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
 
 static async #onDefenseChoice(event, target) {
   event.preventDefault();
-  const container = target.closest(".crp-defense-choice");
+  const messageId = target.closest(".crp-chat").dataset.messageId;
+  const message = await game.messages.get(messageId)
   const {
-    messageId,
-    attacker: attackerUuid,
-    defender: defenderUuid,
+    defender,
     skill,
     itemType,
-    range,
-    attackerMounted,
+    isRangedAttack,
     defenderMounted,
-  } = container.dataset;
-
+    attackerMounted,
+  } = message.system.crp.defenseChoice;
+  const atackRoll = message.system.crp.atackRoll;
   const defenseType = target.dataset.defense;
-  const attackModifier = Number(container.dataset.attackModifier) || 0;
-  const selectedAttackModifier = Number(container.dataset.selectedAttackModifier) || 0;
-  const attackerIsMounted = attackerMounted === "true";
-  const defenderIsMounted = defenderMounted === "true";
+  const defenderActor = await fromUuid(defender);
 
-  const [attacker, defender] = await Promise.all([
-    fromUuid(attackerUuid),
-    fromUuid(defenderUuid),
-  ]);
+  if (!defenderActor) return;
 
-  if (!attacker || !defender) return;
-
-  if (!game.user.isGM && !defender.isOwner) {
+  if (!game.user.isGM && !defenderActor.isOwner) {
     ui.notifications.warn("Nie kontrolujesz tej postaci");
     return;
   }
 
-  const mountedDefenseModifier = defenderIsMounted && !attackerIsMounted ? 2 : 0;
+  const mountedDefenseModifier = defenderMounted && !attackerMounted ? 2 : 0;
   let defenseModifier = mountedDefenseModifier;
   let defSkill;
 
-  const equipment = defender.system.equipment;
+  const equipment = defenderActor.system.equipment;
   const handItems = ["rightHand", "leftHand"].map((slot) => {
     const id = equipment[slot]?.id;
-    return id ? defender.items.get(id) : null;
+    return id ? defenderActor.items.get(id) : null;
   });
 
   const getCombatModifier = ({ item, skill, unarmed = false } = {}) => {
@@ -81,15 +74,15 @@ static async #onDefenseChoice(event, target) {
   const getTotal = (skill) => {
     if (!skill) return -999;
 
-    const attr = defender._mapSkillToAttribute(skill);
+    const attr = defenderActor._mapSkillToAttribute(skill);
     if (!attr) return -999;
 
-    const attributes = defender.system.attributes[attr];
+    const attributes = defenderActor.system.attributes[attr];
     return (attributes?.value ?? 0) + (attributes?.skills?.[skill]?.value ?? 0);
   };
 
   if (defenseType === "parry") {
-    if (itemType === "weapon" && range === "ranged") {
+    if (itemType === "weapon" && isRangedAttack) {
       ui.notifications.warn("Nie można parować ataku dystansowego");
       return;
     }
@@ -125,7 +118,7 @@ static async #onDefenseChoice(event, target) {
     defenseModifier += best.modifier;
   } else if (defenseType === "dodge") {
     defSkill = "athletics";
-    defenseModifier = defenderIsMounted ? -2 : mountedDefenseModifier;
+    defenseModifier = defenderMounted ? -2 : mountedDefenseModifier;
   } else if (defenseType === "shield") {
     if (!handItems.some((item) => item?.type === "shield")) {
       ui.notifications.warn("Brak tarczy");
@@ -137,8 +130,8 @@ static async #onDefenseChoice(event, target) {
   }
 
   const combat = game.combat;
-  const combatant = combat?.combatants.find((c) => c.actor?.id === defender.id);
-  const defensiveAttack = defender.getFlag("crp", "defensiveAttack");
+  const combatant = combat?.combatants.find((c) => c.actor?.id === defenderActor.id);
+  const defensiveAttack = defenderActor.getFlag("crp", "defensiveAttack");
 
   const defensiveAttackBonus = defensiveAttack?.oneTime
     ? Number(defensiveAttack.bonus) || 3
@@ -152,41 +145,74 @@ static async #onDefenseChoice(event, target) {
     defenseModifier += defensiveAttackBonus;
 
     if (defensiveAttack.oneTime) {
-      await defender.unsetFlag("crp", "defensiveAttack");
+      await defenderActor.unsetFlag("crp", "defensiveAttack");
     }
   }
-
-  const result = await attacker.opposedTest(
-    defender,
-    attacker._mapSkillToAttribute(skill),
-    skill,
-    defender._mapSkillToAttribute(defSkill),
+  const defAttr = defenderActor._mapSkillToAttribute(defSkill);
+  const selectedDeffModifier = defenseType === "dodge" && defenderMounted ? -2 : 0;
+  const defenceRoll = await CRPRoll.skill(
+    defenderActor,
+    defAttr,
     defSkill,
-    {
-      actorAOptions: {
-        modifier: attackModifier,
-        displayModifier: selectedAttackModifier,
-      },
-      actorBOptions: {
+    {   
+        chat:false,
+        allowFate: false,
         modifier: defenseModifier,
-        displayModifier: defenseType === "dodge" && defenderIsMounted ? -2 : null,
+        displayModifier: selectedDeffModifier
       },
-    },
+    
   );
+const penalty = defenderActor.system.derived.woundPenalty ?? 0;
 
-  if (result?.winner !== "A") return;
+Object.assign(defenceRoll,{
+  name: defenderActor.name,
+  skill:CONFIG.CRP.skills[defSkill],
+  attr: CONFIG.CRP.attributes[defAttr],
+  displayModifier: selectedDeffModifier,
+  rany: penalty>0,
+  karaRany:penalty,
+  pancerz: defenceRoll.armorPenalty > 0,
+}) 
+let winner;
 
-  const marginA = result.rollA?.margin ?? 0;
-  const marginB = result.rollB?.margin ?? 0;
+    if (
+      atackRoll.critical === "criticalSuccess" &&
+      defenceRoll.critical === "criticalSuccess"
+    ) {
+      winner = "tie";
+    } else if (atackRoll.critical === "criticalSuccess") {
+      winner = "A";
+    } else if (defenceRoll.critical === "criticalSuccess") {
+      winner = "B";
+    } else if (
+      atackRoll.critical === "criticalFailure" &&
+      defenceRoll.critical === "criticalFailure"
+    ) {
+      winner = "tie";
+    } else if (atackRoll.critical === "criticalFailure") {
+      winner = "B";
+    } else if (defenceRoll.critical === "criticalFailure") {
+      winner = "A";
+    } else {
+      if (atackRoll.margin > defenceRoll.margin) {
+        winner = "A";
+      } else if (defenceRoll.margin > atackRoll.margin) {
+        winner = "B";
+      } else {
+        winner = "tie";
+      }
+    }
+  const marginA = atackRoll?.margin ?? 0;
+  const marginB = defenceRoll?.margin ?? 0;
   const baseDamage = Math.max(0, marginA - marginB);
 
-  const attackEagles = result.rollA?.eagles ?? 0;
-  const attackShields = result.rollA?.shields ?? 0;
+  const attackEagles = atackRoll?.eagles ?? 0;
+  const attackShields = atackRoll?.shields ?? 0;
   const hasAttackModifiers = attackEagles !== 0 || attackShields !== 0;
 
   let damage = Math.max(0, baseDamage + attackEagles - attackShields);
 
-  const armorProtection = defender.items.get(equipment.armor?.id)?.system?.protection ?? 0;
+  const armorProtection = defenderActor.items.get(equipment.armor?.id)?.system?.protection ?? 0;
 
   const shieldProtection =
     defenseType === "shield"
@@ -197,8 +223,8 @@ static async #onDefenseChoice(event, target) {
         )
       : 0;
 
-  const defenseEagles = result.rollB?.eagles ?? 0;
-  const defenseShields = result.rollB?.shields ?? 0;
+  const defenseEagles = defenceRoll?.eagles ?? 0;
+  const defenseShields = defenceRoll?.shields ?? 0;
 
   const reduction = Math.max(
     0,
@@ -207,27 +233,11 @@ static async #onDefenseChoice(event, target) {
 
   damage = Math.max(0, damage - reduction);
 
-  const defenderFate = defender.system.resources.fate.value ?? 0;
+  const defenderFate = defenderActor.system.resources.fate.value ?? 0;
   const needsDamageChoice = damage > 0 && defenderFate > 0;
   const autoDamage = damage > 0 && defenderFate < 1;
 
-  if (autoDamage) await defender.applyDamage(damage);
-
-  if (!result.messageId) return;
-
-  const msg = game.messages.get(result.messageId);
-  if (!msg) return;
-
-  const fate = defenderFate !== 0
-    ? {
-        use: true,
-        actorUuid: defender.uuid,
-        skill: defSkill,
-        attr: getTotal(defSkill) - (defender.system.attributes[defender._mapSkillToAttribute(defSkill)]?.skills?.[defSkill]?.value ?? 0),
-        modifier: defenseModifier,
-      }
-    : { use: false };
-
+  if (autoDamage) await defenderActor.applyDamage(damage);
   const defenseResult = {
     label: {
       parry: "Parowanie",
@@ -235,7 +245,6 @@ static async #onDefenseChoice(event, target) {
       shield: "Tarcza",
     }[defenseType] ?? defenseType,
   };
-
   const damageResult = {
     base: baseDamage,
     reduction,
@@ -244,33 +253,22 @@ static async #onDefenseChoice(event, target) {
     hasAttackModifiers,
     total: damage,
   };
+  await message.update({
+    system: {
+      crp: {
+        defenceRoll: defenceRoll,
+        damageResult: damageResult,
+        defenseResult: defenseResult,
+        defenseChoice: {
+           defenceChoice:false
+        },
+        winner: winner
+      }
+    }
+  })
+  await message.regenerateAtakRollContent();
 
-  const damageControls = {
-    disabled: false,
-    damageControls: damage || (
-      !needsDamageChoice
-        ? "Brak Doli - obrażenia przyjęte automatycznie."
-        : "Obrońca może przyjąć albo anulować obrażenia wydając punkt Doli."
-    ),
-    damage,
-    defenderUuid: defender.uuid,
-    messageId,
-  };
 
-  const newContent = await foundry.applications.handlebars.renderTemplate(
-    "systems/crp/templates/chat/oposite-test.hbs",
-    { content: msg.content, fate, defenseResult, damageResult, damageControls },
-  );
-
-  await msg.update({ content: newContent });
-
-  if (autoDamage) {
-    await msg.setFlag("crp", "damageResolved", {
-      action: "auto",
-      defenderUuid: defender.uuid,
-      damage,
-    });
-  }
 }
 }
 

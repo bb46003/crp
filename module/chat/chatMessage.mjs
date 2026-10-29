@@ -7,7 +7,7 @@ async renderHTML(options = {}) {
     return html;
   }
   async regenerateAtakRollContent() {
-    const data = this.getFlag("crp", "defenseChoice");
+    const data = this.system.crp;
 
     if (!data) return;
 
