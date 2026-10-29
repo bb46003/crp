@@ -315,6 +315,16 @@ export class CRPActorData extends TypeDataModel {
   }
 }
 
-export class CRPNPCKnechtData extends CRPActorData {}
+export class CRPNPCKnechtData extends CRPActorData {  
+  prepareDerivedData() {
+    super.prepareDerivedData();
+    this.resources.fate.value = 0
+  }
+  }
 
-export class CRPNPCRycerzData extends CRPActorData {}
+export class CRPNPCRycerzData extends CRPActorData {
+    prepareDerivedData() {
+    super.prepareDerivedData();
+    this.resources.fate.value = 0
+  }
+}

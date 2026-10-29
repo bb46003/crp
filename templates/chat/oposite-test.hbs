@@ -1,8 +1,8 @@
-
+{{{content}}}
 {{!-- ========================================================= --}}
 {{!-- DOLA — ponowny rzut                                  --}}
 {{!-- ========================================================= --}}
-{{#if fate}}
+{{#if fate.use}}
   <button
     type="button"
     class="crp-use-fate"
@@ -18,59 +18,59 @@
 {{!-- ========================================================= --}}
 {{!-- WYNIK WYBORU OBRONY                                    --}}
 {{!-- ========================================================= --}}
-{{#if defenseResult}}
+
   <div class="crp-defense-result">
     🛡 Wybrałeś: <b>{{defenseResult.label}}</b>
   </div>
-{{/if}}
+
 
 
 {{!-- ========================================================= --}}
 {{!-- PODSUMOWANIE OBRAŻEŃ                                  --}}
 {{!-- ========================================================= --}}
-{{#if damage}}
+
   <div class="crp-damage">
     <p>
-      💥 Obrażenia bazowe: <b>{{damage.base}}</b>
+      💥 Obrażenia bazowe: <b>{{damageResult.base}}</b>
     </p>
 
     <p>
-      🛡 Redukcja: {{damage.reduction}}
-      ({{damage.armorProtection}} pancerz
-      {{#if damage.shieldProtection}}
-        + {{damage.shieldProtection}} tarcza
+      🛡 Redukcja: {{damageResult.reduction}}
+      ({{damageResult.armorProtection}} pancerz
+      {{#if damageResult.shieldProtection}}
+        + {{damageResult.shieldProtection}} tarcza
       {{/if}}
-      {{#if damage.defenseEagles}}
-        + {{damage.defenseEagles}} 🦅
+      {{#if damageResult.defenseEagles}}
+        + {{damageResult.defenseEagles}} 🦅
       {{/if}}
-      {{#if damage.defenseShields}}
-        - {{damage.defenseShields}} 🛡️
+      {{#if damageResult.defenseShields}}
+        - {{damageResult.defenseShields}} 🛡️
       {{/if}})
     </p>
 
-    {{#if damage.hasAttackModifiers}}
+    {{#if damageResult.hasAttackModifiers}}
       <p>
         ⚔ Modyfikator ataku:
-        {{#if damage.attackEagles}}
-          +{{damage.attackEagles}} 🦅
+        {{#if damageResult.attackEagles}}
+          +{{damageResult.attackEagles}} 🦅
         {{/if}}
-        {{#if damage.attackShields}}
-          -{{damage.attackShields}} 🛡️
+        {{#if damageResult.attackShields}}
+          -{{damageResult.attackShields}} 🛡️
         {{/if}}
       </p>
     {{/if}}
 
     <p>
-      👉 Obrażenia końcowe: <b>{{damage.total}}</b>
+      👉 Obrażenia końcowe: <b>{{damageResult.total}}</b>
     </p>
   </div>
-{{/if}}
+
 
 
 {{!-- ========================================================= --}}
 {{!-- KONTROLKI ROZLICZANIA OBRAŻEŃ                          --}}
 {{!-- ========================================================= --}}
-{{#if damageControls}}
+
   <div
     class="crp-damage-control"
     data-message-id="{{damageControls.messageId}}"
@@ -105,4 +105,4 @@
       {{damageControls.status}}
     </div>
   </div>
-{{/if}}
+

@@ -241,7 +241,7 @@ export class CRPRoll {
                 <h3>Test przeciwstawny</h3>
                 <hr>
                 <p>
-                    <strong>${actorA.name}</strong><br>
+                    <strong>Atakujący: ${actorA.name}</strong><br>
                     ${skillLabelA} (${attrLabelA})<br>
                     🎲 ${rollA.dice.length ? rollA.dice.join(", ") : "—"} = ${rollA.total}<br>
                     Cel: ${rollA.target}${attackModifierText}<br>
@@ -250,7 +250,7 @@ export class CRPRoll {
                     ${marginTextA !== null ? `Margin: ${marginTextA}<br>` : ""}
                 </p>
                 <p>
-                    <strong>${actorB.name}</strong><br>
+                    <strong>Obrońca: ${actorB.name}</strong><br>
                     ${skillLabelB} (${attrLabelB})<br>
                     🎲 ${rollB.dice.length ? rollB.dice.join(", ") : "—"} = ${rollB.total}<br>
                     Cel: ${rollB.target}${defenseModifierText}<br>
