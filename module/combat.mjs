@@ -40,8 +40,8 @@ export class CRPCombat extends Combat {
       ),
     );
   }
-  async rollInitiative(ids, option){
-ids = typeof ids === "string" ? [ids] : ids;
+  async rollInitiative(ids, option) {
+    ids = typeof ids === "string" ? [ids] : ids;
 
     for (const id of ids) {
       const combatant = this.combatants.get(id);
@@ -55,6 +55,5 @@ ids = typeof ids === "string" ? [ids] : ids;
     }
 
     return this;
-  };
-  
+  }
 }

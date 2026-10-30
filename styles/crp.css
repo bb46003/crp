@@ -49,27 +49,27 @@
   }
 }
 .crp--sheet {
-    padding: 10px;
-    overflow-y: auto;
-    overflow-x: hidden;
-    min-height: fit-content;
-    margin-bottom: 5px;
-  nav{
-          border-top: none;
-        border-bottom: 1px solid #666;
-        min-width: 110%;
-        margin-left: -15px;
-        margin-right: 15px;
-    a[data-tab="bio"]{
+  padding: 10px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: fit-content;
+  margin-bottom: 5px;
+  nav {
+    border-top: none;
+    border-bottom: 1px solid #666;
+    min-width: 110%;
+    margin-left: -15px;
+    margin-right: 15px;
+    a[data-tab="bio"] {
       margin-right: 90px;
     }
-    a[data-tab="attributes"]{
-          margin-left: 30px;
+    a[data-tab="attributes"] {
+      margin-left: 30px;
     }
   }
-  .crp-tabs.tabs.npc{
-    a[data-tab="equipment"]{
-          margin-right: 90px;
+  .crp-tabs.tabs.npc {
+    a[data-tab="equipment"] {
+      margin-right: 90px;
     }
   }
 }
@@ -89,10 +89,9 @@
 /* ===== HEADER ===== */
 
 .crp-header {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 10px;
-
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
 .crp-header-main {
@@ -2113,8 +2112,10 @@ nav.crp-tabs {
   margin-bottom: 0px;
   line-height: 1.5;
 }
-.crp-stats.npc{
-  a{text-align: center;}
+.crp-stats.npc {
+  a {
+    text-align: center;
+  }
 }
 .crp-chat,
 .crp-chat *:not(a):not(i) {
@@ -2126,13 +2127,13 @@ nav.crp-tabs {
   border: 10px double rgba(75, 48, 20, 1);
   background: url("../assets/parchment.png");
   background-size: cover;
-  button{
-            width: 100%;
-        margin-bottom: 5px;
-        justify-content: center;
-        justify-self: center;
+  button {
+    width: 100%;
+    margin-bottom: 5px;
+    justify-content: center;
+    justify-self: center;
   }
-  h3{
-        font-size: 1.2rem;
+  h3 {
+    font-size: 1.2rem;
   }
 }

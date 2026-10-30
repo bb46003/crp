@@ -1,5 +1,5 @@
 export class CRPChatMessage extends ChatMessage {
-async renderHTML(options = {}) {
+  async renderHTML(options = {}) {
     const html = await super.renderHTML(options);
 
     html.classList.add("crp-chat");

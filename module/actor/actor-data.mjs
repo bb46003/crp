@@ -155,8 +155,18 @@ export class CRPActorData extends TypeDataModel {
         initiativeTotal: new NumberField({ initial: 0 }),
 
         health: new SchemaField({
-          value: new NumberField({required: true, integer: true, initial: 8, min: 0}),
-          max: new NumberField({ required: true, integer: true, initial: 8, min: 1}),
+          value: new NumberField({
+            required: true,
+            integer: true,
+            initial: 8,
+            min: 0,
+          }),
+          max: new NumberField({
+            required: true,
+            integer: true,
+            initial: 8,
+            min: 1,
+          }),
         }),
 
         maneuver: new SchemaField({
@@ -315,16 +325,17 @@ export class CRPActorData extends TypeDataModel {
   }
 }
 
-export class CRPNPCKnechtData extends CRPActorData {  
+export class CRPNPCKnechtData extends CRPActorData {
   prepareDerivedData() {
     super.prepareDerivedData();
-    this.resources.fate.value = 0
+    this.resources.fate.value = 0;
+    this.derived.maneuver.value = 0;
+    this.derived.maneuver.max = 0;
   }
-  }
+}
 
 export class CRPNPCRycerzData extends CRPActorData {
-    prepareDerivedData() {
+  prepareDerivedData() {
     super.prepareDerivedData();
-    this.resources.fate.value = 0
   }
 }

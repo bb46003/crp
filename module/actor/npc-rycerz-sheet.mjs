@@ -1,12 +1,12 @@
 import { CRPActorSheet } from "./actor-sheet.mjs";
 
 export class CRPNPCRycerzSheet extends CRPActorSheet {
-     static DEFAULT_OPTIONS = {
-        position: {
+  static DEFAULT_OPTIONS = {
+    position: {
       width: 970,
       height: 860,
     },
-   }
+  };
   static PARTS = {
     body: {
       template: "systems/crp/templates/actor/npc-rycerz-sheet.hbs",
@@ -21,7 +21,7 @@ export class CRPNPCRycerzSheet extends CRPActorSheet {
     },
     attributes: {
       id: "tabs",
-      template: "systems/crp/templates/actor/tabs/character-tab-attributes.hbs",
+      template: "systems/crp/templates/actor/tabs/npc-tab-attributes.hbs",
     },
   };
 }

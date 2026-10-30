@@ -290,30 +290,29 @@ export class CRPActor extends Actor {
     const reasonValue = this?.system?.attributes?.reason?.value ?? 4;
     // TOKEN DEFAULT
     await this.updateSource({
-  prototypeToken: {
-    name: actor.name,
-    displayName: CONST.TOKEN_DISPLAY_MODES.ALWAYS,
-    displayBars: CONST.TOKEN_DISPLAY_MODES.ALWAYS,
-    bar1: {
-      attribute: "derived.health",
-      editable: false
-    },
-    actorLink: actor.type === "character",
-    disposition: actor.type === "character" ? 1 : -1
-  },
-  system: {
-    resources: {
-      advantageUses: {
-        value: reasonValue
-      }
-    }
-  }
-});
-    
+      prototypeToken: {
+        name: actor.name,
+        displayName: CONST.TOKEN_DISPLAY_MODES.ALWAYS,
+        displayBars: CONST.TOKEN_DISPLAY_MODES.ALWAYS,
+        bar1: {
+          attribute: "derived.health",
+          editable: false,
+        },
+        actorLink: actor.type === "character",
+        disposition: actor.type === "character" ? 1 : -1,
+      },
+      system: {
+        resources: {
+          advantageUses: {
+            value: reasonValue,
+          },
+        },
+      },
+    });
   }
   //rzeczy do zrobienia przy updacie Aktora
   async _onUpdate(data, options, user) {
-   await super._onUpdate(data, options, user);
+    await super._onUpdate(data, options, user);
     const changeName = data?.name ?? false;
     const actor = this;
     const dependedTokens = actor.getDependentTokens();
@@ -328,7 +327,7 @@ export class CRPActor extends Actor {
         for (const token of dependedTokens) {
           await token.update({ name: tokenName });
         }
-        this.sheet.render({force:true})
+        this.sheet.render({ force: true });
       }
     }
     const tokenImg = data?.prototypeToken?.texture?.src ?? false;
@@ -343,11 +342,11 @@ export class CRPActor extends Actor {
         for (const token of dependedTokens) {
           await token.update({ ["texture.src"]: tokenImg });
         }
-        this.sheet.render({force:true})
+        this.sheet.render({ force: true });
       }
     }
-    if(this.sheet.rendered){
-    this.sheet.render({force:true})
+    if (this.sheet.rendered) {
+      this.sheet.render();
     }
     const hasExperienceChange = [
       "system.resources.experience",
@@ -366,10 +365,8 @@ export class CRPActor extends Actor {
         CRPAdvancementWindow.refreshForActor(actor);
       }
     }
-
   }
-  async atackRoll(itemId){
-
+  async atackRoll(itemId) {
     const item = this.items.get(itemId) ?? null;
 
     if (item && item.type !== "weapon") {
@@ -402,174 +399,176 @@ export class CRPActor extends Actor {
     const targetActor = targets[0].actor;
     if (!targetActor) return;
 
-const equipment = targetActor.system.equipment;
-const defenderMounted = equipment.mounted;
+    const equipment = targetActor.system.equipment;
+    const defenderMounted = equipment.mounted;
 
-const isValidParryWeapon = (item) => {
-  if (!item) return false;
+    const isValidParryWeapon = (item) => {
+      if (!item) return false;
 
-  if (item.type !== "weapon") return false;
+      if (item.type !== "weapon") return false;
 
-  // KLUCZOWE
-  if (item.system.range === "ranged") return false;
+      // KLUCZOWE
+      if (item.system.range === "ranged") return false;
 
-  return true;
-};
+      return true;
+    };
 
-const rightItem = equipment.rightHand?.id
-  ? targetActor.items.get(equipment.rightHand.id)
-  : null;
+    const rightItem = equipment.rightHand?.id
+      ? targetActor.items.get(equipment.rightHand.id)
+      : null;
 
-const leftItem = equipment.leftHand?.id
-  ? targetActor.items.get(equipment.leftHand.id)
-  : null;
+    const leftItem = equipment.leftHand?.id
+      ? targetActor.items.get(equipment.leftHand.id)
+      : null;
 
-const isRangedAttack = itemRange === "ranged";
+    const isRangedAttack = itemRange === "ranged";
 
-const hasParryWeapon =
-  isValidParryWeapon(rightItem) ||
-  isValidParryWeapon(leftItem);
+    const hasParryWeapon =
+      isValidParryWeapon(rightItem) || isValidParryWeapon(leftItem);
 
-const hasEmptyHand =
-  !equipment.rightHand?.id ||
-  !equipment.leftHand?.id;
+    const hasEmptyHand = !equipment.rightHand?.id || !equipment.leftHand?.id;
 
-const canParry = hasParryWeapon || (isUnarmedAttack && hasEmptyHand);
+    const canParry = hasParryWeapon || (isUnarmedAttack && hasEmptyHand);
 
-  const isShield = (item) => item?.type === "shield";
+    const isShield = (item) => item?.type === "shield";
 
-const hasShield =
-  isShield(rightItem) ||
-  isShield(leftItem);
+    const hasShield = isShield(rightItem) || isShield(leftItem);
 
-const mountedAdvantage = attackerMounted && !defenderMounted ? 2 : 0;
-const attackChoice = await getAttackModifier(this, {
-  allowManeuvers: !isNPCActor(this)
-}).catch(() => null);
+    const mountedAdvantage = attackerMounted && !defenderMounted ? 2 : 0;
+    const attackChoice = await getAttackModifier(this, {
+      allowManeuvers: !isNPCActor(this),
+    }).catch(() => null);
 
-if (!attackChoice?.confirmed) return;
+    if (!attackChoice?.confirmed) return;
 
-const selectedAttackModifier = attackChoice.modifier;
-const maneuverCost = Math.max(0, Number(attackChoice.maneuverCost) || 0);
-const currentManeuver = this.system.derived.maneuver?.value ?? 0;
+    const selectedAttackModifier = attackChoice.modifier;
+    const maneuverCost = Math.max(0, Number(attackChoice.maneuverCost) || 0);
+    const currentManeuver = this.system.derived.maneuver?.value ?? 0;
 
-if (maneuverCost > currentManeuver) {
-  ui.notifications.warn("Brak wystarczającej liczby Punktów Manewru.");
-  return;
-}
+    if (maneuverCost > currentManeuver) {
+      ui.notifications.warn("Brak wystarczającej liczby Punktów Manewru.");
+      return;
+    }
 
-if (maneuverCost > 0) {
-  await this.update({
-    "system.derived.maneuver.value": currentManeuver - maneuverCost
-  });
-}
+    if (maneuverCost > 0) {
+      await this.update({
+        "system.derived.maneuver.value": currentManeuver - maneuverCost,
+      });
+    }
 
-const combat = game.combat;
-const combatant = combat?.combatants.find(combatant => combatant.actor?.id === this.id);
-const aimedAttack = this.getFlag("crp", "aimedAttack");
-const aimedAttackBonus =
-  combat?.started &&
-  aimedAttack?.combatId === combat.id &&
-  aimedAttack?.combatantId === combatant?.id
-    ? Number(aimedAttack.bonus) || 3
-    : 0;
-const startsAimedAttack =
-  attackChoice.maneuver === "aimedAttack" &&
-  combat?.started &&
-  combatant;
-const oneTimeAimedAttack =
-  attackChoice.maneuver === "aimedAttack" &&
-  !combat?.started;
-const startsDefensiveAttack =
-  attackChoice.maneuver === "defensiveAttack" &&
-  combat?.started &&
-  combatant;
-const oneTimeDefensiveAttack =
-  attackChoice.maneuver === "defensiveAttack" &&
-  !combat?.started;
+    const combat = game.combat;
+    const combatant = combat?.combatants.find(
+      (combatant) => combatant.actor?.id === this.id,
+    );
+    const aimedAttack = this.getFlag("crp", "aimedAttack");
+    const aimedAttackBonus =
+      combat?.started &&
+      aimedAttack?.combatId === combat.id &&
+      aimedAttack?.combatantId === combatant?.id
+        ? Number(aimedAttack.bonus) || 3
+        : 0;
+    const startsAimedAttack =
+      attackChoice.maneuver === "aimedAttack" && combat?.started && combatant;
+    const oneTimeAimedAttack =
+      attackChoice.maneuver === "aimedAttack" && !combat?.started;
+    const startsDefensiveAttack =
+      attackChoice.maneuver === "defensiveAttack" &&
+      combat?.started &&
+      combatant;
+    const oneTimeDefensiveAttack =
+      attackChoice.maneuver === "defensiveAttack" && !combat?.started;
 
-if (startsAimedAttack) {
-  await this.setFlag("crp", "aimedAttack", {
-    combatId: combat.id,
-    combatantId: combatant.id,
-    expiresRound: (combat.round ?? 0) + 1,
-    bonus: 3
-  });
-}
+    if (startsAimedAttack) {
+      await this.setFlag("crp", "aimedAttack", {
+        combatId: combat.id,
+        combatantId: combatant.id,
+        expiresRound: (combat.round ?? 0) + 1,
+        bonus: 3,
+      });
+    }
 
-if (startsDefensiveAttack) {
-  await this.setFlag("crp", "defensiveAttack", {
-    combatId: combat.id,
-    combatantId: combatant.id,
-    expiresRound: (combat.round ?? 0) + 1,
-    bonus: 3
-  });
-}
+    if (startsDefensiveAttack) {
+      await this.setFlag("crp", "defensiveAttack", {
+        combatId: combat.id,
+        combatantId: combatant.id,
+        expiresRound: (combat.round ?? 0) + 1,
+        bonus: 3,
+      });
+    }
 
-if (oneTimeDefensiveAttack) {
-  await this.setFlag("crp", "defensiveAttack", {
-    oneTime: true,
-    bonus: 3
-  });
-}
+    if (oneTimeDefensiveAttack) {
+      await this.setFlag("crp", "defensiveAttack", {
+        oneTime: true,
+        bonus: 3,
+      });
+    }
 
-const totalAttackModifier =
-  attackModifier +
-  mountedAdvantage +
-  selectedAttackModifier +
-  (startsAimedAttack || oneTimeAimedAttack ? 3 : aimedAttackBonus);
-const attr = this._mapSkillToAttribute(attackSkill)
-  const atackRoll = await CRPRoll.skill(
-  this,
-  attr,
-  attackSkill,{
-    chat:false,
-    allowFate: false,
-    modifier: totalAttackModifier,
-    displayModifier: selectedAttackModifier
-  })
-const penalty = this.system.derived.woundPenalty ?? 0;
+    const totalAttackModifier =
+      attackModifier +
+      mountedAdvantage +
+      selectedAttackModifier +
+      (startsAimedAttack || oneTimeAimedAttack ? 3 : aimedAttackBonus);
+    const attr = this._mapSkillToAttribute(attackSkill);
+    const allowFate = this.system.resources.fate.value > 0;
 
-Object.assign(atackRoll,{
-  name: this.name,
-  skill:CONFIG.CRP.skills[attackSkill],
-  attr: CONFIG.CRP.attributes[attr],
-  displayModifier: selectedAttackModifier,
-  rany: penalty>0,
-  karaRany:penalty,
-  pancerz: atackRoll.armorPenalty > 0,
-}) 
-const msg = await ChatMessage.create({
-  content: "",
-  system: {
-    crp: {
-      defenseChoice: {
-        attacker: this.uuid,
-        defender: targetActor.uuid,
-        attackSkill,
-        itemType,
-        itemRange,
-        totalAttackModifier,
-        selectedAttackModifier,
-        attackerMounted,
-        defenderMounted,
-        canParry,
-        isRangedAttack,
-        hasShield,
-        defenceChoice:true
+    const atackRoll = await CRPRoll.skill(this, attr, attackSkill, {
+      chat: false,
+      allowFate: allowFate,
+      modifier: totalAttackModifier,
+      displayModifier: selectedAttackModifier,
+    });
+    const penalty = this.system.derived.woundPenalty ?? 0;
+
+    Object.assign(atackRoll, {
+      name: this.name,
+      skill: CONFIG.CRP.skills[attackSkill],
+      attr: CONFIG.CRP.attributes[attr],
+      displayModifier: selectedAttackModifier,
+      rany: penalty > 0,
+      karaRany: penalty,
+      pancerz: atackRoll.armorPenalty > 0,
+      allowFate: allowFate,
+      reRoll: false,
+      testData: {
+        attAttr: attr,
+        attSkill: attackSkill,
+        uuid: this.uuid,
+        chat: false,
+        allowFate: allowFate,
+        modifier: totalAttackModifier,
+        displayModifier: selectedAttackModifier,
       },
-      atackRoll: atackRoll
-    },
-  },
-});
-await msg.regenerateAtakRollContent();
-await msg.update({
-  content: msg.content.replace(
-    'data-message-id=""',
-    `data-message-id="${msg.id}"`
-  )
-});
-
+    });
+    const msg = await ChatMessage.create({
+      content: "",
+      system: {
+        crp: {
+          defenseChoice: {
+            attacker: this.uuid,
+            defender: targetActor.uuid,
+            attackSkill,
+            itemType,
+            itemRange,
+            totalAttackModifier,
+            selectedAttackModifier,
+            attackerMounted,
+            defenderMounted,
+            canParry,
+            isRangedAttack,
+            hasShield,
+            defenceChoice: true,
+          },
+          atackRoll: atackRoll,
+        },
+      },
+    });
+    await msg.regenerateAtakRollContent();
+    await msg.update({
+      content: msg.content.replace(
+        'data-message-id=""',
+        `data-message-id="${msg.id}"`,
+      ),
+    });
   }
 }
 

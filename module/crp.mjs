@@ -39,8 +39,6 @@ import { CRPChatLog } from "./chat/chatLog.mjs";
 
 const CRP_PENDING_INITIATIVE_UPDATES = new Map();
 
-
-
 Hooks.once("init", () => {
   game.settings.register("crp", "characterSheetsLocked", {
     scope: "world",
@@ -82,14 +80,10 @@ Hooks.once("init", () => {
     makeDefault: true,
   });
 
-  foundry.documents.collections.Actors.registerSheet(
-    "crp",
-    CRPNPCKnechtSheet,
-    {
-      types: ["npc"],
-      makeDefault: true,
-    },
-  );
+  foundry.documents.collections.Actors.registerSheet("crp", CRPNPCKnechtSheet, {
+    types: ["npc"],
+    makeDefault: true,
+  });
 
   foundry.documents.collections.Actors.registerSheet("crp", CRPNPCKnechtSheet, {
     types: ["npc-knecht"],
@@ -144,15 +138,10 @@ Hooks.once("init", () => {
   // OVERRIDE INITIATIVE ROLL
   // ======================
 
-CONFIG.ChatMessage.documentClass = CRPChatMessage;
-   CONFIG.ui.chat = CRPChatLog;
-registerHandlebarsHelpers();
-   
+  CONFIG.ChatMessage.documentClass = CRPChatMessage;
+  CONFIG.ui.chat = CRPChatLog;
+  registerHandlebarsHelpers();
 });
-
-
-
-
 
 // =====================
 // SOCKET → GM UPDATE

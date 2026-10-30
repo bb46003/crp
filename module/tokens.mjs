@@ -76,7 +76,12 @@ export class CRPToken extends foundry.canvas.placeables.Token {
         const texture = await CRPToken.getUnderlayTexture();
 
         // The token or mounted state may have changed while loading.
-        if (this.destroyed || !this.isMounted() || !canvas?.ready || !this.mesh?.parent) {
+        if (
+          this.destroyed ||
+          !this.isMounted() ||
+          !canvas?.ready ||
+          !this.mesh?.parent
+        ) {
           return;
         }
 

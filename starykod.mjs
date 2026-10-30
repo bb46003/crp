@@ -347,7 +347,6 @@ function getMountedActorTokens(actor) {
   return [...tokens];
 }
 
-
 Hooks.on("updateItem", async (item, changed) => {
   if (
     ["armor", "shield"].includes(item.type) &&
@@ -396,7 +395,7 @@ Hooks.on("crpMountedChanged", (actor) => {
 });
 
 Hooks.on("updateToken", (tokenDocument, changed) => {
-  console.log(tokenDocument)
+  console.log(tokenDocument);
   const mountedChanged = [
     "actorData.system.equipment.mounted",
     "delta.system.equipment.mounted",
@@ -1041,4 +1040,3 @@ Hooks.on("renderActorDirectory", (app, html) => {
 
   html.querySelector(".directory-header").appendChild(btn);
 });
-

@@ -26,10 +26,11 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
       height: 860,
     },
     dragDrop: [
-      { 
-        dragSelector: ".crp-item-list .crp-item-row, .crp-equipment .crp-item-row", 
-        dropSelector: null // null oznacza, że drop można wykonać na dowolne miejsce karty
-      }
+      {
+        dragSelector:
+          ".crp-item-list .crp-item-row, .crp-equipment .crp-item-row",
+        dropSelector: null, // null oznacza, że drop można wykonać na dowolne miejsce karty
+      },
     ],
     actions: {
       clearMoney: CRPActorSheet.#clearMoney,
@@ -43,9 +44,9 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
       crestSelect: CRPActorSheet.#crestSelect,
       openItem: CRPActorSheet.#openItem,
       clearHand: CRPActorSheet.#clearHand,
-      removeArmor : CRPActorSheet.#removeArmor,
-      atack : CRPActorSheet.#atack,
-      lockSheet: CRPActorSheet.#lockSheet
+      removeArmor: CRPActorSheet.#removeArmor,
+      atack: CRPActorSheet.#atack,
+      lockSheet: CRPActorSheet.#lockSheet,
     },
     form: {
       submitOnChange: true,
@@ -84,19 +85,19 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
   async _prepareContext(options) {
     const context = await super._prepareContext(options);
     const system = this.actor.system;
-    const npcSheetLocked = this.actor.getFlag("crp", "npcSheetLocked")
-let tokenImg = null;
-let isToken = false
-if (this.actor.type !== "character") {
-  const parent = this.document.parent;
+    const npcSheetLocked = this.actor.getFlag("crp", "npcSheetLocked");
+    let tokenImg = null;
+    let isToken = false;
+    if (this.actor.type !== "character") {
+      const parent = this.document.parent;
 
-  if (parent instanceof foundry.documents.TokenDocument) {
-    tokenImg = parent.texture.src;
-    isToken = true
-  }else{
-    tokenImg = this.actor.prototypeToken.texture.src;
-  }
-}
+      if (parent instanceof foundry.documents.TokenDocument) {
+        tokenImg = parent.texture.src;
+        isToken = true;
+      } else {
+        tokenImg = this.actor.prototypeToken.texture.src;
+      }
+    }
     Object.assign(context, {
       actor: this.actor,
       system: system,
@@ -237,18 +238,17 @@ if (this.actor.type !== "character") {
   _onRender(context, options) {
     super._onRender(context, options);
     const dragTargets = this.element.querySelectorAll(".crp-item-row");
-    dragTargets.forEach(el => {
+    dragTargets.forEach((el) => {
       el.addEventListener("dragstart", this.#customDragStart.bind(this));
     });
     const section = this.element.querySelector(".tab.active");
-    section.scrollTop = this.y
+    section.scrollTop = this.y;
   }
-
 
   #customDragStart(event) {
     const li = event.currentTarget;
     const itemId = li.dataset.itemId;
-    const item = this.actor.items.get(itemId)
+    const item = this.actor.items.get(itemId);
     if (!itemId) return;
     const dragData = {
       type: "Item",
@@ -257,56 +257,53 @@ if (this.actor.type !== "character") {
     event.dataTransfer.setData("text/plain", JSON.stringify(dragData));
     event.dataTransfer.effectAllowed = "move";
   }
-  static async #clearHand(ev){
+  static async #clearHand(ev) {
     const target = ev.target;
     const element = target.closest(".crp-item-row");
     const slot = element.dataset.slot;
     const itemId = element.dataset.id;
     const item = this.actor.items.get(itemId);
     const hand = item.system.skill;
-    switch(hand){
-        case "twoHanded":
-        case "ranged":
-      await this.actor.update({
-        ["system.equipment.leftHand"]: {
-                id: "",
-                name: "",
-                img: "",
-              },
-                ["system.equipment.rightHand"]: {
-                id: "",
-                name: "",
-                img: "",
-              },
-      });
-      break;
+    switch (hand) {
+      case "twoHanded":
+      case "ranged":
+        await this.actor.update({
+          ["system.equipment.leftHand"]: {
+            id: "",
+            name: "",
+            img: "",
+          },
+          ["system.equipment.rightHand"]: {
+            id: "",
+            name: "",
+            img: "",
+          },
+        });
+        break;
       case "oneHanded":
-        case "lightWeapons":
-              await this.actor.update({
-                [`system.equipment.${slot}`]: {
-                id: "",
-                name: "",
-                img: "",
-              },
-      });
-      break;
-
+      case "lightWeapons":
+        await this.actor.update({
+          [`system.equipment.${slot}`]: {
+            id: "",
+            name: "",
+            img: "",
+          },
+        });
+        break;
     }
-    this.setY(ev.target)
-    this.render({force:true})
+    this.setY(ev.target);
+    this.render({ force: true });
   }
-  static async #removeArmor(ev){
+  static async #removeArmor(ev) {
     await this.actor.update({
-                    ["system.equipment.armor"]: {
-                id: "",
-                name:"",
-                img: "",
-              }
-    })
-    this.setY(ev.target)
-    this.render({force:true})
-
-
+      ["system.equipment.armor"]: {
+        id: "",
+        name: "",
+        img: "",
+      },
+    });
+    this.setY(ev.target);
+    this.render({ force: true });
   }
   static async #clearMoney(ev) {
     const confirmed = await foundry.applications.api.DialogV2.confirm({
@@ -415,7 +412,7 @@ if (this.actor.type !== "character") {
     if (Object.keys(updates).length) {
       await this.actor.update(updates);
     }
-    this.setY(ev.target)
+    this.setY(ev.target);
     this.render({ force: true });
   }
   static async #addAdvantageUses(ev) {
@@ -423,7 +420,7 @@ if (this.actor.type !== "character") {
     await this.actor.update({
       "system.resources.advantageUses.value": current + 1,
     });
-    this.setY(ev.target)
+    this.setY(ev.target);
     this.render({ force: true });
   }
   static async #useAdvantageUses(ev) {
@@ -435,7 +432,7 @@ if (this.actor.type !== "character") {
     await this.actor.update({
       "system.resources.advantageUses.value": Math.max(0, current - 1),
     });
-    this.setY(ev.target)
+    this.setY(ev.target);
     this.render({ force: true });
   }
   static async #assigneLanguageType(ev) {
@@ -511,36 +508,35 @@ if (this.actor.type !== "character") {
       },
     }).render(true);
   }
-  static async #openItem(ev){
+  static async #openItem(ev) {
     const target = ev.target;
     const element = target.closest("[data-id]");
     const id = element.dataset.id;
-    if(id){
+    if (id) {
       const item = this.actor.items.get(id);
-      item.sheet.render({force:true})
+      item.sheet.render({ force: true });
     }
   }
-  static async #atack(ev){
+  static async #atack(ev) {
     const target = ev.target;
     const element = target.closest(".crp-item-row");
     const itemId = element?.dataset?.id ?? "";
-    await this.actor.atackRoll(itemId)
+    await this.actor.atackRoll(itemId);
   }
-  static async #lockSheet(ev){
+  static async #lockSheet(ev) {
     const locked = !!this.actor.getFlag("crp", "npcSheetLocked");
     await this.actor.setFlag("crp", "npcSheetLocked", !locked);
     const target = ev.target;
-    this.setY(target)
-     this.render({force:true})
+    this.setY(target);
+    this.render({ force: true });
   }
   async _onDrop(event) {
-
     const data = event.dataTransfer;
     const toElement = event.toElement;
     const parent = toElement.closest(".crp-eq-slot");
-    const  itemData = data.getData('text/plain');
-    if(itemData === ""){
-      return
+    const itemData = data.getData("text/plain");
+    if (itemData === "") {
+      return;
     }
     const droppedItem = JSON.parse(itemData);
     const itemDoc = await fromUuid(droppedItem.uuid);
@@ -573,38 +569,46 @@ if (this.actor.type !== "character") {
                 img: itemDoc.img,
               },
             };
-            if(itemDoc.system.skill === "twoHanded" || itemDoc.system.skill ==="ranged"){
+            if (
+              itemDoc.system.skill === "twoHanded" ||
+              itemDoc.system.skill === "ranged"
+            ) {
               updateData = {
-              ["system.equipment.rightHand"]: {
-                id: itemDoc.id,
-                name: itemDoc.name,
-                img: itemDoc.img,
-              },
-            };
+                ["system.equipment.rightHand"]: {
+                  id: itemDoc.id,
+                  name: itemDoc.name,
+                  img: itemDoc.img,
+                },
+              };
             }
             break;
           case "rightHand":
-            updateData = {...updateData,
+            updateData = {
+              ...updateData,
               ["system.equipment.rightHand"]: {
                 id: itemDoc.id,
                 name: itemDoc.name,
                 img: itemDoc.img,
               },
             };
-            if(itemDoc.system.skill === "twoHanded" || itemDoc.system.skill ==="ranged"){
-              updateData = {...updateData,
-              ["system.equipment.leftHand"]: {
-                id: itemDoc.id,
-                name: itemDoc.name,
-                img: itemDoc.img,
-              },
-            };
+            if (
+              itemDoc.system.skill === "twoHanded" ||
+              itemDoc.system.skill === "ranged"
+            ) {
+              updateData = {
+                ...updateData,
+                ["system.equipment.leftHand"]: {
+                  id: itemDoc.id,
+                  name: itemDoc.name,
+                  img: itemDoc.img,
+                },
+              };
             }
             break;
         }
-        
+
         await this.actor.update(updateData);
-        this.setY(toElement)
+        this.setY(toElement);
         this.render({ force: true });
       }
     }
@@ -657,33 +661,34 @@ if (this.actor.type !== "character") {
       super._onDrop(event);
     }
   }
-  _processFormData(event,form,formData){
+  _processFormData(event, form, formData) {
     const target = event.target;
-    this.setY(target)
-    if(formData?.object?.["document.parent.texture.src"]){
-       const parent = this.document.parent;
-       parent.update({["texture.src"]:formData?.object?.["document.parent.texture.src"]})
+    this.setY(target);
+    if (formData?.object?.["document.parent.texture.src"]) {
+      const parent = this.document.parent;
+      parent.update({
+        ["texture.src"]: formData?.object?.["document.parent.texture.src"],
+      });
     }
-    return super._processFormData(event,form,formData)
+    return super._processFormData(event, form, formData);
   }
-  setY(target){
+  setY(target) {
     const section = this.element.querySelector(".tab.active");
     this.y = section.scrollTop;
   }
   get isEditable() {
-    if(this.actor !== "character"){
-      const npcSheetLocked = this.actor.getFlag("crp", "npcSheetLocked")
-      return !npcSheetLocked
-    }else{
-    return super.isEditable;
+    if (this.actor !== "character") {
+      const npcSheetLocked = this.actor.getFlag("crp", "npcSheetLocked");
+      return !npcSheetLocked;
+    } else {
+      return super.isEditable;
+    }
   }
-}
 }
 
 function isNPCActor(actor) {
   return CRP_NPC_ACTOR_TYPES.has(actor?.type);
 }
-
 
 async function getSkillModifier() {
   const content = await foundry.applications.handlebars.renderTemplate(
