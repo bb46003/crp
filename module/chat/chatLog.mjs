@@ -280,9 +280,6 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
 
     const defenderFate = defenderActor.system.resources.fate.value ?? 0;
     const needsDamageChoice = damage > 0 && defenderFate > 0;
-    const autoDamage = damage > 0 && defenderFate < 1;
-
-    if (autoDamage) await defenderActor.applyDamage(damage);
     const defenseResult = {
       label:
         {

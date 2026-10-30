@@ -113,15 +113,16 @@
     👉 Obrażenia końcowe: <b>{{damageResult.total}}</b>
   </div>
   {{/if}}
-  {{#if damageResult.needsDamageChoice}}<!-- CRP_DAMAGE_CONTROL_START -->
+  <!-- CRP_DAMAGE_CONTROL_START -->
   <div class="crp-damage-control">
     <button type="button" data-action="applyDamage">
       Przyjmij obrażenia
     </button>
+    {{#if damageResult.needsDamageChoice}}
     <button type="button" data-action="avoidDamage">
       Anuluj obrażenia
     </button>
-    <div class="crp-damage-status">{note}</div>
+    <div class="crp-damage-status">Uniknięcie obrażeń kosztuje Punkt Doli</div>
   </div>
   {{/if}}
 <!-- CRP_DAMAGE_CONTROL_END -->
