@@ -112,12 +112,13 @@
     {{#if (ne atackRoll.shields 0)}}-{{atackRoll.eagles}}🛡️{{/if}}<br>
     👉 Obrażenia końcowe: <b>{{damageResult.total}}</b>
   </div>
-  {{/if}}
+  
   <!-- CRP_DAMAGE_CONTROL_START -->
   <div class="crp-damage-control">
     <button type="button" data-action="applyDamage">
       Przyjmij obrażenia
     </button>
+    {{/if}}
     {{#if damageResult.needsDamageChoice}}
     <button type="button" data-action="avoidDamage">
       Anuluj obrażenia
