@@ -100,16 +100,16 @@
     {{#if (ne damageResult.shieldProtection 0)}}
     + {{damageResult.shieldProtection}} tarcza
     {{/if}}
-    {{#if (ne damageResult.defenseEagles 0)}}
-    + {{damageResult.defenseEagles}} 🦅
+    {{#if (ne defenceRoll.eagles 0)}}
+    + {{defenceRoll.eagles}} 🦅
     {{/if}}
-    {{#if (ne damageResult.defenseShields 0)}}
-     - {{damageResult.defenseShields}} 🛡️
+    {{#if (ne defenceRoll.eagles 0)}}
+     - {{defenceRoll.eagles}} 🛡️
     {{/if}}
     )<br>
   ⚔ Modyfikator ataku:
     {{#if (ne atackRoll.eagles 0)}}+{{atackRoll.eagles}}🦅{{/if}}
-    {{#if (ne atackRoll.shields 0)}}-{{atackRoll.shields}}🛡️{{/if}}<br>
+    {{#if (ne atackRoll.shields 0)}}-{{atackRoll.eagles}}🛡️{{/if}}<br>
     👉 Obrażenia końcowe: <b>{{damageResult.total}}</b>
   </div>
   {{/if}}
