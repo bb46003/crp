@@ -127,106 +127,115 @@ export class CRPRoll {
       armorPenalty,
       displayModifier,
     };
-    const content = await this.renderRollHTML(actor, attrKey, skillKey, result, {
-      usedFate: false,
-      allowFate: effectiveAllowFate,
-      rollLabel,
-      reRoll,
-    });
+    const content = await this.renderRollHTML(
+      actor,
+      attrKey,
+      skillKey,
+      result,
+      {
+        usedFate: false,
+        allowFate: effectiveAllowFate,
+        rollLabel,
+        reRoll,
+      },
+    );
     Object.assign(content.context, { modifier: modifier });
     Object.assign(result, { content: content });
     if (chat) {
       await ChatMessage.create({
         speaker: ChatMessage.getSpeaker({ actor }),
         content: content.html,
-        system:{
-          crp: content.context
-        }
+        system: {
+          crp: content.context,
+        },
       });
     }
 
     return result;
   }
 
-
-
-static async renderRollHTML(
-  actor,
-  attrKey,
-  skillKey,
-  result,
-  { usedFate = false, allowFate = true, rollLabel = null, reRoll = false } = {},
-) {
-  const canUseFate = allowFate && (actor.isOwner || game.user.isGM);
-
-  const skillLabel = CONFIG.CRP.skills[skillKey] ?? skillKey;
-  const attrLabel = CONFIG.CRP.attributes[attrKey] ?? attrKey;
-
-  const woundPenalty = actor.system.derived.woundPenalty ?? 0;
-
-  const armorPenalty =
-    result.armorPenalty ?? actor.getArmorSkillPenalty?.(skillKey) ?? 0;
-
-  let resultText;
-
-  if (result.critical === "criticalSuccess") {
-    resultText = "🔥 KRYTYCZNY SUKCES";
-  } else if (result.critical === "criticalFailure") {
-    resultText = "💀 KRYTYCZNA PORAŻKA";
-  } else {
-    resultText = result.success ? "✔ SUKCES" : "❌ PORAŻKA";
-  }
-
-  const context = {
+  static async renderRollHTML(
     actor,
     attrKey,
     skillKey,
+    result,
+    {
+      usedFate = false,
+      allowFate = true,
+      rollLabel = null,
+      reRoll = false,
+    } = {},
+  ) {
+    const canUseFate = allowFate && (actor.isOwner || game.user.isGM);
 
-    rollLabel: rollLabel ?? `${skillLabel} (${attrLabel})`,
+    const skillLabel = CONFIG.CRP.skills[skillKey] ?? skillKey;
+    const attrLabel = CONFIG.CRP.attributes[attrKey] ?? attrKey;
 
-    usedFate,
-    canUseFate,
+    const woundPenalty = actor.system.derived.woundPenalty ?? 0;
 
-    success: result.success,
-    critical: result.critical,
+    const armorPenalty =
+      result.armorPenalty ?? actor.getArmorSkillPenalty?.(skillKey) ?? 0;
 
-    diceDisplay: result.dice.length ? result.dice.join(", ") : "—",
-    total: result.total,
-    target: result.target,
+    let resultText;
 
-    displayModifier: result.displayModifier ?? 0,
-    modifierText:
-      result.displayModifier === null
-        ? ""
-        : ` (modyfikator: ${result.displayModifier >= 0 ? "+" : ""}${result.displayModifier})`,
+    if (result.critical === "criticalSuccess") {
+      resultText = "🔥 KRYTYCZNY SUKCES";
+    } else if (result.critical === "criticalFailure") {
+      resultText = "💀 KRYTYCZNA PORAŻKA";
+    } else {
+      resultText = result.success ? "✔ SUKCES" : "❌ PORAŻKA";
+    }
 
-    woundPenalty,
-    armorPenalty,
+    const context = {
+      actor,
+      attrKey,
+      skillKey,
 
-    showWoundPenalty: woundPenalty !== 0,
-    showArmorPenalty: armorPenalty > 0,
+      rollLabel: rollLabel ?? `${skillLabel} (${attrLabel})`,
 
-    resultText,
+      usedFate,
+      canUseFate,
 
-    showMargin: !result.critical,
-    marginText: this.formatMargin(result.margin),
+      success: result.success,
+      critical: result.critical,
 
-    eagles: result.eagles,
-    shields: result.shields,
+      diceDisplay: result.dice.length ? result.dice.join(", ") : "—",
+      total: result.total,
+      target: result.target,
 
-    showEagles: result.eagles > 0,
-    showShields: result.shields > 0,
-    showSymbols: result.eagles > 0 || result.shields > 0,
-    reRoll: reRoll,
-  };
+      displayModifier: result.displayModifier ?? 0,
+      modifierText:
+        result.displayModifier === null
+          ? ""
+          : ` (modyfikator: ${result.displayModifier >= 0 ? "+" : ""}${result.displayModifier})`,
 
-  const html = await foundry.applications.handlebars.renderTemplate(
-    "systems/crp/templates/chat/skill-roll.hbs",
-    context,
-  );
+      woundPenalty,
+      armorPenalty,
 
-  return {html, context};
-}
+      showWoundPenalty: woundPenalty !== 0,
+      showArmorPenalty: armorPenalty > 0,
+
+      resultText,
+
+      showMargin: !result.critical,
+      marginText: this.formatMargin(result.margin),
+
+      eagles: result.eagles,
+      shields: result.shields,
+
+      showEagles: result.eagles > 0,
+      showShields: result.shields > 0,
+      showSymbols: result.eagles > 0 || result.shields > 0,
+      reRoll: reRoll,
+    };
+
+    const html = await foundry.applications.handlebars.renderTemplate(
+      "systems/crp/templates/chat/skill-roll.hbs",
+      context,
+    );
+
+    return { html, context };
+  }
 
   static async processTurn(actor) {
     // blokada wielokrotnego wywołania w tej samej turze

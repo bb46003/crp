@@ -2194,10 +2194,14 @@ nav.crp-tabs {
       }
     }
   }
+  .crp-dice-modifier{
+        display: flex;
+    align-items: center;
+  }
 }
 
 .control[data-tool="crpTools"] {
-    background-image: url("../assets/orzel-kostka.webp");
+  background-image: url("../assets/orzel-kostka.webp");
   background-size: 24px 24px;
   background-position: center;
   background-repeat: no-repeat;

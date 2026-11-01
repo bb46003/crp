@@ -381,9 +381,9 @@ export class CRPGMPanel extends HandlebarsApplicationMixin(ApplicationV2) {
           for (const token of scene.tokens) {
             const actor = token.actor;
             if (!actor) continue;
-            if (actor.type !== "character"){
+            if (actor.type !== "character") {
               await actor.setFlag("crp", "npcSheetLocked", !locked);
-            };
+            }
           }
         }
         for (const actor of actors) {

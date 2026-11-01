@@ -1,130 +1,390 @@
 <div class="crp-defense-choice">
-  <p class="crp-atak-roll">
-    <strong>Atakujący: {{atackRoll.name}}</strong><br>
-    <label>Wynik Testu Ataku {{#if atackRoll.reRoll}}po Użyciu Doli{{/if}}:</label><br>
-    {{atackRoll.skill}} ({{atackRoll.attr}})<br>
-    🎲 {{lookup atackRoll.dice 0}}, {{lookup atackRoll.dice 1}} = {{atackRoll.total}}<br>
-    Cel: {{atackRoll.target}}
-    {{#if (gte atackRoll.displayModifier 0)}}
-      (Modyfikator +{{atackRoll.displayModifier}})
-    {{else}}
-      (Modyfikator {{atackRoll.displayModifier}})
-    {{/if}}
-    <br>
-    {{#if atackRoll.rany}}
-    ⚠ Kara za rany: {{atackRoll.karaRany}}<br>
-    {{/if}}
-    {{#if atackRoll.pancerz}}
-    ⚠ Kara za pancerz: -{{atackRoll.armorPenaltyValue}}<br>
-    {{/if}}
-    Margin: {{atackRoll.margin}}<br>
-  </p>
-  {{#if atackRoll.allowFate}}
-    <button
-    type="button"
-    class="crp-use-fate"
-    data-action="useFate"
-    data-type="atackRoll">
-    ✨ Użyj Doli
-  </button>
-  {{/if}}
- {{#if defenseChoice.defenceChoice}}
-  <p>Wybierz obronę:</p>
 
-  <button
-    data-defense="parry"
-    data-action="defenseChoice"
-    {{#if (or defenseChoice.canParry defenseChoice.isRangedAttack)}}disabled{{/if}}>
-    Parowanie
-  </button>
+  {{! ATTAKUJĄCY }}
+  <section class="crp-attack-section">
 
-  <button data-defense="dodge" data-action="defenseChoice">
-    Unik{{#if defenseChoice.defenderMounted}} (-2){{/if}}
-  </button>
+    <header class="crp-section-header">
+      <h3 class="crp-section-title">
+        Atakujący:
+        {{atackRoll.name}}
+      </h3>
+    </header>
 
-  <button
-    data-defense="shield" data-action="defenseChoice"
-    {{#if defenseChoice.hasShield}}disabled{{/if}}>
-    Tarcza
-  </button>
-{{else}}
-  <p class="crp-defence-roll">
-    <label>{{defenseResult.label}}</label>
-    <strong>Broniący: {{defenceRoll.name}}</strong><br>
-    <label>Wynik Testu Obrony:</label><br>
-    {{defenceRoll.skill}} ({{defenceRoll.attr}})<br>
-    🎲 {{lookup defenceRoll.dice 0}}, {{lookup defenceRoll.dice 1}} = {{defenceRoll.total}}<br>
-    Cel: {{defenceRoll.target}}
-    {{#if (gte defenceRoll.displayModifier 0)}}
-      (Modyfikator +{{defenceRoll.displayModifier}})
-    {{else}}
-      (Modyfikator {{defenceRoll.displayModifier}})
-    {{/if}}
-    <br>
-    {{#if defenceRoll.rany}}
-    ⚠ Kara za rany: {{defenceRoll.karaRany}}<br>
-    {{/if}}
-    {{#if defenceRoll.pancerz}}
-    ⚠ Kara za pancerz: -{{defenceRoll.armorPenaltyValue}}<br>
-    {{/if}}
-    Margin: {{defenceRoll.margin}}<br>
-      {{#if defenceRoll.allowFate}}
-    <button
-    type="button"
-    class="crp-use-fate"
-    data-action="useFate"
-    data-action="useFate"
-    data-type="defenceRoll">
-    ✨ Użyj Doli
-  </button>
-  {{/if}}
-  </p>
-  {{#if (eq winner "A")}}
-    <label class="crp-winner">👉 Wygrywa atakujący {{atackRoll.name}} </label>
+    <div class="crp-attack-roll">
+
+      <p class="crp-roll-label">
+        Wynik Testu Ataku
+        {{#if atackRoll.reRoll}}
+          <span class="crp-reroll-label">(po Użyciu Doli)</span>
+        {{/if}}
+      </p>
+
+      <div class="crp-roll-details">
+
+        <p class="crp-roll-skill">
+          <span class="crp-label">Umiejętność:</span>
+          <span class="crp-value">{{atackRoll.skill}}</span>
+          <span class="crp-roll-attribute">({{atackRoll.attr}})</span>
+        </p>
+
+        <p class="crp-roll-dice">
+          <span class="crp-label">Kości:</span>
+          <span class="crp-value">
+            🎲
+            {{lookup atackRoll.dice 0}},
+            {{lookup atackRoll.dice 1}}
+            =
+            {{atackRoll.total}}
+          </span>
+        </p>
+
+        <p class="crp-roll-target">
+          <span class="crp-label">Cel:</span>
+          <span class="crp-value">{{atackRoll.target}}</span>
+
+          <span class="crp-roll-modifier">
+            (Modyfikator
+            {{#if (gte atackRoll.displayModifier 0)}}
+              +{{atackRoll.displayModifier}}
+            {{else}}
+              {{atackRoll.displayModifier}}
+            {{/if}})
+          </span>
+        </p>
+
+        {{#if atackRoll.rany}}
+          <p class="crp-roll-penalty crp-wound-penalty">
+            <span class="crp-label">⚠ Kara za rany:</span>
+            <span class="crp-value">{{atackRoll.karaRany}}</span>
+          </p>
+        {{/if}}
+
+        {{#if atackRoll.pancerz}}
+          <p class="crp-roll-penalty crp-armor-penalty">
+            <span class="crp-label">⚠ Kara za pancerz:</span>
+            <span class="crp-value">-{{atackRoll.armorPenaltyValue}}</span>
+          </p>
+        {{/if}}
+
+        <p class="crp-roll-margin">
+          <span class="crp-label">Margin:</span>
+          <span class="crp-value">{{atackRoll.margin}}</span>
+        </p>
+
+      </div>
+
+      {{#if atackRoll.allowFate}}
+        <footer class="crp-roll-actions">
+          <button
+            type="button"
+            class="crp-use-fate"
+            data-action="useFate"
+            data-type="atackRoll"
+          >
+            ✨ Użyj Doli
+          </button>
+        </footer>
+      {{/if}}
+
+    </div>
+  </section>
+
+  {{! WYBÓR OBRONY LUB WYNIK TESTU }}
+  {{#if defenseChoice.defenceChoice}}
+
+    <section class="crp-defense-selection">
+
+      <header class="crp-section-header">
+        <h3 class="crp-section-title">Wybierz obronę</h3>
+      </header>
+
+      <div class="crp-defense-actions">
+
+        {{#if (or defenseChoice.canParry defenseChoice.isRangedAttack)}}
+          <button
+            type="button"
+            class="crp-defense-button crp-parry-button"
+            data-defense="parry"
+            data-action="defenseChoice"
+          >
+            Parowanie
+          </button>
+        {{/if}}
+
+        <button
+          type="button"
+          class="crp-defense-button crp-dodge-button"
+          data-defense="dodge"
+          data-action="defenseChoice"
+        >
+          Unik{{#if defenseChoice.defenderMounted}} (-2){{/if}}
+        </button>
+
+        {{#if defenseChoice.hasShield}}
+          <button
+            type="button"
+            class="crp-defense-button crp-shield-button"
+            data-defense="shield"
+            data-action="defenseChoice"
+          >
+            Tarcza
+          </button>
+        {{/if}}
+
+      </div>
+    </section>
+
   {{else}}
-    {{#if (eq winner "B")}}
-      <label class="crp-winner">👉 Wygrywa broniący {{defenceRoll.name}} </label>
-    {{else}}
-      <label class="crp-winner">👉 Remis</label>
-    {{/if}}
+
+    {{! BRONIĄCY }}
+    <section class="crp-defense-roll-section">
+
+      <header class="crp-section-header">
+        <h3 class="crp-section-title">
+          {{defenseResult.label}}
+        </h3>
+
+        <p class="crp-defender-name">
+          Broniący:
+          <strong>{{defenceRoll.name}}</strong>
+        </p>
+      </header>
+
+      <div class="crp-defense-roll">
+
+        <p class="crp-roll-label">Wynik Testu Obrony</p>
+
+        <div class="crp-roll-details">
+
+          <p class="crp-roll-skill">
+            <span class="crp-label">Umiejętność:</span>
+            <span class="crp-value">{{defenceRoll.skill}}</span>
+            <span class="crp-roll-attribute">({{defenceRoll.attr}})</span>
+          </p>
+
+          <p class="crp-roll-dice">
+            <span class="crp-label">Kości:</span>
+            <span class="crp-value">
+              🎲
+              {{lookup defenceRoll.dice 0}},
+              {{lookup defenceRoll.dice 1}}
+              =
+              {{defenceRoll.total}}
+            </span>
+          </p>
+
+          <p class="crp-roll-target">
+            <span class="crp-label">Cel:</span>
+            <span class="crp-value">{{defenceRoll.target}}</span>
+
+            <span class="crp-roll-modifier">
+              (Modyfikator
+              {{#if (gte defenceRoll.displayModifier 0)}}
+                +{{defenceRoll.displayModifier}}
+              {{else}}
+                {{defenceRoll.displayModifier}}
+              {{/if}})
+            </span>
+          </p>
+
+          {{#if defenceRoll.rany}}
+            <p class="crp-roll-penalty crp-wound-penalty">
+              <span class="crp-label">⚠ Kara za rany:</span>
+              <span class="crp-value">{{defenceRoll.karaRany}}</span>
+            </p>
+          {{/if}}
+
+          {{#if defenceRoll.pancerz}}
+            <p class="crp-roll-penalty crp-armor-penalty">
+              <span class="crp-label">⚠ Kara za pancerz:</span>
+              <span class="crp-value">-{{defenceRoll.armorPenaltyValue}}</span>
+            </p>
+          {{/if}}
+
+          <p class="crp-roll-margin">
+            <span class="crp-label">Margin:</span>
+            <span class="crp-value">{{defenceRoll.margin}}</span>
+          </p>
+
+        </div>
+
+        {{#if defenceRoll.allowFate}}
+          <footer class="crp-roll-actions">
+            <button
+              type="button"
+              class="crp-use-fate"
+              data-action="useFate"
+              data-type="defenceRoll"
+            >
+              ✨ Użyj Doli
+            </button>
+          </footer>
+        {{/if}}
+
+      </div>
+    </section>
+
+    {{! ZWYCIĘZCA }}
+    <section class="crp-combat-result">
+
+      {{#if (eq winner "A")}}
+        <p class="crp-winner crp-attacker-wins">
+          👉 Wygrywa atakujący:
+          {{atackRoll.name}}
+        </p>
+      {{else}}
+        {{#if (eq winner "B")}}
+          <p class="crp-winner crp-defender-wins">
+            👉 Wygrywa broniący:
+            {{defenceRoll.name}}
+          </p>
+        {{else}}
+          <p class="crp-winner crp-draw">
+            👉 Remis
+          </p>
+        {{/if}}
+      {{/if}}
+
+    </section>
+
   {{/if}}
-  {{/if}}
+
+  {{! OBRAŻENIA }}
+  {{#if (eq winner "A")}}
   {{#if damageResult}}
-  <div class="crp-dmg">
-    💥 Obrażenia bazowe: <b>{{damageResult.base}}</b><br>
-    🛡 Redukcja: {{damageResult.reduction}}
-    (
-    {{#if (ne damageResult.armorProtection 0)}}
-    + {{damageResult.armorProtection}} pancerz
+    
+    <section class="crp-damage-section">
+
+      <header class="crp-section-header">
+        <h3 class="crp-section-title">Obrażenia</h3>
+      </header>
+
+      <div class="crp-dmg">
+
+        <p class="crp-damage-base">
+          <span class="crp-label">💥 Obrażenia bazowe:</span>
+          <strong class="crp-value">{{damageResult.base}}</strong>
+        </p>
+
+        <div class="crp-damage-reduction">
+
+          <p class="crp-damage-reduction-total">
+            <span class="crp-label">🛡 Redukcja:</span>
+            <strong class="crp-value">{{damageResult.reduction}}</strong>
+          </p>
+
+          <div class="crp-damage-reduction-details">
+
+            {{#if (ne damageResult.armorProtection 0)}}
+              <span class="crp-armor-protection">
+                +
+                {{damageResult.armorProtection}}
+                pancerz
+              </span>
+            {{/if}}
+
+            {{#if (ne damageResult.shieldProtection 0)}}
+              <span class="crp-shield-protection">
+                +
+                {{damageResult.shieldProtection}}
+                tarcza
+              </span>
+            {{/if}}
+
+            {{#if (ne defenceRoll.eagles 0)}}
+              <span class="crp-dice-modifier">
+                +{{defenceRoll.eagles}}
+                <img
+                  class="crp-dice-image"
+                  src="systems/crp/assets/orzel-kostka.webp"
+                  alt="Orzeł"
+                  title="Orzeł"
+                />
+              </span>
+            {{/if}}
+
+            {{#if (ne defenceRoll.shields 0)}}
+              <span class="crp-dice-modifier">
+                -{{defenceRoll.shields}}
+                <img
+                  class="crp-dice-image"
+                  src="systems/crp/assets/tarcza_kostka.webp"
+                  alt="Tarcza"
+                  title="Tarcza"
+                />
+              </span>
+            {{/if}}
+
+          </div>
+        </div>
+
+        <div class="crp-damage-modifier">
+
+          <span class="crp-label">⚔ Modyfikator ataku:</span>
+          {{#if (ne atackRoll.eagles 0)}}
+            <span class="crp-dice-modifier">
+              +{{atackRoll.eagles}}
+              <img
+                class="crp-dice-image"
+                src="systems/crp/assets/orzel-kostka.webp"
+                alt="Orzeł"
+                title="Orzeł"
+              />
+            </span>
+          {{/if}}
+
+          {{#if (ne atackRoll.shields 0)}}
+            <span class="crp-dice-modifier">
+              -{{atackRoll.shields}}
+              <img
+                class="crp-dice-image"
+                src="systems/crp/assets/tarcza_kostka.webp"
+                alt="Tarcza"
+                title="Tarcza"
+              />
+            </span>
+          {{/if}}
+
+        </div>
+
+        <p class="crp-damage-total">
+          <span class="crp-label">👉 Obrażenia końcowe:</span>
+          <strong class="crp-value">{{damageResult.total}}</strong>
+        </p>
+
+      </div>
+
+      {{#if (gt damageResult.total 0)}}
+      <footer class="crp-damage-control">
+
+        <button
+          type="button"
+          class="crp-apply-damage"
+          data-action="applyDamage"
+        >
+          Przyjmij obrażenia
+        </button>
+
+        {{#if damageResult.needsDamageChoice}}
+          <button
+            type="button"
+            class="crp-avoid-damage"
+            data-action="avoidDamage"
+          >
+            Anuluj obrażenia
+          </button>
+
+          <p class="crp-damage-status">
+            Uniknięcie obrażeń kosztuje Punkt Doli
+          </p>
+        {{/if}}
+
+      </footer>
+    {{else}}
+      <label>Atak nie zadał obrażeń</label>
     {{/if}}
-    {{#if (ne damageResult.shieldProtection 0)}}
-    + {{damageResult.shieldProtection}} tarcza
-    {{/if}}
-    {{#if (ne defenceRoll.eagles 0)}}
-    + {{defenceRoll.eagles}} 🦅
-    {{/if}}
-    {{#if (ne defenceRoll.eagles 0)}}
-     - {{defenceRoll.eagles}} 🛡️
-    {{/if}}
-    )<br>
-  ⚔ Modyfikator ataku:
-    {{#if (ne atackRoll.eagles 0)}}+{{atackRoll.eagles}}🦅{{/if}}
-    {{#if (ne atackRoll.shields 0)}}-{{atackRoll.eagles}}🛡️{{/if}}<br>
-    👉 Obrażenia końcowe: <b>{{damageResult.total}}</b>
-  </div>
-  
-  <!-- CRP_DAMAGE_CONTROL_START -->
-  <div class="crp-damage-control">
-    <button type="button" data-action="applyDamage">
-      Przyjmij obrażenia
-    </button>
-    {{/if}}
-    {{#if damageResult.needsDamageChoice}}
-    <button type="button" data-action="avoidDamage">
-      Anuluj obrażenia
-    </button>
-    <div class="crp-damage-status">Uniknięcie obrażeń kosztuje Punkt Doli</div>
-  </div>
+    </section>
+
   {{/if}}
-<!-- CRP_DAMAGE_CONTROL_END -->
+{{/if}}
 </div>

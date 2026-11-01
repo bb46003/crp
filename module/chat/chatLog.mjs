@@ -39,7 +39,7 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
       case "defenceRoll": {
         roll = crp.defenceRoll;
         actor = await fromUuid(roll.testData.uuid);
-        if(!game.user.isGM && !actor.isOwner){
+        if (!game.user.isGM && !actor.isOwner) {
           ui.notifications.warn("Nie kontrolujesz tej postaci");
           return;
         }
@@ -56,7 +56,7 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
       case "atackRoll": {
         roll = crp.atackRoll;
         actor = await fromUuid(roll.testData.uuid);
-        if(!game.user.isGM && !actor.isOwner){
+        if (!game.user.isGM && !actor.isOwner) {
           ui.notifications.warn("Nie kontrolujesz tej postaci");
           return;
         }
@@ -71,7 +71,7 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
       case "skillRoll": {
         roll = crp;
         actor = await game.actors.get(roll.actor._id);
-        if(!game.user.isGM && !actor.isOwner){
+        if (!game.user.isGM && !actor.isOwner) {
           ui.notifications.warn("Nie kontrolujesz tej postaci");
           return;
         }
@@ -82,16 +82,19 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
         modifier = roll.modifier;
         displayModifier = roll.displayModifier;
         const reroll = await CRPRoll.skill(actor, attr, skill, {
-      chat: false,
-      allowFate: false,
-      modifier,
-      displayModifier,
-      reRoll: true,
-    });
-        const updateData = { content: reroll.content.html, "system.crp": reroll.content.context };
+          chat: false,
+          allowFate: false,
+          modifier,
+          displayModifier,
+          reRoll: true,
+        });
+        const updateData = {
+          content: reroll.content.html,
+          "system.crp": reroll.content.context,
+        };
         await message.update(updateData);
 
-        return;     
+        return;
       }
       default:
         return;
@@ -120,14 +123,19 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
       const defenceRoll = crp.defenceRoll;
       const defenderActor = await fromUuid(crp.defenceRoll.testData.uuid);
       const defenseType = crp.defenceRoll.defenseType;
-      const {damage, baseDamage,reduction} = damageCalculation(reroll,defenceRoll,defenderActor,defenseType)
+      const { damage, baseDamage, reduction } = damageCalculation(
+        reroll,
+        defenceRoll,
+        defenderActor,
+        defenseType,
+      );
       updateData["system.crp.winner"] = defnieWinner(
         updatedRoll,
         crp.defenceRoll,
       );
-      updateData['system.crp.damageResult.total'] = damage;
-      updateData['system.crp.damageResult.base'] = baseDamage
-      updateData['system.crp.damageResults.reduction'] = reduction
+      updateData["system.crp.damageResult.total"] = damage;
+      updateData["system.crp.damageResult.base"] = baseDamage;
+      updateData["system.crp.damageResults.reduction"] = reduction;
     } else if (type === "defenceRoll") {
       updateData["system.crp.winner"] = defnieWinner(
         crp.atackRoll,
@@ -136,10 +144,15 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
       const defenceRoll = crp.defenceRoll;
       const defenderActor = await fromUuid(crp.defenceRoll.testData.uuid);
       const defenseType = crp.defenceRoll.defenseType;
-      const {damage, baseDamage, reduction} = damageCalculation(reroll,defenceRoll,defenderActor,defenseType)
-      updateData['system.crp.damageResult.total'] = damage;
-      updateData['system.crp.damageResult.base'] = baseDamage
-      updateData['system.crp.damageResults.reduction'] = reduction
+      const { damage, baseDamage, reduction } = damageCalculation(
+        reroll,
+        defenceRoll,
+        defenderActor,
+        defenseType,
+      );
+      updateData["system.crp.damageResult.total"] = damage;
+      updateData["system.crp.damageResult.base"] = baseDamage;
+      updateData["system.crp.damageResults.reduction"] = reduction;
     }
     await message.update(updateData);
     await message.regenerateAtakRollContent();
@@ -304,7 +317,8 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
       },
     });
     const winner = defnieWinner(atackRoll, defenceRoll);
-    const {damage, baseDamage,reduction,armorProtection,shieldProtection} = damageCalculation(atackRoll,defenceRoll,defenderActor,defenseType)
+    const { damage, baseDamage, reduction, armorProtection, shieldProtection } =
+      damageCalculation(atackRoll, defenceRoll, defenderActor, defenseType);
     const attackEagles = atackRoll?.eagles ?? 0;
     const attackShields = atackRoll?.shields ?? 0;
     const hasAttackModifiers = attackEagles !== 0 || attackShields !== 0;
@@ -321,12 +335,12 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
     };
     const damageResult = {
       base: baseDamage,
-      armorProtection:armorProtection,
+      armorProtection: armorProtection,
       shieldProtection: shieldProtection,
       reduction,
       hasAttackModifiers,
       total: damage,
-      needsDamageChoice: needsDamageChoice
+      needsDamageChoice: needsDamageChoice,
     };
     await message.update({
       system: {
@@ -377,37 +391,35 @@ function defnieWinner(atackRoll, defenceRoll) {
   return winner;
 }
 
-function damageCalculation(atackRoll, defenceRoll, defenderActor,defenseType){
+function damageCalculation(atackRoll, defenceRoll, defenderActor, defenseType) {
   const marginA = atackRoll?.margin ?? 0;
-    const marginB = defenceRoll?.margin ?? 0;
-    const baseDamage = Math.max(0, marginA - marginB);
+  const marginB = defenceRoll?.margin ?? 0;
+  const baseDamage = Math.max(0, marginA - marginB);
 
-    const attackEagles = atackRoll?.eagles ?? 0;
-    const attackShields = atackRoll?.shields ?? 0;
+  const attackEagles = atackRoll?.eagles ?? 0;
+  const attackShields = atackRoll?.shields ?? 0;
 
-    let damage = Math.max(0, baseDamage + attackEagles - attackShields);
-     const equipment = defenderActor.system.equipment;
-    const armorProtection =
-      defenderActor.items.get(equipment.armor?.id)?.system?.protection ?? 0;
+  let damage = Math.max(0, baseDamage + attackEagles - attackShields);
+  const equipment = defenderActor.system.equipment;
+  const armorProtection =
+    defenderActor.items.get(equipment.armor?.id)?.system?.protection ?? 0;
 
-    const shieldProtection =
-      defenseType === "shield"
-        ? Math.max(
-            ...handItems.map((item) =>
-              item?.type === "shield"
-                ? Number(item.system?.protection) || 0
-                : 0,
-            ),
-          )
-        : 0;
+  const shieldProtection =
+    defenseType === "shield"
+      ? Math.max(
+          ...handItems.map((item) =>
+            item?.type === "shield" ? Number(item.system?.protection) || 0 : 0,
+          ),
+        )
+      : 0;
 
-    const defenseEagles = defenceRoll?.eagles ?? 0;
-    const defenseShields = defenceRoll?.shields ?? 0;
+  const defenseEagles = defenceRoll?.eagles ?? 0;
+  const defenseShields = defenceRoll?.shields ?? 0;
 
-    const reduction = Math.max(
-      0,
-      armorProtection + shieldProtection + defenseEagles - defenseShields,
-    );
-    damage = Math.max(0, damage - reduction)
-    return {damage,baseDamage,reduction,armorProtection,shieldProtection};
+  const reduction = Math.max(
+    0,
+    armorProtection + shieldProtection + defenseEagles - defenseShields,
+  );
+  damage = Math.max(0, damage - reduction);
+  return { damage, baseDamage, reduction, armorProtection, shieldProtection };
 }
