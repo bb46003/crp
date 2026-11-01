@@ -394,7 +394,7 @@ export class CRPActor extends Actor {
     const attackSkill = isUnarmedAttack ? "brawl" : item.system?.skill;
     const itemType = isUnarmedAttack ? "unarmed" : item.type;
     const itemRange = isUnarmedAttack ? "melee" : item.system?.range;
-    const attackerMounted = !!this.system.equipment.mounted;
+    const attackerMounted = this.system.equipment.mounted;
     const getSlotAttackModifier = () => {
       if (isUnarmedAttack) return -3;
       if (item.type !== "weapon") return 0;
@@ -540,11 +540,20 @@ export class CRPActor extends Actor {
       skill: CONFIG.CRP.skills[attackSkill],
       attr: CONFIG.CRP.attributes[attr],
       displayModifier: selectedAttackModifier,
-      rany: penalty > 0,
+      rany: penalty !== 0,
       karaRany: penalty,
-      pancerz: atackRoll.armorPenalty > 0,
+      pancerz: atackRoll.armorPenalty !== 0,
       allowFate: allowFate,
       reRoll: false,
+      modifier:{
+        total: totalAttackModifier+penalty-atackRoll.armorPenalty,
+        slot: attackModifier,
+        mounted: mountedAdvantage,
+        selected: selectedAttackModifier,
+        aimed: startsAimedAttack || oneTimeAimedAttack ? 3 : aimedAttackBonus,
+        karaRany: penalty,
+        pancerz: atackRoll.armorPenalty
+      },
       testData: {
         attAttr: attr,
         attSkill: attackSkill,
@@ -586,6 +595,54 @@ export class CRPActor extends Actor {
       ),
     });
   }
+  async  getSkillModifier() {
+  const content = await foundry.applications.handlebars.renderTemplate(
+    "systems/crp/templates/skills.hbs",
+  );
+
+  return foundry.applications.api.DialogV2.wait({
+    window: { title: "Test umiejętności" },
+    content,
+    buttons: [
+      {
+        action: "confirm",
+        label: "Rzuć",
+        default: true,
+        callback: (_event, _button, dialog) => {
+          const value = Number(
+            dialog.element.querySelector("input[name='skillModifier']")
+              ?.value ?? 0,
+          );
+          return {
+            confirmed: true,
+            modifier: Math.max(
+              -4,
+              Math.min(4, Number.isFinite(value) ? value : 0),
+            ),
+          };
+        },
+      },
+      {
+        action: "cancel",
+        label: "Anuluj",
+        callback: () => ({ confirmed: false }),
+      },
+    ],
+    render: (_event, dialog) => {
+      const input = dialog.element.querySelector("input[name='skillModifier']");
+      const output = dialog.element.querySelector(".crp-skills-modifier-value");
+      if (!input || !output) return;
+
+      const refreshOutput = () => {
+        const value = Number(input.value) || 0;
+        output.value = value >= 0 ? `+${value}` : String(value);
+      };
+
+      input.addEventListener("input", refreshOutput);
+      refreshOutput();
+    },
+  });
+}
 }
 
 function hasChangedPath(changed, path) {

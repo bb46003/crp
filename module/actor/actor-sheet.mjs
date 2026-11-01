@@ -477,7 +477,7 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
       const element = target.closest(".crp-skill");
       const attr = element.dataset.attr;
       const skill = element.dataset.skill;
-      const choice = await getSkillModifier().catch(() => null);
+      const choice = await this.actor.getSkillModifier().catch(() => null);
 
       if (!choice?.confirmed) return;
 
@@ -539,7 +539,7 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
       return;
     }
     const droppedItem = JSON.parse(itemData);
-    const itemDoc = await fromUuid(droppedItem.uuid);
+    let itemDoc = await fromUuid(droppedItem.uuid);
     if (
       toElement.classList.value.includes("slot") ||
       parent?.classList?.value.includes("slot")
@@ -551,6 +551,10 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
         itemDoc.type == slotType ||
         (slotType?.includes("Hand") && itemDoc.type === "weapon")
       ) {
+        if(!itemDoc.uuid.includes("Actor")) {
+          itemDoc = await this.actor.createEmbeddedDocuments("Item", [itemDoc]);
+          itemDoc = itemDoc[0];
+        }
         switch (slotType) {
           case "armor":
             updateData = {
@@ -692,54 +696,7 @@ function isNPCActor(actor) {
   return CRP_NPC_ACTOR_TYPES.has(actor?.type);
 }
 
-async function getSkillModifier() {
-  const content = await foundry.applications.handlebars.renderTemplate(
-    "systems/crp/templates/skills.hbs",
-  );
 
-  return foundry.applications.api.DialogV2.wait({
-    window: { title: "Test umiejętności" },
-    content,
-    buttons: [
-      {
-        action: "confirm",
-        label: "Rzuć",
-        default: true,
-        callback: (_event, _button, dialog) => {
-          const value = Number(
-            dialog.element.querySelector("input[name='skillModifier']")
-              ?.value ?? 0,
-          );
-          return {
-            confirmed: true,
-            modifier: Math.max(
-              -4,
-              Math.min(4, Number.isFinite(value) ? value : 0),
-            ),
-          };
-        },
-      },
-      {
-        action: "cancel",
-        label: "Anuluj",
-        callback: () => ({ confirmed: false }),
-      },
-    ],
-    render: (_event, dialog) => {
-      const input = dialog.element.querySelector("input[name='skillModifier']");
-      const output = dialog.element.querySelector(".crp-skills-modifier-value");
-      if (!input || !output) return;
-
-      const refreshOutput = () => {
-        const value = Number(input.value) || 0;
-        output.value = value >= 0 ? `+${value}` : String(value);
-      };
-
-      input.addEventListener("input", refreshOutput);
-      refreshOutput();
-    },
-  });
-}
 async function enrich(html) {
   if (html) {
     return await foundry.applications.ux.TextEditor.implementation.enrichHTML(

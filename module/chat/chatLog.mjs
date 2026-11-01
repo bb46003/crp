@@ -327,10 +327,13 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
     const selectedDeffModifier =
       defenseType === "dodge" && defenderMounted ? -2 : 0;
     const allowFate = defenderActor.system.resources.fate.value > 0;
+    const choiceModifier = await defenderActor.getSkillModifier();
+    if(choiceModifier.confirmed){ 
+      const totalModifier = choiceModifier.modifier+ selectedDeffModifier;
     const defenceRoll = await CRPRoll.skill(defenderActor, defAttr, defSkill, {
       chat: false,
       allowFate: allowFate,
-      modifier: defenseModifier,
+      modifier: totalModifier,
       displayModifier: selectedDeffModifier,
     });
     const penalty = defenderActor.system.derived.woundPenalty ?? 0;
@@ -341,17 +344,29 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
       attr: CONFIG.CRP.attributes[defAttr],
       displayModifier: selectedDeffModifier,
       defenseType: defenseType,
-      rany: penalty > 0,
+      rany: penalty !== 0,
       karaRany: penalty,
-      pancerz: defenceRoll.armorPenalty > 0,
+      pancerz: defenceRoll.armorPenalty !== 0,
       allowFate: allowFate,
+      modifier: {
+        total: totalModifier+penalty-defenceRoll.armorPenalty ,
+        slot: 0,
+        mounted: 0,
+        selected: choiceModifier.modifier,
+        aimed: 0,
+        karaRany: penalty,
+        pancerz: -defenceRoll.armorPenalty,
+        shield: defenseType === "shield" ? 1 : 0,
+        defenseModifier: defenseModifier,
+      },
+      reRoll: false,
       testData: {
         defSkill: defSkill,
         defAttr: defAttr,
         uuid: defenderActor.uuid,
         chat: false,
         allowFate: allowFate,
-        modifier: defenseModifier,
+        modifier: defenseModifier+choiceModifier.modifier,
         displayModifier: selectedDeffModifier,
       },
     });
@@ -397,6 +412,7 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
     });
     await message.regenerateAtakRollContent();
   }
+}
 }
 
 function defnieWinner(atackRoll, defenceRoll) {

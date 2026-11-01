@@ -41,4 +41,25 @@ export function registerHandlebarsHelpers() {
     }
     return result;
   });
+
+
+  Handlebars.registerHelper("modifierTooltip", function (modifiers) {
+      const modifierLabels = {
+    slot: "Modyfikator ataku",
+    mounted: "Premia za walkę konną",
+    aimed: "Modyfikator manewru",
+    karaRany: "Kara za rany",
+    pancerz: "Kara za pancerz",
+    selected: "Wybrany modyfikator",
+    shield: "Premia za tarczę",
+    defenseModifier: "Modyfikator obrony",
+  };
+  const activeModifiers = Object.entries(modifiers)
+    .filter(([key, value]) => value !== 0 && value != null && key !== "total")
+    .map(([key, value]) => `${modifierLabels[key] ?? key}: ${value > 0 ? "+" : ""}${value}`);
+
+  return activeModifiers.length
+    ? activeModifiers.join("\n")
+    : "Brak modyfikatorów";
+  })
 }

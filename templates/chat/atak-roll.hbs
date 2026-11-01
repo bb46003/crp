@@ -42,12 +42,16 @@
           <span class="crp-label">Cel:</span>
           <span class="crp-value">{{atackRoll.target}}</span>
 
-          <span class="crp-roll-modifier">
+          <span class="crp-roll-modifier"
+          data-toggle="tooltip" 
+          data-placement="bottom" 
+          title="{{modifierTooltip atackRoll.modifier}}"
+          >
             (Modyfikator
-            {{#if (gte atackRoll.displayModifier 0)}}
-              +{{atackRoll.displayModifier}}
+            {{#if (gte atackRoll.modifier.total 0)}}
+              +{{atackRoll.modifier.total}}
             {{else}}
-              {{atackRoll.displayModifier}}
+              {{atackRoll.modifier.total}}
             {{/if}})
           </span>
         </p>
@@ -177,12 +181,15 @@
             <span class="crp-label">Cel:</span>
             <span class="crp-value">{{defenceRoll.target}}</span>
 
-            <span class="crp-roll-modifier">
+            <span class="crp-roll-modifier"          
+            data-toggle="tooltip" 
+          data-placement="bottom" 
+          title="{{modifierTooltip defenceRoll.modifier}}">
               (Modyfikator
-              {{#if (gte defenceRoll.displayModifier 0)}}
-                +{{defenceRoll.displayModifier}}
+              {{#if (gte defenceRoll.modifier.total  0)}}
+                +{{defenceRoll.modifier.total }}
               {{else}}
-                {{defenceRoll.displayModifier}}
+                {{defenceRoll.modifier.total }}
               {{/if}})
             </span>
           </p>
@@ -197,7 +204,7 @@
           {{#if defenceRoll.pancerz}}
             <p class="crp-roll-penalty crp-armor-penalty">
               <span class="crp-label">⚠ Kara za pancerz:</span>
-              <span class="crp-value">-{{defenceRoll.armorPenaltyValue}}</span>
+              <span class="crp-value">-{{defenceRoll.armorPenalty}}</span>
             </p>
           {{/if}}
 
