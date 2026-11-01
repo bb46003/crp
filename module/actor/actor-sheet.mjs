@@ -524,7 +524,7 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
     await this.actor.atackRoll(itemId);
   }
   static async #lockSheet(ev) {
-    const locked = !!this.actor.getFlag("crp", "npcSheetLocked");
+    const locked = this.actor.getFlag("crp", "npcSheetLocked");
     await this.actor.setFlag("crp", "npcSheetLocked", !locked);
     const target = ev.target;
     this.setY(target);
@@ -677,11 +677,13 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
     this.y = section.scrollTop;
   }
   get isEditable() {
+    const locked = game.settings.get("crp", "characterSheetsLocked");
     if (this.actor !== "character") {
       const npcSheetLocked = this.actor.getFlag("crp", "npcSheetLocked");
-      return !npcSheetLocked;
+      return !npcSheetLocked && !locked;
     } else {
-      return super.isEditable;
+      const isEditable = super.isEditable;
+      return isEditable && !locked;
     }
   }
 }
