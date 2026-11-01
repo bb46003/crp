@@ -57,6 +57,7 @@ export class CRPRoll {
       displayModifier = null,
       targetOverride = null,
       rollLabel = null,
+      reRoll = false,
     } = {},
   ) {
     if (!actor) {
@@ -126,250 +127,106 @@ export class CRPRoll {
       armorPenalty,
       displayModifier,
     };
-    const content = this.renderRollHTML(actor, attrKey, skillKey, result, {
+    const content = await this.renderRollHTML(actor, attrKey, skillKey, result, {
       usedFate: false,
       allowFate: effectiveAllowFate,
       rollLabel,
+      reRoll,
     });
+    Object.assign(content.context, { modifier: modifier });
     Object.assign(result, { content: content });
     if (chat) {
       await ChatMessage.create({
         speaker: ChatMessage.getSpeaker({ actor }),
-        content,
+        content: content.html,
+        system:{
+          crp: content.context
+        }
       });
     }
 
     return result;
   }
 
-  static async opposed(
-    actorA,
-    attrA,
-    skillA,
-    actorB,
-    attrB,
-    skillB,
-    { actorAOptions = {}, actorBOptions = {} } = {},
-  ) {
-    const rollA = await this.skill(actorA, attrA, skillA, {
-      chat: false,
-      ...actorAOptions,
-    });
-    const rollB = await this.skill(actorB, attrB, skillB, {
-      chat: false,
-      ...actorBOptions,
-    });
 
-    if (!rollA || !rollB) {
-      console.error("Błąd testu przeciwstawnego");
-      ui.notifications.warn("Nie można wykonać testu");
-      return;
-    }
 
-    const penaltyA = actorA.system.derived.woundPenalty ?? 0;
-    const penaltyB = actorB.system.derived.woundPenalty ?? 0;
-    const armorPenaltyA = rollA.armorPenalty ?? 0;
-    const armorPenaltyB = rollB.armorPenalty ?? 0;
-    const attackModifierText =
-      rollA.displayModifier === null
-        ? ""
-        : ` (modyfikator: ${rollA.displayModifier >= 0 ? "+" : ""}${rollA.displayModifier})`;
-    const defenseModifierText =
-      rollB.displayModifier === null
-        ? ""
-        : ` (modyfikator: ${rollB.displayModifier >= 0 ? "+" : ""}${rollB.displayModifier})`;
+static async renderRollHTML(
+  actor,
+  attrKey,
+  skillKey,
+  result,
+  { usedFate = false, allowFate = true, rollLabel = null, reRoll = false } = {},
+) {
+  const canUseFate = allowFate && (actor.isOwner || game.user.isGM);
 
-    const marginTextA = rollA.critical ? null : this.formatMargin(rollA.margin);
+  const skillLabel = CONFIG.CRP.skills[skillKey] ?? skillKey;
+  const attrLabel = CONFIG.CRP.attributes[attrKey] ?? attrKey;
 
-    const marginTextB = rollB.critical ? null : this.formatMargin(rollB.margin);
+  const woundPenalty = actor.system.derived.woundPenalty ?? 0;
 
-    //  porównanie marginów
-    let winner;
+  const armorPenalty =
+    result.armorPenalty ?? actor.getArmorSkillPenalty?.(skillKey) ?? 0;
 
-    if (
-      rollA.critical === "criticalSuccess" &&
-      rollB.critical === "criticalSuccess"
-    ) {
-      winner = "tie";
-    } else if (rollA.critical === "criticalSuccess") {
-      winner = "A";
-    } else if (rollB.critical === "criticalSuccess") {
-      winner = "B";
-    } else if (
-      rollA.critical === "criticalFailure" &&
-      rollB.critical === "criticalFailure"
-    ) {
-      winner = "tie";
-    } else if (rollA.critical === "criticalFailure") {
-      winner = "B";
-    } else if (rollB.critical === "criticalFailure") {
-      winner = "A";
-    } else {
-      if (rollA.margin > rollB.margin) {
-        winner = "A";
-      } else if (rollB.margin > rollA.margin) {
-        winner = "B";
-      } else {
-        winner = "tie";
-      }
-    }
+  let resultText;
 
-    //  Chat summary
-    const speaker = ChatMessage.getSpeaker({ actor: actorA });
-
-    // nazwy (ładne)
-    const skillLabelA = CONFIG.CRP.skills[skillA] ?? skillA;
-    const attrLabelA = CONFIG.CRP.attributes[attrA] ?? attrA;
-    const skillLabelB = CONFIG.CRP.skills[skillB] ?? skillB;
-    const attrLabelB = CONFIG.CRP.attributes[attrB] ?? attrB;
-
-    // wynik
-    let resultText;
-
-    if (winner === "A") {
-      resultText = `👉 ${actorA.name} wygrywa`;
-    } else if (winner === "B") {
-      resultText = `👉 ${actorB.name} wygrywa`;
-    } else {
-      resultText = "👉 REMIS";
-    }
-
-    // HTML
-    const content = `
-            <div class="crp-roll">
-                <h3>Test przeciwstawny</h3>
-                <hr>
-                <p>
-                    <strong>Atakujący: ${actorA.name}</strong><br>
-                    ${skillLabelA} (${attrLabelA})<br>
-                    🎲 ${rollA.dice.length ? rollA.dice.join(", ") : "—"} = ${rollA.total}<br>
-                    Cel: ${rollA.target}${attackModifierText}<br>
-                    ${penaltyA !== 0 ? `⚠ Kara za rany: ${penaltyA}<br>` : ""}
-                    ${armorPenaltyA > 0 ? `⚠ Kara za pancerz: -${armorPenaltyA}<br>` : ""}
-                    ${marginTextA !== null ? `Margin: ${marginTextA}<br>` : ""}
-                </p>
-                <p>
-                    <strong>Obrońca: ${actorB.name}</strong><br>
-                    ${skillLabelB} (${attrLabelB})<br>
-                    🎲 ${rollB.dice.length ? rollB.dice.join(", ") : "—"} = ${rollB.total}<br>
-                    Cel: ${rollB.target}${defenseModifierText}<br>
-                    ${penaltyB !== 0 ? `⚠ Kara za rany: ${penaltyB}<br>` : ""}
-                    ${armorPenaltyB > 0 ? `⚠ Kara za pancerz: -${armorPenaltyB}<br>` : ""}
-                    ${marginTextB !== null ? `Margin: ${marginTextB}<br>` : ""}
-                </p>
-                <hr>
-                <p><strong>${resultText}</strong></p>
-            </div>
-        `;
-
-    const message = await ChatMessage.create({
-      speaker,
-      content,
-    });
-
-    return {
-      rollA,
-      rollB,
-      winner,
-      messageId: message.id,
-    };
+  if (result.critical === "criticalSuccess") {
+    resultText = "🔥 KRYTYCZNY SUKCES";
+  } else if (result.critical === "criticalFailure") {
+    resultText = "💀 KRYTYCZNA PORAŻKA";
+  } else {
+    resultText = result.success ? "✔ SUKCES" : "❌ PORAŻKA";
   }
 
-  static renderRollHTML(
+  const context = {
     actor,
     attrKey,
     skillKey,
-    result,
-    { usedFate = false, allowFate = true, rollLabel = null } = {},
-  ) {
-    const canUseFate = allowFate && (actor.isOwner || game.user.isGM);
 
-    const skillLabel = CONFIG.CRP.skills[skillKey] ?? skillKey;
-    const attrLabel = CONFIG.CRP.attributes[attrKey] ?? attrKey;
+    rollLabel: rollLabel ?? `${skillLabel} (${attrLabel})`,
 
-    const penalty = actor.system.derived.woundPenalty ?? 0;
-    const armorPenalty =
-      result.armorPenalty ?? actor.getArmorSkillPenalty?.(skillKey) ?? 0;
-    const modifierText =
+    usedFate,
+    canUseFate,
+
+    success: result.success,
+    critical: result.critical,
+
+    diceDisplay: result.dice.length ? result.dice.join(", ") : "—",
+    total: result.total,
+    target: result.target,
+
+    displayModifier: result.displayModifier ?? 0,
+    modifierText:
       result.displayModifier === null
         ? ""
-        : ` (modyfikator: ${result.displayModifier >= 0 ? "+" : ""}${result.displayModifier})`;
+        : ` (modyfikator: ${result.displayModifier >= 0 ? "+" : ""}${result.displayModifier})`,
 
-    //  wynik tekstowy
-    let resultText;
-    if (result.critical === "criticalSuccess") {
-      resultText = "🔥 KRYTYCZNY SUKCES";
-    } else if (result.critical === "criticalFailure") {
-      resultText = "💀 KRYTYCZNA PORAŻKA";
-    } else {
-      resultText = result.success ? "✔ SUKCES" : "❌ PORAŻKA";
-    }
+    woundPenalty,
+    armorPenalty,
 
-    //  margin
-    const marginText = result.critical
-      ? ""
-      : `<div class="crp-roll-margin">Margin: ${this.formatMargin(result.margin)}</div>`;
+    showWoundPenalty: woundPenalty !== 0,
+    showArmorPenalty: armorPenalty > 0,
 
-    //  symbole
-    let symbols = "";
-    if (result.eagles > 0) symbols += `🦅 ${result.eagles} `;
-    if (result.shields > 0) symbols += `🛡️ ${result.shields}`;
+    resultText,
 
-    //  przycisk Doli
-    const fateButton = canUseFate
-      ? `
-  <button class="crp-use-fate ${usedFate ? "used" : ""}"
-          data-actor-uuid="${actor.uuid}"
-          data-attr="${attrKey}"
-          data-skill="${skillKey}"
-          data-modifier="${result.displayModifier ?? 0}"
-          ${usedFate ? "disabled" : ""}>
-    ${usedFate ? "✔ Dola użyta" : "✨ Użyj Doli"}
-  </button>
-`
-      : "";
+    showMargin: !result.critical,
+    marginText: this.formatMargin(result.margin),
 
-    return `
-    <div class="crp-roll-card ${result.success ? "success" : "fail"}">
+    eagles: result.eagles,
+    shields: result.shields,
 
-      <div class="crp-roll-header">
-        <img src="${actor.img}" class="crp-roll-avatar">
-        <div>
-          <div class="crp-roll-actor">${actor.name}</div>
-          <div class="crp-roll-skill">${rollLabel ?? `${skillLabel} (${attrLabel})`}</div>
-        </div>
-      </div>
+    showEagles: result.eagles > 0,
+    showShields: result.shields > 0,
+    showSymbols: result.eagles > 0 || result.shields > 0,
+    reRoll: reRoll,
+  };
 
-      <div class="crp-roll-body">
+  const html = await foundry.applications.handlebars.renderTemplate(
+    "systems/crp/templates/chat/skill-roll.hbs",
+    context,
+  );
 
-        ${usedFate ? `<div class="crp-roll-fate-used">✔ Dola użyta</div>` : ""}
-
-        <div class="crp-roll-dice">
-          🎲 ${result.dice.length ? result.dice.join(", ") : "—"} 
-          → <strong>${result.total}</strong>
-        </div>
-
-        <div class="crp-roll-target">
-          🎯 Cel: ${result.target}${modifierText}
-        </div>
-
-        ${penalty !== 0 ? `<div class="crp-roll-penalty">⚠ Kara za rany: ${penalty}</div>` : ""}
-        ${armorPenalty > 0 ? `<div class="crp-roll-penalty">⚠ Kara za pancerz: -${armorPenalty}</div>` : ""}
-
-        <div class="crp-roll-result">${resultText}</div>
-
-        ${marginText}
-
-        ${symbols ? `<div class="crp-roll-symbols">${symbols}</div>` : ""}
-
-        ${fateButton}
-
-
-        
-      </div>
-    </div>
-  `;
-  }
+  return {html, context};
+}
 
   static async processTurn(actor) {
     // blokada wielokrotnego wywołania w tej samej turze

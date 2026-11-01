@@ -39,7 +39,10 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
       case "defenceRoll": {
         roll = crp.defenceRoll;
         actor = await fromUuid(roll.testData.uuid);
-
+        if(!game.user.isGM && !actor.isOwner){
+          ui.notifications.warn("Nie kontrolujesz tej postaci");
+          return;
+        }
         const spendFate = await actor.spendFate(1);
         if (!spendFate) return;
 
@@ -53,6 +56,10 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
       case "atackRoll": {
         roll = crp.atackRoll;
         actor = await fromUuid(roll.testData.uuid);
+        if(!game.user.isGM && !actor.isOwner){
+          ui.notifications.warn("Nie kontrolujesz tej postaci");
+          return;
+        }
         const spendFate = await actor.spendFate(1);
         if (!spendFate) return;
         attr = roll.testData.attAttr;
@@ -61,7 +68,31 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
         displayModifier = roll.displayModifier;
         break;
       }
+      case "skillRoll": {
+        roll = crp;
+        actor = await game.actors.get(roll.actor._id);
+        if(!game.user.isGM && !actor.isOwner){
+          ui.notifications.warn("Nie kontrolujesz tej postaci");
+          return;
+        }
+        const spendFate = await actor.spendFate(1);
+        if (!spendFate) return;
+        attr = roll.attrKey;
+        skill = roll.skillKey;
+        modifier = roll.modifier;
+        displayModifier = roll.displayModifier;
+        const reroll = await CRPRoll.skill(actor, attr, skill, {
+      chat: false,
+      allowFate: false,
+      modifier,
+      displayModifier,
+      reRoll: true,
+    });
+        const updateData = { content: reroll.content.html, "system.crp": reroll.content.context };
+        await message.update(updateData);
 
+        return;     
+      }
       default:
         return;
     }

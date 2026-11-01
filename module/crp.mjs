@@ -142,7 +142,15 @@ Hooks.once("init", () => {
   CONFIG.ui.chat = CRPChatLog;
   registerHandlebarsHelpers();
 });
-
+Hooks.on("getSceneControlButtons", (controls) => {
+  controls.tokens.tools.crpTools = {
+    name: "crpTools",
+    title: "CRP GM Panel",
+    icon: "",
+    button: true,
+    onChange: () => new CRPGMPanel().render(true),
+  };
+});
 // =====================
 // SOCKET → GM UPDATE
 // =====================
