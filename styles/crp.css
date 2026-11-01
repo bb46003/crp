@@ -2136,4 +2136,73 @@ nav.crp-tabs {
   h3 {
     font-size: 1.2rem;
   }
+  .crp-defense-choice {
+    p {
+      padding: 0px;
+      margin: unset;
+      font-size: 15px;
+    }
+    h3 {
+      font-size: 18px;
+    }
+    .crp-combat-result {
+      border: 5px double brown;
+      padding: 2px;
+      margin-top: 5px;
+      margin-bottom: 5px;
+    }
+    p {
+      font-size: 18px;
+    }
+    .crp-section-header {
+      border: none;
+    }
+    section {
+      border-bottom: 1px solid black;
+    }
+    .crp-damage-reduction,
+    .crp-damage-modifier {
+      display: flex;
+      align-items: center;
+      .crp-shield-protection,
+      .crp-eagle-protection,
+      .crp-eagle-modifier,
+      .crp-eagle-modifier {
+        display: flex;
+        .crp-dice-icon {
+          align-self: center;
+        }
+      }
+      img {
+        width: 20px;
+      }
+    }
+  }
+  .crp-damage-reduction-details {
+    margin-left: 5px;
+    display: flex;
+    flex-direction: column;
+    font-size: 12px;
+  }
+  .crp-roll-symbols {
+    display: flex;
+    align-items: center;
+    .crp-dice-icon {
+      align-self: center;
+      img {
+        width: 20px;
+      }
+    }
+  }
+}
+
+.control[data-tool="crpTools"] {
+    background-image: url("../assets/orzel-kostka.webp");
+  background-size: 24px 24px;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.control[data-tool="crpTools"] i {
+  display: none;
 }
