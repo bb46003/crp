@@ -9,8 +9,27 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
       useFate: CRPChatLog.#onUseFate,
       damageChoice: CRPChatLog.#onDamageChoice,
       defenseChoice: CRPChatLog.#onDefenseChoice,
+      applyDamage: CRPChatLog.#onApplyDamage,  
     },
   };
+
+  static async #onApplyDamage(event, target) {
+    event.preventDefault();
+    const messageId = target.closest(".crp-chat").dataset.messageId;
+    const message = await game.messages.get(messageId);
+    const { damageResult } = message.system.crp;
+    const defenderUuid = damageResult.defenceRoll.testData.uuid;
+    const defenderActor = await fromUuid(defenderUuid);
+    if(game.user.isGM || defenderActor.isOwner){
+      const damage = damageResult.total;
+      await defenderActor.applyDamage(damage);
+      await message.update({
+        "system.crp.damageResult.canApplyDamage": false,
+      });
+    } else {
+      ui.notifications.warn("Nie kontrolujesz tej postaci");
+    }
+  }
   static async #onDamageChoice(event, target) {
     event.preventDefault();
 
@@ -341,6 +360,7 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
       hasAttackModifiers,
       total: damage,
       needsDamageChoice: needsDamageChoice,
+      canApplyDamage: true,
     };
     await message.update({
       system: {

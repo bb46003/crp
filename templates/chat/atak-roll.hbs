@@ -356,7 +356,7 @@
 
       {{#if (gt damageResult.total 0)}}
       <footer class="crp-damage-control">
-
+        {{#if damageResult.canApplyDamage}}
         <button
           type="button"
           class="crp-apply-damage"
@@ -364,7 +364,15 @@
         >
           Przyjmij obrażenia
         </button>
-
+        {{else}}
+                <button
+          type="button"
+          class="crp-apply-damage"
+          data-action="restoreHealth"
+        >
+          Przywróć zdrowie
+        </button>
+        {{/if}}
         {{#if damageResult.needsDamageChoice}}
           <button
             type="button"
