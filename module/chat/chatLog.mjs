@@ -9,7 +9,8 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
       useFate: CRPChatLog.#onUseFate,
       damageChoice: CRPChatLog.#onDamageChoice,
       defenseChoice: CRPChatLog.#onDefenseChoice,
-      applyDamage: CRPChatLog.#onApplyDamage,  
+      applyDamage: CRPChatLog.#onApplyDamage,
+      restoreHealth: CRPChatLog.#onRestoreHealth,  
     },
   };
 
@@ -17,15 +18,34 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
     event.preventDefault();
     const messageId = target.closest(".crp-chat").dataset.messageId;
     const message = await game.messages.get(messageId);
-    const { damageResult } = message.system.crp;
-    const defenderUuid = damageResult.defenceRoll.testData.uuid;
+    const crp = message.system.crp;
+    const defenderUuid = crp.defenceRoll.testData.uuid;
     const defenderActor = await fromUuid(defenderUuid);
     if(game.user.isGM || defenderActor.isOwner){
-      const damage = damageResult.total;
+      const damage = crp.damageResult.total;
       await defenderActor.applyDamage(damage);
       await message.update({
         "system.crp.damageResult.canApplyDamage": false,
       });
+      message.regenerateAtakRollContent();
+    } else {
+      ui.notifications.warn("Nie kontrolujesz tej postaci");
+    }
+  }
+    static async #onRestoreHealth(event, target) {
+    event.preventDefault();
+    const messageId = target.closest(".crp-chat").dataset.messageId;
+    const message = await game.messages.get(messageId);
+    const crp = message.system.crp;
+    const defenderUuid = crp.defenceRoll.testData.uuid;
+    const defenderActor = await fromUuid(defenderUuid);
+    if(game.user.isGM || defenderActor.isOwner){
+      const damage = crp.damageResult.total;
+      await defenderActor.restoreHealth(damage);
+      await message.update({
+        "system.crp.damageResult.canApplyDamage": true,
+      });
+      message.regenerateAtakRollContent();
     } else {
       ui.notifications.warn("Nie kontrolujesz tej postaci");
     }

@@ -42,9 +42,9 @@ export class CRPActor extends Actor {
     if (
       isNPC &&
       (!Number.isFinite(Number(derived.health.value)) ||
-        derived.health.value < 1)
+        derived.health.value < 0)
     ) {
-      derived.health.value = maxHealth;
+      derived.health.value = 0;
     }
 
     // clamp
@@ -282,6 +282,22 @@ export class CRPActor extends Actor {
 
     await this.applyWoundsState();
   }
+  async restoreHealth(amount) {
+        if (amount <= 0) return;
+
+    const hp = this.system.derived.health.value;
+    const max = this.system.derived.health.max;
+
+    const currentHp = Number(hp) || 0;
+    const newHp = Math.max(-max, currentHp + amount);
+
+    await this.update({
+      "system.derived.health.value": newHp,
+    });
+
+    await this.applyWoundsState();
+  }
+
   //rzeczy do zrobienia przed stworzeniem Aktora
   async _preCreate(data, options, user) {
     await super._preCreate(data, options, user);
