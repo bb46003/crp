@@ -3,7 +3,7 @@ const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 export class CRPGMPanel extends HandlebarsApplicationMixin(ApplicationV2) {
   static DEFAULT_OPTIONS = {
     id: "crp-gm-panel",
-    classes: ["crp", "gm-panel"],
+    classes: ["crp-dialog", "gm-panel"],
     window: {
       title: "CRP – Panel MG",
       resizable: true,

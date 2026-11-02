@@ -56,4 +56,61 @@ export class CRPCombat extends Combat {
 
     return this;
   }
+
+  async _onStartTurn(combatant,context,){
+    super._onStartTurn(combatant,context);
+    for (const flagName of ["aimedAttack", "defensiveAttack"]) {
+      const maneuver = combatant.actor.getFlag("crp", flagName);
+
+      if (this.round >= maneuver?.expiresRound
+      ) {
+        await combatant.actor.unsetFlag("crp", flagName);
+      }
+    }
+    
+    if (combatant.actor.system.state.life === "dead") return;
+    if (!combatant.actor.system.state.bleeding) return;
+    let result
+    if(combatant.actor.type ==="character"){
+      //soket do gracza o tym że jego postać krwawi i musi wykonać test tężyzny
+      game.socket.emit("system.crp", {
+        type: "fortitudeRoll",
+        actorId: combatant.actor.id,
+      });
+      
+    }else{
+    result = await CRPRoll.fortitude(combatant.actor, { chat: true });
+    }
+    if (!result) return;
+
+    // =====================
+    // LOGIKA STANÓW (NA AKTUALNYM STANIE)
+    // =====================
+
+    if (!combatant.actor.system.state.unconscious) {
+      // był przytomny → może stracić przytomność
+      if (!result.success) {
+        await combatant.actor.update({
+          "system.state.unconscious": true,
+        });
+        combatant.actor.toggleStatusEffect("unconscious", { active: true });
+        ui.notifications.info(`${combatant.name} traci przytomność!`);
+      }
+    } else {
+      // był nieprzytomny → może umrzeć
+      if (!result.success) {
+        await combatant.actor.update({
+          "system.state.life": "dead",
+          "system.state.bleeding": false,
+          "system.state.unconscious": false,
+        });
+        combatant.actor.toggleStatusEffect("dead", { active: true });
+        ui.notifications.info(`${combatant.name} umiera!`);
+      }
+    }
+    // odśwież UI (opcjonalne, ale OK)
+    if(combatant.actor.sheet?.rendered){
+    await combatant.actor.sheet?.render(true);
+    }
+  }
 }

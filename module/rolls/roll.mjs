@@ -287,12 +287,13 @@ export class CRPRoll {
     });
   }
 
-  /* TEST TĘŻYZNY!
+  
 
-static async fortitude(actor, { chat = true } = {}) {
+static async fortitude(actor, { chat = true, modifier = 0 } = {}) {
   const result = await this.skill(actor, "strength", "endurance", {
     chat: false,
-    allowFate: false
+    allowFate: false,
+    modifier: modifier
   });
 
   if (chat && result) {
@@ -304,7 +305,7 @@ static async fortitude(actor, { chat = true } = {}) {
 
   return result;
 }
-  */
+
 
   static renderFortitudeHTML(actor, result) {
     const penalty = actor.system.derived.woundPenalty ?? 0;

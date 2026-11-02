@@ -47,6 +47,9 @@
   .window-content {
     padding: 0px;
   }
+  header.window-header {
+    background: rgba(75, 48, 20, 1);
+  }
 }
 .crp--sheet {
   padding: 10px;
@@ -461,15 +464,12 @@ input:focus {
 
 .crp-gm-panel {
   padding: 10px;
-  font-family: "CRP-Header", serif;
   color: #4b3014;
   height: 100%;
   overflow-y: auto;
   box-sizing: border-box;
-
-  background: url("../assets/parchment.png");
   background-size: cover;
-  border: 5px double rgba(75, 48, 20, 1);
+
 }
 
 .crp.gm-panel .window-content {
@@ -969,6 +969,15 @@ input:focus {
     grid-template-columns: 1fr 1fr 1fr;
   }
 }
+.crp-dialog{
+  border: 5px double rgba(75, 48, 20, 1);
+  background: url("../assets/parchment.png");
+  background-size: cover;
+  font-family: "CRP-Header", serif;
+  header{
+        background: rgba(75, 48, 20, 1);
+  }
+}
 .crp-attack-dialog {
   display: flex;
   flex-direction: column;
@@ -977,12 +986,10 @@ input:focus {
   min-width: 300px;
   width: 340px;
   max-width: 340px;
-  font-family: "CRP-Header", serif;
+  
   padding: 10px;
   overflow-y: auto;
-  border: 5px double rgba(75, 48, 20, 1);
-  background: url("../assets/parchment.png");
-  background-size: cover;
+  
   color: #4b3014;
   align-items: stretch;
 }
@@ -1026,10 +1033,6 @@ input:focus {
   font-family: "CRP-Header", serif;
   padding: 10px;
   overflow-y: auto;
-  border: 5px double rgba(75, 48, 20, 1);
-  background: url("../assets/parchment.png");
-  background-size: cover;
-  color: #4b3014;
   align-items: center;
 }
 

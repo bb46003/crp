@@ -1,43 +1,21 @@
 // module/crp.mjs
 
 import { CRPActor } from "./actor/actor.mjs";
-import {
-  CRPActorData,
-  CRPNPCKnechtData,
-  CRPNPCRycerzData,
-} from "./actor/actor-data.mjs";
+import {  CRPActorData,  CRPNPCKnechtData,  CRPNPCRycerzData,} from "./actor/actor-data.mjs";
 import { CRP } from "./config.mjs";
 import { CRPActorSheet } from "./actor/actor-sheet.mjs";
-import { CRPNPCCommonerSheet } from "./actor/npc-commoner-sheet.mjs";
 import { CRPNPCKnechtSheet } from "./actor/npc-knecht-sheet.mjs";
 import { CRPNPCRycerzSheet } from "./actor/npc-rycerz-sheet.mjs";
 import { CRPGMPanel } from "./gm-panel.mjs";
 import { CRPItem } from "./item/item.mjs";
-import {
-  CRPWeaponData,
-  CRPArmorData,
-  CRPShieldData,
-  CRPStuffData,
-  CRPLanguageData,
-  CRPOriginData,
-  CRPTraitData,
-} from "./item/item-data.mjs";
-import {
-  CRPWeaponSheet,
-  CRPArmorSheet,
-  CRPShieldSheet,
-  CRPStuffSheet,
-  CRPLanguageSheet,
-  CRPOriginSheet,
-  CRPTraitSheet,
-} from "./item/item-sheet.mjs";
+import {  CRPWeaponData,  CRPArmorData,  CRPShieldData,  CRPStuffData,  CRPLanguageData,  CRPOriginData,  CRPTraitData,} from "./item/item-data.mjs";
+import {  CRPWeaponSheet,  CRPArmorSheet,  CRPShieldSheet,  CRPStuffSheet,  CRPLanguageSheet,  CRPOriginSheet,  CRPTraitSheet,} from "./item/item-sheet.mjs";
 import { CRPCombat } from "./combat.mjs";
 import { registerHandlebarsHelpers } from "./handlebars.mjs";
 import { CRPToken } from "./tokens.mjs";
 import { CRPChatMessage } from "./chat/chatMessage.mjs";
 import { CRPChatLog } from "./chat/chatLog.mjs";
-
-const CRP_PENDING_INITIATIVE_UPDATES = new Map();
+import { SocketHandler } from "./socket-handler.mjs";
 
 Hooks.once("init", () => {
   game.settings.register("crp", "characterSheetsLocked", {
@@ -137,9 +115,10 @@ Hooks.once("init", () => {
   // ======================
   // OVERRIDE INITIATIVE ROLL
   // ======================
-
+  game.scket
   CONFIG.ChatMessage.documentClass = CRPChatMessage;
   CONFIG.ui.chat = CRPChatLog;
+  game.system.socketHandler = new SocketHandler();
   registerHandlebarsHelpers();
 });
 Hooks.on("getSceneControlButtons", (controls) => {
@@ -198,7 +177,9 @@ function refreshCharacterSheetLocks(locked) {
       });
   }
 
-  for (const actor of game.actors?.contents ?? []) {
-    actor.sheet?.render(false);
+  for (const actor of game.actors) {
+    if(actor.sheet?.rendered){
+    actor.sheet?.render(true);
   }
+}
 }

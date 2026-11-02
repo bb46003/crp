@@ -453,6 +453,7 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
       );
       foundry.applications.api.DialogV2.wait({
         window: { title: "Wybór Typu Jezyka" },
+        classes:["crp-dialog"],
         content: content,
         buttons: [
           {
@@ -631,6 +632,7 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
         );
         foundry.applications.api.DialogV2.wait({
           window: { title: "Wybór Typu Jezyka" },
+              classes:["crp-dialog"],
           content: content,
           buttons: [
             {

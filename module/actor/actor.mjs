@@ -248,10 +248,18 @@ export class CRPActor extends Actor {
 
     if (hp <= 0 && !this.system.state.bleeding) {
       update["system.state.bleeding"] = true;
+     await this.toggleStatusEffect("bleeding", { active: true });
     }
 
     if (hp > 0 && this.system.state.bleeding) {
       update["system.state.bleeding"] = false;
+      await this.toggleStatusEffect("unconscious", { active: false });
+    }
+     if (hp > 0 && this.system.state.life === "dead") {
+      update["system.state.life"] = "alive";
+      await this.toggleStatusEffect("dead", { active: false });
+      await this.toggleStatusEffect("bleeding", { active: false });
+      await this.toggleStatusEffect("unconscious", { active: true })
     }
 
     if (Object.keys(update).length) {
@@ -265,6 +273,8 @@ export class CRPActor extends Actor {
       "system.state.unconscious": false,
       "system.state.life": "alive",
     });
+    this.toggleStatusEffect("bleeding", { active: false });
+    this.toggleStatusEffect("unconscious", { active: false });
   }
 
   async applyDamage(amount) {
@@ -597,11 +607,12 @@ export class CRPActor extends Actor {
   }
   async  getSkillModifier() {
   const content = await foundry.applications.handlebars.renderTemplate(
-    "systems/crp/templates/skills.hbs",
+    "systems/crp/templates/dialogs/skills.hbs",
   );
 
   return foundry.applications.api.DialogV2.wait({
     window: { title: "Test umiejętności" },
+    classes:["crp-dialog"],
     content,
     buttons: [
       {
@@ -656,7 +667,7 @@ async function getAttackModifier(actor, { allowManeuvers = true } = {}) {
     [...text].map((character) => `${character}\u0336`).join("");
   const activeAimedAttack = actor.getFlag("crp", "aimedAttack");
   const activeDefensiveAttack = actor.getFlag("crp", "defensiveAttack");
-  const hasActiveManeuver = !!activeAimedAttack || !!activeDefensiveAttack;
+  const hasActiveManeuver = activeAimedAttack || activeDefensiveAttack;
   const availableManeuver = actor.system.derived.maneuver?.value ?? 0;
   const maneuvers = [
     { key: "none", cost: 0, implemented: true },
@@ -699,7 +710,7 @@ async function getAttackModifier(actor, { allowManeuvers = true } = {}) {
     }));
 
   const content = await foundry.applications.handlebars.renderTemplate(
-    "systems/crp/templates/attack.hbs",
+    "systems/crp/templates/dialogs/attack.hbs",
     {
       maneuver: actor.system.derived.maneuver,
       maneuvers,
@@ -709,6 +720,7 @@ async function getAttackModifier(actor, { allowManeuvers = true } = {}) {
 
   return foundry.applications.api.DialogV2.wait({
     window: { title: "Atak" },
+    classes:["crp-dialog"],
     content,
     buttons: [
       {
