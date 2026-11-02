@@ -70,44 +70,50 @@ export class CRPCombat extends Combat {
     
     if (combatant.actor.system.state.life === "dead") return;
     if (!combatant.actor.system.state.bleeding) return;
+    if(combatant.actor.type !=="character" && !combatant.actor.type !== "npc-rycerz") return;
     let result
-    if(combatant.actor.type ==="character"){
-      //soket do gracza o tym że jego postać krwawi i musi wykonać test tężyzny
-      game.socket.emit("system.crp", {
-        type: "fortitudeRoll",
-        actorId: combatant.actor.id,
-      });
-      
+      const hasConnectedOwner = game.users.some(
+    user =>
+      user.active &&
+      combatant.actor.testUserPermission(user, "OWNER") &&
+      !user.isGM
+  );
+if (combatant.actor.type === "character" && hasConnectedOwner) {
+
+
+
+    game.socket.emit("system.crp", {
+      type: "fortitudeRoll",
+      actorId: combatant.actor.id,
+    });
+  
     }else{
     result = await CRPRoll.fortitude(combatant.actor, { chat: true });
     }
     if (!result) return;
-
+    const stan = combatant.actor.system.state;
+    if(stan.bleeding && !result.success){
+      await combatant.actor.update({
+        "system.state.unconscious": true,
+      });
+      combatant.actor.toggleStatusEffect("unconscious", {active:true});
+    }
+    if(stan.unconscious && !result.success){
+      await combatant.actor.update({
+        "system.state.agony": true,
+      });
+      combatant.actor.toggleStatusEffect("agonia", {active:true});
+    }
+    if(stan.agony && !result.success){
+      await combatant.actor.update({
+        "system.state.life": "dead",
+      });c
+      combatant.actor.toggleStatusEffect("dead", {active:true});
+    }
     // =====================
     // LOGIKA STANÓW (NA AKTUALNYM STANIE)
     // =====================
 
-    if (!combatant.actor.system.state.unconscious) {
-      // był przytomny → może stracić przytomność
-      if (!result.success) {
-        await combatant.actor.update({
-          "system.state.unconscious": true,
-        });
-        combatant.actor.toggleStatusEffect("unconscious", { active: true });
-        ui.notifications.info(`${combatant.name} traci przytomność!`);
-      }
-    } else {
-      // był nieprzytomny → może umrzeć
-      if (!result.success) {
-        await combatant.actor.update({
-          "system.state.life": "dead",
-          "system.state.bleeding": false,
-          "system.state.unconscious": false,
-        });
-        combatant.actor.toggleStatusEffect("dead", { active: true });
-        ui.notifications.info(`${combatant.name} umiera!`);
-      }
-    }
     // odśwież UI (opcjonalne, ale OK)
     if(combatant.actor.sheet?.rendered){
     await combatant.actor.sheet?.render(true);

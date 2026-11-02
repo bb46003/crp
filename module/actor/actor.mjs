@@ -245,36 +245,29 @@ export class CRPActor extends Actor {
     const hp = this.system.derived.health.value;
 
     const update = {};
-
-    if (hp <= 0 && !this.system.state.bleeding) {
+    const actorType = ["character", "npc-rycerz"].includes(this.type) ? this.type : false;
+    if (hp <= 0 && !this.system.state.bleeding && actorType) {
       update["system.state.bleeding"] = true;
      await this.toggleStatusEffect("bleeding", { active: true });
+    }else if(hp <= 0 && !actorType){
+      update["system.state.life"] = "dead";
+      await this.toggleStatusEffect("dead", { active: true, overlay: true });
     }
 
-    if (hp > 0 && this.system.state.bleeding) {
+    if (hp > 0 ) {
       update["system.state.bleeding"] = false;
-      await this.toggleStatusEffect("unconscious", { active: false });
-    }
-     if (hp > 0 && this.system.state.life === "dead") {
+      update["system.state.unconscious"] = false;
       update["system.state.life"] = "alive";
+      update["system.state.agony"] = false;
+      await this.toggleStatusEffect("unconscious", { active: false });
       await this.toggleStatusEffect("dead", { active: false });
       await this.toggleStatusEffect("bleeding", { active: false });
-      await this.toggleStatusEffect("unconscious", { active: true })
+      await this.toggleStatusEffect("agonia", { active: false });
     }
 
     if (Object.keys(update).length) {
       await this.update(update);
     }
-  }
-
-  async clearWoundsState() {
-    await this.update({
-      "system.state.bleeding": false,
-      "system.state.unconscious": false,
-      "system.state.life": "alive",
-    });
-    this.toggleStatusEffect("bleeding", { active: false });
-    this.toggleStatusEffect("unconscious", { active: false });
   }
 
   async applyDamage(amount) {
@@ -390,6 +383,9 @@ export class CRPActor extends Actor {
       if (hasExperienceChange) {
         CRPAdvancementWindow.refreshForActor(actor);
       }
+    }
+    if(data.system?.derived?.health?.value !== undefined){
+      await this.applyWoundsState();
     }
   }
   async atackRoll(itemId) {

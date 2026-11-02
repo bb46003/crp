@@ -115,9 +115,15 @@ Hooks.once("init", () => {
   // ======================
   // OVERRIDE INITIATIVE ROLL
   // ======================
-  game.scket
+  game.socket
   CONFIG.ChatMessage.documentClass = CRPChatMessage;
   CONFIG.ui.chat = CRPChatLog;
+  CONFIG.statusEffects["agonia"] = {
+  id: "agonia",
+  name: "CRP.Status.Agonia",
+  img: "systems/crp/assets/agonia.png",
+  hud: true,
+};
   game.system.socketHandler = new SocketHandler();
   registerHandlebarsHelpers();
 });

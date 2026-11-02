@@ -268,6 +268,7 @@ export class CRPActorData extends TypeDataModel {
           choices: ["alive", "dead"],
         }),
         bleeding: new BooleanField({ initial: false }),
+        agony: new BooleanField({ initial: false }),
         unconscious: new BooleanField({ initial: false }),
       }),
 
