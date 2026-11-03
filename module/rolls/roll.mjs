@@ -78,18 +78,18 @@ static resolveOutcome(dice, total, target) {
       rollLabel,
       showSymbols,
       resultsText,
+      usedFate: false
     };
-      const content = await foundry.applications.handlebars.renderTemplate(
-    "systems/crp/templates/chat/skill-roll.hbs",{data:result}
-  );
+
     if (chat) {
-      await ChatMessage.create({
+     const chat=  await ChatMessage.create({
         speaker: ChatMessage.getSpeaker({ actor }),
-        content: content,
+        content: "",
         system: {
           crp: result,
         },
       });
+      chat.regenerateSkillRoll()
     }
 
     return result;

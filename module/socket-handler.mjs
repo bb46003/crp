@@ -1,69 +1,97 @@
 import { CRPRoll } from "./rolls/roll.mjs";
 
-export class SocketHandler {
+export class CRPSocketHandler {
   constructor() {
     this.identifier = "system.crp";
+    this.pendingRequests = new Map();
+
     this.registerSocketEvents();
   }
+
   registerSocketEvents() {
     game.socket.on(this.identifier, async (data) => {
-      const operation = data.operation;
-      switch (operation) {
-        case "fortitudeRoll":
+      switch (data.operation) {
+        case "fortitudeRoll": {
           const actor = game.actors.get(data.actorId);
-            const content = await foundry.applications.handlebars.renderTemplate(
-              "systems/crp/templates/dialogs/skills.hbs",
-             );
-           const dialog = await foundry.applications.api.DialogV2.wait({
-    window: { title: "Test Tężyzny" },
-    classes:["crp-dialog"],
-    content,
-    buttons: [
-      {
-        action: "confirm",
-        label: "Rzuć",
-        default: true,
-        callback: (_event, _button, dialog) => {
-          const value = Number(
-            dialog.element.querySelector("input[name='skillModifier']")
-              ?.value ?? 0,
-          );
-          return {
-            confirmed: true,
-            modifier: Math.max(
-              -4,
-              Math.min(4, Number.isFinite(value) ? value : 0),
-            ),
-          };
-        },
-      },
-      {
-        action: "cancel",
-        label: "Anuluj",
-        callback: () => ({ confirmed: false }),
-      },
-    ],
-    render: (_event, dialog) => {
-      const input = dialog.element.querySelector("input[name='skillModifier']");
-      const output = dialog.element.querySelector(".crp-skills-modifier-value");
-      if (!input || !output) return;
 
-      const refreshOutput = () => {
-        const value = Number(input.value) || 0;
-        output.value = value >= 0 ? `+${value}` : String(value);
-      };
+          // Only the client assigned to this character performs the roll.
+          if (!actor || game.user.character?.id !== actor.id) return;
 
-      input.addEventListener("input", refreshOutput);
-      refreshOutput();
-    }
-  });
-        if (!dialog.result.confirmed) return;
-        await CRPRoll.fortitude(actor, { chat: true, modifier: dialog.result.modifier });          
-        break;
-         
+          try {
+            const result = await actor.rollSkill({
+              attr: "strength",
+              skill: "endurance",
+              reRoll: false,
+              allowFate: false,
+            });
+
+            this.emit({
+              operation: "fortitudeRollResult",
+              requestId: data.requestId,
+              actorId: actor.id,
+              success: result.success,
+            });
+          } catch (error) {
+            console.error("CRP | Fortitude roll failed", error);
+
+            this.emit({
+              operation: "fortitudeRollResult",
+              requestId: data.requestId,
+              actorId: actor.id,
+              error: true,
+            });
+          }
+
+          break;
+        }
+
+        case "fortitudeRollResult": {
+          const request = this.pendingRequests.get(data.requestId);
+          if (!request) return;
+
+          if (request.actorId !== data.actorId) return;
+
+          clearTimeout(request.timeout);
+          this.pendingRequests.delete(data.requestId);
+
+          request.resolve(data.error ? null : {
+            success: data.success,
+          });
+
+          break;
+        }
       }
     });
   }
+
+  /**
+   * Request a Fortitude roll from the assigned player.
+   * Returns a Promise resolving with the roll result.
+   */
+  requestFortitudeRoll(actor, timeoutDuration = 120000) {
+    const requestId = foundry.utils.randomID();
+
+    return new Promise((resolve) => {
+      const timeout = setTimeout(() => {
+        this.pendingRequests.delete(requestId);
+        console.warn(`CRP | Fortitude roll timeout: ${actor.name}`);
+        resolve(null);
+      }, timeoutDuration);
+
+      this.pendingRequests.set(requestId, {
+        actorId: actor.id,
+        resolve,
+        timeout,
+      });
+
+      game.system.socketHandler.emit({
+        operation: "fortitudeRoll",
+        actorId: actor.id,
+        requestId,
+      });
+    });
+  }
+
   emit(data) {
     return game.socket.emit(this.identifier, data);
   }

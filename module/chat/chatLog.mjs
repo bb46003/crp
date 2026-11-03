@@ -120,14 +120,12 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
           actor: actor, 
           modyfiers: crp.modyfiers,
           allowFate: false,
-          rollLabel: crp.rollLabel,
+          rollLabel: crp.rollLabel + "przerzut z Użycia Doli",
           reRoll : true,
           chat: true
         })
-        await message.update({["system.crp.reRoll"]:true})
-        const button = target.closest(".crp-use-fate");
-        button.disabled = true;
-
+        await message.update({["system.crp.usedFate"]:true})
+        message.regenerateSkillRoll()
         return;
       }
       default:

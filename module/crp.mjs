@@ -15,7 +15,7 @@ import { registerHandlebarsHelpers } from "./handlebars.mjs";
 import { CRPToken } from "./tokens.mjs";
 import { CRPChatMessage } from "./chat/chatMessage.mjs";
 import { CRPChatLog } from "./chat/chatLog.mjs";
-import { SocketHandler } from "./socket-handler.mjs";
+import { CRPSocketHandler } from "./socket-handler.mjs";
 
 Hooks.once("init", () => {
   game.settings.register("crp", "characterSheetsLocked", {
@@ -124,7 +124,7 @@ Hooks.once("init", () => {
   img: "systems/crp/assets/agonia.png",
   hud: true,
 };
-  game.system.socketHandler = new SocketHandler();
+  game.system.socketHandler = new CRPSocketHandler();
   registerHandlebarsHelpers();
 });
 Hooks.on("getSceneControlButtons", (controls) => {

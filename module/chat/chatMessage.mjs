@@ -21,4 +21,17 @@ export class CRPChatMessage extends ChatMessage {
 
     await this.update({ content });
   }
+  async regenerateSkillRoll(){
+        const data = this.system.crp;
+
+    if (!data) return;
+        const content = await foundry.applications.handlebars.renderTemplate(
+      "systems/crp/templates/chat/skill-roll.hbs",
+      {
+        ...data,
+        messageId: this.id,
+      },
+    );
+    await this.update({ content });
+  }
 }

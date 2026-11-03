@@ -116,10 +116,10 @@ export class CRPActor extends Actor {
   //   system.derived.woundState = woundState;
   // }
 
-  async rollSkill(attrKey, skillKey, reRoll) {
+  async rollSkill({attrKey, skillKey, reRoll, allowFate}) {
     const actor = this;
     const modyfiers = await this.getModifiers(skillKey, attrKey)
-    const allowFate = this.system.resources.fate.value > 0;
+    const useFate = this.system.resources.fate.value > 0 && allowFate;
     if(!modyfiers){
       return
     }else{
@@ -127,7 +127,7 @@ export class CRPActor extends Actor {
       await CRPRoll.skill({
         actor: actor, 
         modyfiers: modyfiers,
-        allowFate: allowFate,
+        allowFate: useFate,
         rollLabel: rollLabel,
         reRoll : reRoll,
         chat: true
@@ -135,14 +135,11 @@ export class CRPActor extends Actor {
       );
     }
   }
-  async _prepareRollLabel(attrKey,skillKey,reRoll){
+  async _prepareRollLabel(attrKey,skillKey){
     const attrName = CONFIG.CRP.attributes[attrKey];
     const skillName = CONFIG.CRP.skills[skillKey];
-    if(reRoll){
-      return "Test " + skillName + "("+attrName +") z Użyciem Doli" 
-    }else{
-      return "Test " + skillName + "("+attrName +")"
-    }
+    return "Test " + skillName + "("+attrName +")"
+    
   }
   async getModifiers(skillKey, attrKey){
     const armmorPenelty = -this.getArmorSkillPenalty(skillKey);
@@ -603,16 +600,8 @@ export class CRPActor extends Actor {
     },
   });
 }
-}
-
-function hasChangedPath(changed, path) {
-  return (
-    foundry.utils.hasProperty(changed, path) || Object.hasOwn(changed, path)
-  );
-}
-
-async function getManuver(actor, { allowManeuvers = true } = {}) {
-const availableManeuver = actor.system.derived.maneuver?.value ?? 0;
+async  getManuver() {
+const availableManeuver = this.system.derived.maneuver?.value ?? 0;
 
 const maneuvers = Object.fromEntries(
   Object.entries(CONFIG.CRP.manuvers).filter(
@@ -623,9 +612,8 @@ const maneuvers = Object.fromEntries(
   const content = await foundry.applications.handlebars.renderTemplate(
     "systems/crp/templates/dialogs/attack.hbs",
     {
-      maneuver: actor.system.derived.maneuver,
+      maneuver: this.system.derived.maneuver,
       maneuvers,
-      allowManeuvers,
     },
   );
 
@@ -642,8 +630,8 @@ const maneuvers = Object.fromEntries(
           const maneuverSelect = dialog.element.querySelector(
             "select[name='maneuver']",
           );
-          const maneuverOption = maneuverSelect?.selectedOptions[0];
-          const selectedManuver = CONFIG.CRP.maneuver[maneuverOption]
+          const maneuverOption = maneuverSelect?.selectedOptions[0].value;
+          const selectedManuver = CONFIG.CRP.manuvers[maneuverOption]
 
           return {
             confirmed: true,
@@ -678,3 +666,12 @@ const maneuvers = Object.fromEntries(
     },
   });
 }
+}
+
+function hasChangedPath(changed, path) {
+  return (
+    foundry.utils.hasProperty(changed, path) || Object.hasOwn(changed, path)
+  );
+}
+
+

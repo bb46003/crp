@@ -3,8 +3,8 @@
 
     <label for="crp-attack-maneuver">Manewr</label>
     <select id="crp-attack-maneuver" name="maneuver">
-      {{#each maneuvers as |maneuver|}}
-        <option value="{{maneuver.key}}"
+      {{#each maneuvers as |maneuver key|}}
+        <option value="{{key}}"
                 data-cost="{{maneuver.cost}}"
                 data-description="{{localize maneuver.description}}"
                 {{#if (eq maneuver.key "none")}}selected{{/if}}>

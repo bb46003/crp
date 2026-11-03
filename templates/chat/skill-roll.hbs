@@ -1,33 +1,33 @@
 
-<div class="crp-roll-card {{#if data.success}}success{{else}}fail{{/if}}">
+<div class="crp-roll-card {{#if success}}success{{else}}fail{{/if}}">
   <div class="crp-roll-header">
-    <img src="{{data.actor.img}}" class="crp-roll-avatar">
+    <img src="{{actor.img}}" class="crp-roll-avatar">
     <div>
-      <div class="crp-roll-actor">{{data.actor.name}}</div>
-      <div class="crp-roll-skill">{{data.rollLabel}}</div>
+      <div class="crp-roll-actor">{{actor.name}}</div>
+      <div class="crp-roll-skill">{{rollLabel}}</div>
     </div>
   </div>
 
   <div class="crp-roll-body">
     <div class="crp-roll-dice">
-      🎲 {{lookup data.dice 0}},{{lookup data.dice 1}}
-      → <strong>{{data.total}}</strong>
+      🎲 {{lookup dice 0}},{{lookup dice 1}}
+      → <strong>{{total}}</strong>
     </div>
 
     <div class="crp-roll-target"           data-toggle="tooltip" 
           data-placement="bottom" 
-          title="{{modifierTooltip data.modyfiers}}">
-      🎯 Cel: {{data.modyfiers.target}} (Całkowity Modyfikator {{data.modyfiers.totalMod}})
+          title="{{modifierTooltip modyfiers}}">
+      🎯 Cel: {{modyfiers.target}} (Całkowity Modyfikator {{modyfiers.totalMod}})
     </div>
     <div class="crp-roll-result"></div>
       <div class="crp-roll-margin">
-        Margin: {{data.margin}}
+        Margin: {{margin}}
       </div>
   
 
-{{#if data.showSymbols}}
+{{#if showSymbols}}
   <div class="crp-roll-symbols">
-    {{#if (ne data.eagles 0)}}
+    {{#if (ne eagles 0)}}
     <label>Ilość</label>
       <span class="crp-dice-icon crp-dice-eagle">
         <img
@@ -37,10 +37,10 @@
         >
       </span>
       
-        <label>:{{data.eagles}}</label>
+        <label>:{{eagles}}</label><br>
     {{/if}}
 
-    {{#if (ne data.shields 0)}}
+    {{#if (ne shields 0)}}
     <label>Ilość</label>
       <span class="crp-dice-icon crp-dice-shield">
                 <img
@@ -49,16 +49,16 @@
           title="Tarcza"
         >      
       </span>
-        <label>:{{data.shields}}<label>
+        <label>:{{shields}}<label>
     {{/if}}
   </div>
 {{/if}}
 <div class="crp-result">
-  <strong>{{data.resultsText}}</strong>
+  <strong>{{resultsText}}</strong>
   </div>
-    {{#if data.allowFate}}
+    {{#if allowFate}}
       <button
-        class="crp-use-fate" data-action="useFate" data-type="skillRoll" {{#if data.reRoll}}disabled{{/if}}>
+        class="crp-use-fate" data-action="useFate" data-type="skillRoll" {{#if usedFate}}disabled{{/if}}>
           ✨ Użyj Doli
       </button>
     {{/if}}

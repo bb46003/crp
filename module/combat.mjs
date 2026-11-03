@@ -1,16 +1,18 @@
+
 import { CRPRoll } from "./rolls/roll.mjs";
+import {CRPSocketHandler} from "./socket-handler.mjs"
 
 export class CRPCombat extends Combat {
   async nextRound() {
-    super.nextRound();
+    await super.nextRound();
 
-    const combatants = this.combatants;
     const initiatives = [];
 
-    // Calculate initiative for all combatants
-    for (const combatant of combatants) {
-      const rolledInitiative = combatant.flags.crp.initiativeRoll;
+    for (const combatant of this.combatants) {
       const actor = combatant.actor;
+      if (!actor) continue;
+
+      const rolledInitiative = combatant.flags.crp.initiativeRoll;
       const initiativeBonus = actor.system.derived.initiativeTotal;
 
       initiatives.push({
@@ -20,7 +22,7 @@ export class CRPCombat extends Combat {
       });
     }
 
-    // Check for duplicate initiatives
+    // Check for duplicate initiatives.
     for (const current of initiatives) {
       const hasDuplicate = initiatives.some(
         (other) =>
@@ -33,93 +35,140 @@ export class CRPCombat extends Combat {
       }
     }
 
-    // Update all combatants
+    // Update all combatants.
     await Promise.all(
       initiatives.map(({ combatant, initiative }) =>
         combatant.update({ initiative }),
       ),
     );
   }
+
   async rollInitiative(ids, option) {
     ids = typeof ids === "string" ? [ids] : ids;
 
     for (const id of ids) {
       const combatant = this.combatants.get(id);
-      if (!combatant) continue;
+      if (!combatant?.actor) continue;
 
-      const actor = combatant.actor;
-      if (!actor) continue;
-
-      // NASZ SYSTEM
-      await CRPRoll.initiative(actor, { combatant });
+      await CRPRoll.initiative(combatant.actor, { combatant });
     }
 
     return this;
   }
 
-  async _onStartTurn(combatant,context,){
-    super._onStartTurn(combatant,context);
-    const maneuver = combatant.actor.getFlag("crp", "manuver");
+  async _onStartTurn(combatant, context) {
+    await super._onStartTurn(combatant, context);
 
-      if (this.round >= maneuver?.expiresRound
-      ) {
-        await combatant.actor.unsetFlag("crp", "manuver");
-      }
-    
-    
-    if (combatant.actor.system.state.life === "dead") return;
-    if (!combatant.actor.system.state.bleeding) return;
-    if(combatant.actor.type !=="character" && !combatant.actor.type !== "npc-rycerz") return;
-    let result
-      const hasConnectedOwner = game.users.some(
-    user =>
+    const actor = combatant.actor;
+    if (!actor) return;
+
+    // Check maneuver expiration.
+    const maneuver = actor.getFlag("crp", "manuver");
+
+    if (maneuver && this.round >= maneuver.expiresRound) {
+      await actor.unsetFlag("crp", "manuver");
+    }
+
+    // Wait until all conditions are resolved.
+    await this.handleConditions(combatant);
+
+    // Handle maneuver selection.
+    const canMakeManeuver = ["character", "npc-rycerz"].includes(actor.type);
+
+    if (canMakeManeuver) {
+      await this.handleManuver(combatant);
+    }
+
+    // Refresh actor sheet.
+    if (actor.sheet?.rendered) {
+      await actor.sheet.render(true);
+    }
+  }
+
+  async handleConditions(combatant) {
+    const actor = combatant.actor;
+    if (!actor) return;
+
+    const state = actor.system.state;
+
+    if (state.life === "dead") return;
+    if (!state.bleeding) return;
+
+    if (!["character", "npc-rycerz"].includes(actor.type)) return;
+
+    const hasConnectedOwner = game.users.some(
+      (user) =>
+        user.active &&
+        actor.testUserPermission(user, "OWNER") &&
+        !user.isGM,
+    );
+  }
+    async handleConditions(combatant) {
+  const actor = combatant.actor;
+  if (!actor) return;
+
+  const state = actor.system.state;
+
+  if (state.life === "dead" || !state.bleeding) return;
+  if (!["character", "npc-rycerz"].includes(actor.type)) return;
+
+  const hasConnectedOwner = game.users.some(
+    (user) =>
       user.active &&
-      combatant.actor.testUserPermission(user, "OWNER") &&
-      !user.isGM
+      actor.testUserPermission(user, "OWNER") &&
+      !user.isGM,
   );
-  if (combatant.actor.type === "character" && hasConnectedOwner) {
 
+  let result;
 
-
-    game.socket.emit("system.crp", {
-      type: "fortitudeRoll",
-      actorId: combatant.actor.id,
+  if (actor.type === "character" && hasConnectedOwner) {
+    result = await CRPSocketHandler.requestFortitudeRoll(actor);
+  } else {
+    result = await actor.rollSkill({
+      attr: "strength",
+      skill: "endurance",
+      reRoll: false,
+      allowFate: false,
     });
-  
-    }else{
-    result = await CRPRoll.fortitude(combatant.actor, { chat: true });
-    }
-    if (!result) return;
-    const stan = combatant.actor.system.state;
-    if(stan.bleeding && !result.success){
-      await combatant.actor.update({
-        "system.state.unconscious": true,
-      });
-      combatant.actor.toggleStatusEffect("unconscious", {active:true});
-    }
-    if(stan.unconscious && !result.success){
-      await combatant.actor.update({
-        "system.state.agony": true,
-      });
-      combatant.actor.toggleStatusEffect("agonia", {active:true});
-    }
-    if(stan.agony && !result.success){
-      await combatant.actor.update({
-        "system.state.life": "dead",
-      });c
-      combatant.actor.toggleStatusEffect("dead", {active:true});
-    }
-    const canMakeManuver = combatant.actor.system.derived.maneuver.vale;
-    if(canMakeManuver > 0){
-      
-    }
-    // =====================
-    // LOGIKA STANÓW (NA AKTUALNYM STANIE)
-    // =====================
+  }
 
-    // odśwież UI (opcjonalne, ale OK)
-    if(combatant.actor.sheet?.rendered){
-    await combatant.actor.sheet?.render(true);
+  if (!result) return;
+
+  if (!result.success) {
+    if (state.agony) {
+      await actor.update({ "system.state.life": "dead" });
+      await actor.toggleStatusEffect("dead", { active: true });
+    } else if (state.unconscious) {
+      await actor.update({ "system.state.agony": true });
+      await actor.toggleStatusEffect("agonia", { active: true });
+    } else if (state.bleeding) {
+      await actor.update({ "system.state.unconscious": true });
+      await actor.toggleStatusEffect("unconscious", { active: true });
+    }
+  }
+}
+
+
+
+  async handleManuver(combatant) {
+    const actor = combatant.actor;
+    if (!actor) return;
+
+    const hasConnectedOwner = game.users.some(
+      (user) =>
+        user.active &&
+        actor.testUserPermission(user, "OWNER") &&
+        !user.isGM,
+    );
+
+    if (actor.type === "character" && hasConnectedOwner) {
+      game.socket.emit("system.crp", {
+        type: "selectManuver",
+        actorId: actor.id,
+      });
+    } else {
+      const selectedManuver = await actor.getManuver();
+      console.log(selectedManuver);
     }
   }
 }
