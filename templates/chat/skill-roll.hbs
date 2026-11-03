@@ -1,54 +1,33 @@
 
-<div class="crp-roll-card {{#if success}}success{{else}}fail{{/if}}">
-
+<div class="crp-roll-card {{#if data.success}}success{{else}}fail{{/if}}">
   <div class="crp-roll-header">
-    <img src="{{actor.img}}" class="crp-roll-avatar">
+    <img src="{{data.actor.img}}" class="crp-roll-avatar">
     <div>
-      <div class="crp-roll-actor">{{actor.name}}</div>
-      <div class="crp-roll-skill">{{rollLabel}}</div>
-      {{#if reRoll}}
-        <div class="crp-roll-reroll">Wykorzystano dole do przerzutu</div>
-      {{/if}}
+      <div class="crp-roll-actor">{{data.actor.name}}</div>
+      <div class="crp-roll-skill">{{data.rollLabel}}</div>
     </div>
   </div>
 
   <div class="crp-roll-body">
     <div class="crp-roll-dice">
-      🎲 {{diceDisplay}}
-      → <strong>{{total}}</strong>
+      🎲 {{lookup data.dice 0}},{{lookup data.dice 1}}
+      → <strong>{{data.total}}</strong>
     </div>
 
-    <div class="crp-roll-target">
-      🎯 Cel: {{target}}{{modifierText}}
+    <div class="crp-roll-target"           data-toggle="tooltip" 
+          data-placement="bottom" 
+          title="{{modifierTooltip data.modyfiers}}">
+      🎯 Cel: {{data.modyfiers.target}} (Całkowity Modyfikator {{data.modyfiers.totalMod}})
     </div>
-
-    {{#if showWoundPenalty}}
-      <div class="crp-roll-penalty">
-        ⚠ Kara za rany: {{woundPenalty}}
-      </div>
-    {{/if}}
-
-    {{#if showArmorPenalty}}
-      <div class="crp-roll-penalty">
-        ⚠ Kara za pancerz: -{{armorPenalty}}
-      </div>
-    {{/if}}
-    {{#if (ne displayModifier 0)}}
-    <div class="crp-roll-penalty">
-        Dodatkowy Modyfikator: {{customMod}}
-    </div>
-    {{/if}}
-    <div class="crp-roll-result">{{resultText}}</div>
-
-    {{#if showMargin}}
+    <div class="crp-roll-result"></div>
       <div class="crp-roll-margin">
-        Margin: {{marginText}}
+        Margin: {{data.margin}}
       </div>
-    {{/if}}
+  
 
-{{#if showSymbols}}
+{{#if data.showSymbols}}
   <div class="crp-roll-symbols">
-    {{#if showEagles}}
+    {{#if (ne data.eagles 0)}}
     <label>Ilość</label>
       <span class="crp-dice-icon crp-dice-eagle">
         <img
@@ -58,10 +37,10 @@
         >
       </span>
       
-        <label>:{{eagles}}</label>
+        <label>:{{data.eagles}}</label>
     {{/if}}
 
-    {{#if showShields}}
+    {{#if (ne data.shields 0)}}
     <label>Ilość</label>
       <span class="crp-dice-icon crp-dice-shield">
                 <img
@@ -70,12 +49,14 @@
           title="Tarcza"
         >      
       </span>
-        <label>:{{shields}}<label>
+        <label>:{{data.shields}}<label>
     {{/if}}
   </div>
 {{/if}}
-
-    {{#if canUseFate}}
+<div class="crp=result">
+  {{data.resultsText}}
+  </div>
+    {{#if data.allowFate}}
       <button
         class="crp-use-fate" data-action="useFate" data-type="skillRoll">
           ✨ Użyj Doli

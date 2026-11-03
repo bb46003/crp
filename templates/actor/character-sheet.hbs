@@ -31,6 +31,26 @@
             <div class="crp-health-fill {{system.derived.woundState}}"
                  style="width: {{healthPercent}}%;" >
             </div>
+            {{#if system.state.bleeding}}
+              <div class="crp-health-bleeding">
+                <i class="fa-solid fa-droplet"></i>
+              </div>
+            {{/if}}
+            {{#if system.state.unconscious}}
+              <div class="crp-health-unconscious">
+                <i class="fa-solid fa-bed"></i>
+              </div>
+            {{/if}}
+            {{#if system.state.agony}}
+              <div class="crp-health-agony">
+                <i><img src="../../assets/agonia.png"></img></i>
+              </div>
+            {{/if}}
+            {{#if (eq system.derived.health.value 0)}}
+              <div class="crp-button">
+                <button class="crp-roll-death" data-action="rollDeath">Test Tężyzny</button>
+              </div>
+            {{/if}}
           </div>
 
   </div>

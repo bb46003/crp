@@ -59,14 +59,13 @@ export class CRPCombat extends Combat {
 
   async _onStartTurn(combatant,context,){
     super._onStartTurn(combatant,context);
-    for (const flagName of ["aimedAttack", "defensiveAttack"]) {
-      const maneuver = combatant.actor.getFlag("crp", flagName);
+    const maneuver = combatant.actor.getFlag("crp", "manuver");
 
       if (this.round >= maneuver?.expiresRound
       ) {
-        await combatant.actor.unsetFlag("crp", flagName);
+        await combatant.actor.unsetFlag("crp", "manuver");
       }
-    }
+    
     
     if (combatant.actor.system.state.life === "dead") return;
     if (!combatant.actor.system.state.bleeding) return;
@@ -78,7 +77,7 @@ export class CRPCombat extends Combat {
       combatant.actor.testUserPermission(user, "OWNER") &&
       !user.isGM
   );
-if (combatant.actor.type === "character" && hasConnectedOwner) {
+  if (combatant.actor.type === "character" && hasConnectedOwner) {
 
 
 
@@ -109,6 +108,10 @@ if (combatant.actor.type === "character" && hasConnectedOwner) {
         "system.state.life": "dead",
       });c
       combatant.actor.toggleStatusEffect("dead", {active:true});
+    }
+    const canMakeManuver = combatant.actor.system.derived.maneuver.vale;
+    if(canMakeManuver > 0){
+      
     }
     // =====================
     // LOGIKA STANÓW (NA AKTUALNYM STANIE)

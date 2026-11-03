@@ -1,18 +1,4 @@
 <div class="crp-attack-dialog">
-  <label for="crp-attack-modifier">Modyfikator ataku: <output for="crp-attack-modifier" class="crp-attack-modifier-value">+0</output></label>
-  <div class="crp-attack-modifier-row">
-    <span>-4</span>
-    <input id="crp-attack-modifier"
-           type="range"
-           name="attackModifier"
-           min="-4"
-           max="4"
-           step="1"
-           value="0">
-    <span>+4</span>
-    
-  </div>
-{{#if allowManeuvers}}
   <label for="crp-attack-modifier">Dostępne Punkty Manewru: {{maneuver.value}} / {{maneuver.max}}</label>
 
     <label for="crp-attack-maneuver">Manewr</label>
@@ -20,15 +6,11 @@
       {{#each maneuvers as |maneuver|}}
         <option value="{{maneuver.key}}"
                 data-cost="{{maneuver.cost}}"
-                data-description="{{maneuver.description}}"
-                {{#if this.disabled}}disabled{{/if}}
+                data-description="{{localize maneuver.description}}"
                 {{#if (eq maneuver.key "none")}}selected{{/if}}>
-          {{maneuver.displayName}} (koszt: {{maneuver.cost}})
+          {{localize maneuver.name}} (koszt: {{maneuver.cost}})
         </option>
       {{/each}}
     </select>
-
     <div class="crp-attack-maneuver-description"></div>
-  {{/if}}
-
 </div>

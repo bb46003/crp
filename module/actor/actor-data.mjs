@@ -176,6 +176,7 @@ export class CRPActorData extends TypeDataModel {
         woundState: new StringField({
           initial: "healthy",
         }),
+        woundPenalty: new NumberField({initial:0, max: 0, min:-2})
       }),
 
       npc: new SchemaField({
@@ -310,6 +311,19 @@ export class CRPActorData extends TypeDataModel {
     super.prepareDerivedData();
     this._prepareOrigin();
     this._prepareTotalMoney();
+    this._prepareWoundPenalty()
+  }
+  _prepareWoundPenalty(){
+    const hp = this.derived.health.value;
+    const max = this.derived.health.max;
+    if(hp <= 0 ){
+      this.derived.woundPenalty = -2;
+    }else if(hp < max/2){
+      this.derived.woundPenalty = -1
+    }else{
+      this.derived.woundPenalty = 0
+    }
+
   }
   _prepareOrigin() {
     const originItem = this.parent.items.find((i) => i.type === "origin");

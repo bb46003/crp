@@ -478,19 +478,7 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
       const element = target.closest(".crp-skill");
       const attr = element.dataset.attr;
       const skill = element.dataset.skill;
-      const choice = await this.actor.getSkillModifier().catch(() => null);
-
-      if (!choice?.confirmed) return;
-
-      const targetOverride = isNPCActor(this.actor)
-        ? this.actor.system.npc?.attributes
-        : null;
-
-      CRPRoll.skill(this.actor, attr, skill, {
-        modifier: choice.modifier,
-        displayModifier: choice.modifier,
-        targetOverride,
-      });
+      this.actor.rollSkill(attr,skill,false)
     }
   }
   static async #rollInitiative() {
@@ -522,7 +510,7 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
     const target = ev.target;
     const element = target.closest(".crp-item-row");
     const itemId = element?.dataset?.id ?? "";
-    await this.actor.atackRoll(itemId);
+    await this.actor.getSkillModifier(itemId, "Test Ataku");
   }
   static async #lockSheet(ev) {
     const locked = this.actor.getFlag("crp", "npcSheetLocked");

@@ -10,222 +10,177 @@ function isNPCActor(actor) {
 }
 
 export class CRPActor extends Actor {
-  prepareDerivedData() {
-    super.prepareDerivedData();
+  // prepareDerivedData() {
+  //   super.prepareDerivedData();
 
-    const system = this.system;
-    const attr = system.attributes;
-    const derived = system.derived;
-    const isNPC = isNPCActor(this);
+  //   const system = this.system;
+  //   const attr = system.attributes;
+  //   const derived = system.derived;
+  //   const isNPC = isNPCActor(this);
 
-    // Inicjatywa
-    derived.initiative = isNPC
-      ? Number(system.npc?.attributes) || 0
-      : attr.agility.value + attr.perception.value;
+  //   // Inicjatywa
+  //   derived.initiative = isNPC
+  //     ? Number(system.npc?.attributes) || 0
+  //     : attr.agility.value + attr.perception.value;
 
-    derived.initiativeWeaponModifier = this.getInitiativeWeaponModifier();
-    derived.initiativeArmorModifier = this.getInitiativeArmorModifier();
-    derived.initiativeTotal =
-      derived.initiative +
-      derived.initiativeWeaponModifier +
-      derived.initiativeArmorModifier;
+  //   derived.initiativeWeaponModifier = this.getInitiativeWeaponModifier();
+  //   derived.initiativeArmorModifier = this.getInitiativeArmorModifier();
+  //   derived.initiativeTotal =
+  //     derived.initiative +
+  //     derived.initiativeWeaponModifier +
+  //     derived.initiativeArmorModifier;
 
-    // Zdrowie
-    const maxHealth = isNPC
-      ? Math.max(1, Number(derived.health.max) || 8)
-      : attr.strength.value + attr.character.value;
+  //   // Zdrowie
+  //   const maxHealth = isNPC
+  //     ? Math.max(1, Number(derived.health.max) || 8)
+  //     : attr.strength.value + attr.character.value;
 
-    if (!isNPC) {
-      derived.health.max = maxHealth;
+  //   if (!isNPC) {
+  //     derived.health.max = maxHealth;
+  //   }
+
+  //   if (
+  //     isNPC &&
+  //     (!Number.isFinite(Number(derived.health.value)) ||
+  //       derived.health.value < 0)
+  //   ) {
+  //     derived.health.value = 0;
+  //   }
+
+  //   // clamp
+  //   if (derived.health.value > maxHealth) {
+  //     derived.health.value = maxHealth;
+  //   }
+
+  //   if (isNPC) {
+  //     const equipment = system.equipment ?? {};
+  //     const armorId = equipment.armor?.id;
+  //     const armor = armorId ? this.items.get(armorId) : null;
+  //     const shields = ["rightHand", "leftHand"]
+  //       .map((slot) => {
+  //         const id = equipment[slot]?.id;
+  //         return id ? this.items.get(id) : null;
+  //       })
+  //       .filter((item) => item?.type === "shield");
+
+  //     system.npc.protection = [
+  //       armor?.type === "armor" ? armor : null,
+  //       ...shields,
+  //     ]
+  //       .filter(Boolean)
+  //       .reduce((sum, item) => sum + (Number(item.system.protection) || 0), 0);
+  //   }
+
+  //   // PUNKTY MANEWRU
+  //   const combatSkills = [
+  //     attr.strength.skills.twoHanded.value,
+  //     attr.strength.skills.brawl.value,
+  //     attr.agility.skills.oneHanded.value,
+  //     attr.agility.skills.lightWeapons.value,
+  //     attr.strength.skills.shield.value,
+  //     attr.perception.skills.ranged.value,
+  //   ];
+
+  //   const bestCombatSkill = Math.max(...combatSkills);
+
+  //   const maxManeuver = attr.perception.value + attr.reason.value;
+
+  //   derived.maneuver.max = maxManeuver;
+
+  //   if (derived.maneuver.value > maxManeuver || derived.maneuver.value === 0) {
+  //     derived.maneuver.value = maxManeuver;
+  //   }
+
+  //   const hp = derived.health.value;
+  //   const max = derived.health.max;
+
+  //   let penalty = 0;
+
+  //   // progi
+  //   if (hp <= 0) {
+  //     penalty = -2;
+  //   } else if (hp < max / 2) {
+  //     penalty = -1;
+  //   }
+
+  //   system.derived.woundPenalty = penalty;
+
+  //   let woundState = "healthy";
+
+  //   if (hp <= 0) {
+  //     woundState = "critical";
+  //   } else if (hp < max / 2) {
+  //     woundState = "wounded";
+  //   }
+
+  //   system.derived.woundState = woundState;
+  // }
+
+  async rollSkill(attrKey, skillKey, reRoll) {
+    const actor = this;
+    const modyfiers = await this.getModifiers(skillKey, attrKey)
+    const allowFate = this.system.resources.fate.value > 0;
+    if(!modyfiers){
+      return
+    }else{
+      const rollLabel = await this._prepareRollLabel(attrKey, skillKey,reRoll);
+      await CRPRoll.skill({
+        actor: actor, 
+        modyfiers: modyfiers,
+        allowFate: allowFate,
+        rollLabel: rollLabel,
+        reRoll : reRoll,
+        chat: true
+      }
+      );
     }
-
-    if (
-      isNPC &&
-      (!Number.isFinite(Number(derived.health.value)) ||
-        derived.health.value < 0)
-    ) {
-      derived.health.value = 0;
+  }
+  async _prepareRollLabel(attrKey,skillKey,reRoll){
+    const attrName = CONFIG.CRP.attributes[attrKey];
+    const skillName = CONFIG.CRP.skills[skillKey];
+    if(reRoll){
+      return "Test " + skillName + "("+attrName +") z Użyciem Doli" 
+    }else{
+      return "Test " + skillName + "("+attrName +")"
     }
-
-    // clamp
-    if (derived.health.value > maxHealth) {
-      derived.health.value = maxHealth;
+  }
+  async getModifiers(skillKey, attrKey){
+    const armmorPenelty = -this.getArmorSkillPenalty(skillKey);
+    const woundedPenetly = this.system.derived.woundPenalty;
+    const modificatorDialog = await this.getSkillModifier()
+    let skillValue;
+    let attrValue;
+    if(this.type === "character"){
+      attrValue = this.system.attributes[attrKey].value
+      skillValue = this.system.attributes[attrKey].skills[skillKey].value
+    }else{
+      attrValue = this.system.npc.attributes;
+      skillValue = 0;
     }
+    if(modificatorDialog.confirmed){
+      const customMod = modificatorDialog.modifier;
+      const target = attrValue + skillValue + armmorPenelty + woundedPenetly + customMod; 
+      const totalMod = armmorPenelty + woundedPenetly + customMod
 
-    if (isNPC) {
-      const equipment = system.equipment ?? {};
-      const armorId = equipment.armor?.id;
-      const armor = armorId ? this.items.get(armorId) : null;
-      const shields = ["rightHand", "leftHand"]
-        .map((slot) => {
-          const id = equipment[slot]?.id;
-          return id ? this.items.get(id) : null;
-        })
-        .filter((item) => item?.type === "shield");
-
-      system.npc.protection = [
-        armor?.type === "armor" ? armor : null,
-        ...shields,
-      ]
-        .filter(Boolean)
-        .reduce((sum, item) => sum + (Number(item.system.protection) || 0), 0);
-    }
-
-    // PUNKTY MANEWRU
-    const combatSkills = [
-      attr.strength.skills.twoHanded.value,
-      attr.strength.skills.brawl.value,
-      attr.agility.skills.oneHanded.value,
-      attr.agility.skills.lightWeapons.value,
-      attr.strength.skills.shield.value,
-      attr.perception.skills.ranged.value,
-    ];
-
-    const bestCombatSkill = Math.max(...combatSkills);
-
-    const maxManeuver = attr.perception.value + attr.reason.value;
-
-    derived.maneuver.max = maxManeuver;
-
-    if (derived.maneuver.value > maxManeuver || derived.maneuver.value === 0) {
-      derived.maneuver.value = maxManeuver;
-    }
-
-    const hp = derived.health.value;
-    const max = derived.health.max;
-
-    let penalty = 0;
-
-    // progi
-    if (hp <= 0) {
-      penalty = -2;
-    } else if (hp < max / 2) {
-      penalty = -1;
-    }
-
-    system.derived.woundPenalty = penalty;
-
-    let woundState = "healthy";
-
-    if (hp <= 0) {
-      woundState = "critical";
-    } else if (hp < max / 2) {
-      woundState = "wounded";
-    }
-
-    system.derived.woundState = woundState;
+       return {attrValue, skillValue, armmorPenelty, woundedPenetly, customMod, target, totalMod}
+    }else{
+      return false
+    }   
   }
-
-  async rollSkill(attrKey, skillKey) {
-    return await CRPRoll.skill(this, attrKey, skillKey);
-  }
-
-  _mapSkillToAttribute(skillKey) {
-    const map = {
-      // STR
-      twoHanded: "strength",
-      brawl: "strength",
-      endurance: "strength",
-      shield: "strength",
-      intimidate: "strength",
-
-      // AGI
-      oneHanded: "agility",
-      lightWeapons: "agility",
-      athletics: "agility",
-      craft: "agility",
-      stealth: "agility",
-
-      // PER
-      ranged: "perception",
-    };
-
-    return map[skillKey];
-  }
-
-  getWeaponInitiativeModifier(item) {
-    if (!item || item.type !== "weapon") return 4;
-    if (item.system.range === "ranged" || item.system.skill === "ranged")
-      return -3;
-    if (item.system.skill === "lightWeapons") return 2;
-    if (item.system.skill === "twoHanded") return -2;
-    return 0;
-  }
-
-  getInitiativeWeaponModifier() {
-    const equipment = this.system.equipment ?? {};
-
-    const modifiers = ["rightHand", "leftHand"].map((slot) => {
-      const id = equipment[slot]?.id;
-      const item = id ? this.items.get(id) : null;
-
-      return this.getWeaponInitiativeModifier(item);
-    });
-
-    return Math.min(...modifiers);
-  }
-
-  getInitiativeArmorModifier() {
-    const item = this.getEquippedArmor();
-
-    return item?.type === "armor" ? -(item.system.protection ?? 0) : 0;
-  }
-
-  getEquippedArmor() {
-    const equipment = this.system.equipment ?? {};
-    const id = equipment.armor?.id;
-
-    return id ? this.items.get(id) : null;
-  }
-
   getArmorSkillPenalty(skillKey) {
     if (!ARMOR_PENALIZED_SKILLS.has(skillKey)) return 0;
-
-    const armor = this.getEquippedArmor();
-    if (armor?.type !== "armor") return 0;
-
-    return Math.max(0, Number(armor.system.protection) || 0);
+    return Math.max(0, this.getEquippedArmor());
   }
+  getEquippedArmor(){
+    const equippedArmor = this.system.equipment.armor.id;
+    if(equippedArmor){
+      const armorItem = this.items.get(equippedArmor);
+      return armorItem.system.protection;
+    }else{
+      return 0
+    }
 
-  getEquippedWeapon(skillKey = null) {
-    const equipment = this.system.equipment ?? {};
-    const handWeapons = ["rightHand", "leftHand"]
-      .map((slot) => {
-        const id = equipment[slot]?.id;
-        return id ? this.items.get(id) : null;
-      })
-      .filter((item) => item?.type === "weapon");
-
-    const equippedWeapons = this.items.filter(
-      (item) => item.type === "weapon" && item.system.equipped,
-    );
-
-    const candidates = [...handWeapons, ...equippedWeapons]
-      .filter(
-        (item, index, array) =>
-          array.findIndex((i) => i.id === item.id) === index,
-      )
-      .filter((item) => !skillKey || item.system.skill === skillKey);
-
-    return (
-      candidates.sort(
-        (a, b) => (b.system.damage ?? 0) - (a.system.damage ?? 0),
-      )[0] ?? null
-    );
   }
-
-  async opposedTest(targetActor, attrA, skillA, attrB, skillB, options = {}) {
-    return await CRPRoll.opposed(
-      this,
-      attrA,
-      skillA,
-      targetActor,
-      attrB,
-      skillB,
-      options,
-    );
-  }
-
   async spendFate(amount = 1) {
     const current = this.system.resources.fate.value;
 
@@ -240,7 +195,6 @@ export class CRPActor extends Actor {
 
     return true;
   }
-
   async applyWoundsState() {
     const hp = this.system.derived.health.value;
 
@@ -269,7 +223,6 @@ export class CRPActor extends Actor {
       await this.update(update);
     }
   }
-
   async applyDamage(amount) {
     if (amount <= 0) return;
 
@@ -658,53 +611,15 @@ function hasChangedPath(changed, path) {
   );
 }
 
-async function getAttackModifier(actor, { allowManeuvers = true } = {}) {
-  const strikeText = (text) =>
-    [...text].map((character) => `${character}\u0336`).join("");
-  const activeAimedAttack = actor.getFlag("crp", "aimedAttack");
-  const activeDefensiveAttack = actor.getFlag("crp", "defensiveAttack");
-  const hasActiveManeuver = activeAimedAttack || activeDefensiveAttack;
-  const availableManeuver = actor.system.derived.maneuver?.value ?? 0;
-  const maneuvers = [
-    { key: "none", cost: 0, implemented: true },
-    { key: "assault", cost: 0, implemented: false },
-    { key: "holdBack", cost: 0, implemented: false },
-    { key: "charge", cost: 0, implemented: false },
-    { key: "shieldGuard", cost: 0, implemented: false },
-    { key: "harry", cost: 1, implemented: false },
-    { key: "withdraw", cost: 1, implemented: false },
-    { key: "knockdown", cost: 1, implemented: false },
-    { key: "standUp", cost: 1, implemented: false },
-    { key: "defensiveAttack", cost: 2, implemented: true },
-    { key: "aimedAttack", cost: 2, implemented: true },
-    { key: "lightningAttack", cost: 2, implemented: false },
-    { key: "shieldBash", cost: 2, implemented: false },
-    { key: "extraDodge", cost: 4, implemented: false },
-    { key: "disarm", cost: 4, implemented: false },
-  ]
-    .map((maneuver) => ({
-      ...maneuver,
-      name: game.i18n.localize(`CRP.Maneuvers.${maneuver.key}.name`),
-      description: game.i18n.localize(
-        `CRP.Maneuvers.${maneuver.key}.description`,
-      ),
-    }))
-    .sort((a, b) => {
-      if (a.key === "none") return -1;
-      if (b.key === "none") return 1;
-      if (a.cost !== b.cost) return a.cost - b.cost;
-      return a.name.localeCompare(b.name, game.i18n.lang);
-    })
-    .map((maneuver) => ({
-      ...maneuver,
-      displayName: maneuver.implemented
-        ? maneuver.name
-        : strikeText(maneuver.name),
-      disabled:
-        maneuver.key !== "none" &&
-        (hasActiveManeuver || maneuver.cost > availableManeuver),
-    }));
+async function getManuver(actor, { allowManeuvers = true } = {}) {
+const availableManeuver = actor.system.derived.maneuver?.value ?? 0;
 
+const maneuvers = Object.fromEntries(
+  Object.entries(CONFIG.CRP.manuvers).filter(
+    ([key, maneuver]) => maneuver.cost <= availableManeuver,
+  ),
+);
+  
   const content = await foundry.applications.handlebars.renderTemplate(
     "systems/crp/templates/dialogs/attack.hbs",
     {
@@ -715,7 +630,7 @@ async function getAttackModifier(actor, { allowManeuvers = true } = {}) {
   );
 
   return foundry.applications.api.DialogV2.wait({
-    window: { title: "Atak" },
+    window: { title: "Wybór Manewru" },
     classes:["crp-dialog"],
     content,
     buttons: [
@@ -724,33 +639,16 @@ async function getAttackModifier(actor, { allowManeuvers = true } = {}) {
         label: "Atakuj",
         default: true,
         callback: (_event, _button, dialog) => {
-          const value = Number(
-            dialog.element.querySelector("input[name='attackModifier']")
-              ?.value ?? 0,
-          );
           const maneuverSelect = dialog.element.querySelector(
             "select[name='maneuver']",
           );
           const maneuverOption = maneuverSelect?.selectedOptions[0];
-          const maneuverCost = Number(maneuverOption?.dataset.cost ?? 0);
-          const maneuverDisabled = maneuverOption?.disabled;
+          const selectedManuver = CONFIG.CRP.maneuver[maneuverOption]
 
           return {
             confirmed: true,
-            modifier: Math.max(
-              -4,
-              Math.min(4, Number.isFinite(value) ? value : 0),
-            ),
-            maneuver:
-              allowManeuvers && !maneuverDisabled
-                ? (maneuverSelect?.value ?? "none")
-                : "none",
-            maneuverCost:
-              allowManeuvers &&
-              !maneuverDisabled &&
-              Number.isFinite(maneuverCost)
-                ? maneuverCost
-                : 0,
+            maneuver: selectedManuver,
+            maneuverCost: selectedManuver.cost
           };
         },
       },
@@ -761,20 +659,6 @@ async function getAttackModifier(actor, { allowManeuvers = true } = {}) {
       },
     ],
     render: (_event, dialog) => {
-      const input = dialog.element.querySelector(
-        "input[name='attackModifier']",
-      );
-      const output = dialog.element.querySelector(".crp-attack-modifier-value");
-      if (!input || !output) return;
-
-      const refreshOutput = () => {
-        const value = Number(input.value) || 0;
-        output.value = value >= 0 ? `+${value}` : String(value);
-      };
-
-      input.addEventListener("input", refreshOutput);
-      refreshOutput();
-
       const maneuverSelect = dialog.element.querySelector(
         "select[name='maneuver']",
       );
