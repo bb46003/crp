@@ -503,7 +503,7 @@ export class CRPGMPanel extends HandlebarsApplicationMixin(ApplicationV2) {
 
   _prepareContext() {
     const actors = game.actors.contents
-      .filter((a) => a.type === "character" && a.hasPlayerOwner)
+      .filter((a) => a.type === "character")
       .map((a) => ({
         id: a.id,
         name: a.name,

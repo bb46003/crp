@@ -13,7 +13,7 @@ export class CRPRoll {
     if (isDouble && total === 2) return "criticalSuccess";
     if (isDouble && total === 20) return "criticalFailure";
 
-    return null;
+    return "none";
   }
 
 static resolveOutcome(dice, total, target) {

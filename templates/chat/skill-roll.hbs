@@ -53,12 +53,12 @@
     {{/if}}
   </div>
 {{/if}}
-<div class="crp=result">
-  {{data.resultsText}}
+<div class="crp-result">
+  <strong>{{data.resultsText}}</strong>
   </div>
     {{#if data.allowFate}}
       <button
-        class="crp-use-fate" data-action="useFate" data-type="skillRoll">
+        class="crp-use-fate" data-action="useFate" data-type="skillRoll" {{#if data.reRoll}}disabled{{/if}}>
           ✨ Użyj Doli
       </button>
     {{/if}}

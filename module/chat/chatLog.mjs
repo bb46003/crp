@@ -116,22 +116,17 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
         }
         const spendFate = await actor.spendFate(1);
         if (!spendFate) return;
-        attr = roll.attrKey;
-        skill = roll.skillKey;
-        modifier = roll.modifier;
-        displayModifier = roll.displayModifier;
-        const reroll = await CRPRoll.skill(actor, attr, skill, {
-          chat: false,
+        await CRPRoll.skill({
+          actor: actor, 
+          modyfiers: crp.modyfiers,
           allowFate: false,
-          modifier,
-          displayModifier,
-          reRoll: true,
-        });
-        const updateData = {
-          content: reroll.content.html,
-          "system.crp": reroll.content.context,
-        };
-        await message.update(updateData);
+          rollLabel: crp.rollLabel,
+          reRoll : true,
+          chat: true
+        })
+        await message.update({["system.crp.reRoll"]:true})
+        const button = target.closest(".crp-use-fate");
+        button.disabled = true;
 
         return;
       }
