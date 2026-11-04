@@ -62,6 +62,7 @@ static resolveOutcome(dice, total, target) {
     const shields = dice.filter((d) => d === 10).length;
     const showSymbols = eagles > 0 || shields > 0
     const agoniaResult = this.agoniaResult(actor,success,critical)
+    const maneuver = actor.getFlag("crp", "maneuver")
     // wynik
     const result = {
       actor,
@@ -81,7 +82,8 @@ static resolveOutcome(dice, total, target) {
       resultsText,
       usedFate: false,
       agonia: agonia,
-      agoniaResult
+      agoniaResult,
+      maneuver
     };
 
     if (chat) {

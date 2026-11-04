@@ -314,7 +314,7 @@ export class CRPActorData extends TypeDataModel {
     this._prepareWoundPenalty();
     this._prepareInitiativeMod();
     this._prepareInitiative();
-    this._prepareManuverPoints()
+    this._prepareManeuverPoints()
   }
   _prepareWoundPenalty(){
     const hp = this.derived.health.value;
@@ -349,7 +349,7 @@ export class CRPActorData extends TypeDataModel {
      this.derived.initiativeWeaponModifier +
       this.derived.initiativeArmorModifier;
   }
-  _prepareManuverPoints(){
+  _prepareManeuverPoints(){
     const attr = this.attributes;
     const maxManeuver = attr.perception.value + attr.reason.value;
     this.derived.maneuver.max = maxManeuver;
@@ -412,7 +412,7 @@ export class CRPNPCRycerzData extends CRPActorData {
   prepareDerivedData() {
     super.prepareDerivedData();
       this._prepareinitiative();
-      this._prepareManuverPoints()
+      this._prepareManeuverPoints()
 
   }
     _prepareinitiative(){
@@ -422,7 +422,7 @@ export class CRPNPCRycerzData extends CRPActorData {
      this.derived.initiativeWeaponModifier +
       this.derived.initiativeArmorModifier;
   }
-  _prepareManuverPoints(){
+  _prepareManeuverPoints(){
     this.derived.maneuver.max = 2*this.npc.attributes;
   }
 }

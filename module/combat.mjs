@@ -1,6 +1,6 @@
 
 import { CRPRoll } from "./rolls/roll.mjs";
-
+import { CRPChatMessage } from "./chat/chatMessage.mjs";
 export class CRPCombat extends Combat {
   async nextRound() {
     await super.nextRound();
@@ -61,9 +61,9 @@ export class CRPCombat extends Combat {
     const actor = combatant.actor;
     if (!actor) return;
 
-    const maneuver = actor.getFlag("crp", "manuver");
+    const maneuver = actor.getFlag("crp", "maneuver");
     if (maneuver) {
-      await actor.unsetFlag("crp", "manuver");
+      await actor.unsetFlag("crp", "maneuver");
     }
 
   
@@ -71,7 +71,7 @@ export class CRPCombat extends Combat {
 
     const canMakeManeuver = ["character", "npc-rycerz"].includes(actor.type);
     if (canMakeManeuver) {
-      await this.handleManuver(combatant);
+      await this.handleManeuver(combatant);
     }
 
     // Refresh actor sheet.
@@ -102,8 +102,8 @@ async handleConditions(combatant) {
     result = await game.system.socketHandler.requestFortitudeRoll(actor);
   } else {
     result = await actor.rollSkill({
-      attr: "strength",
-      skill: "endurance",
+      attrKey: "strength",
+      skillKey: "endurance",
       reRoll: false,
       allowFate: false,
       agonia:true
@@ -128,7 +128,7 @@ async handleConditions(combatant) {
 
 
 
-  async handleManuver(combatant) {
+  async handleManeuver(combatant) {
     const actor = combatant.actor;
     if (!actor) return;
 
@@ -141,13 +141,30 @@ async handleConditions(combatant) {
 
     if (actor.type === "character" && hasConnectedOwner) {
       game.system.socketHandler.emit({
-        operation: "selectManuver",
+        operation: "selectManeuver",
         actorId: actor.id,
         combatantId: combatant.id
       });
     } else {
-      const selectedManuver = await actor.getManuver();
-      console.log(selectedManuver);
+      const selectedManeuver = await actor.getManeuver();
+      if(selectedManeuver.confirmed){
+        await actor.setFlag("crp", "maneuver", selectedManeuver.maneuver);
+        await actor.spendManeuverPoints(selectedManeuver.maneuverCost)
+        Object.assign(selectedManeuver.maneuver,{actor: actor, madeTest: false})
+        const chat=  await ChatMessage.create({
+        speaker: ChatMessage.getSpeaker({ actor }),
+        system: {crp: selectedManeuver.maneuver}
+      })
+        await chat.maneuverToChat()
+      }   
     }
+  }
+
+  async endCombat(){
+    await super.endCombat()
+    const combatants = this.combatants;
+    combatants.forEach(async (combatant) =>{
+      await combatant.actor.unsetFlag("crp", "maneuver");
+    })
   }
 }

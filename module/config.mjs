@@ -52,7 +52,7 @@ CRP.itemWeights = Object.freeze({
 });
 
 
-CRP.manuvers = Object.freeze({
+CRP.maneuvers = Object.freeze({
   none: {
     name: "CRP.Maneuvers.none.name",
     cost: 0,

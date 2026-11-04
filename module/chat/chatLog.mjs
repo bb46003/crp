@@ -10,7 +10,8 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
       damageChoice: CRPChatLog.#onDamageChoice,
       defenseChoice: CRPChatLog.#onDefenseChoice,
       applyDamage: CRPChatLog.#onApplyDamage,
-      restoreHealth: CRPChatLog.#onRestoreHealth,  
+      restoreHealth: CRPChatLog.#onRestoreHealth,
+      maneuverTest: CRPChatLog.#maneuverTest,  
     },
   };
 
@@ -404,6 +405,44 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
       },
     });
     await message.regenerateAtakRollContent();
+  }
+}
+static async #maneuverTest(event, target) {
+  event.preventDefault();
+
+  const messageId = target.closest(".crp-chat").dataset.messageId;
+  const message = game.messages.get(messageId);
+  const maneuver = message.system.crp;
+  const attacker = await game.actors.get(maneuver.actor._id);
+  const targets = [...game.user.targets];
+  const requireOpponent = maneuver.oponentTest !== "none";
+  const requireOwnTest = maneuver.ownTest !== "none";
+
+  if (targets.length > 1 && requireOpponent) {
+    ui.notifications.info("Wybierz tylko jeden cel");
+    return;
+  }
+
+  if (targets.length === 0 && requireOpponent) {
+    ui.notifications.info("Wybierz cel");
+    return;
+  }
+
+  if (requireOwnTest) {
+    
+    const skillKey = maneuver.ownTest;
+    const attrKey = attacker.getAttributeKey(skillKey);
+
+    await attacker.rollSkill({
+      attrKey: attrKey, 
+      skillKey: skillKey,
+      reRoll:false,
+      allowFate: true,
+      agonia: false,
+      chat: true})
+    maneuver.madeTest = true;
+    message.update({['system.crp']: maneuver})
+    message.maneuverToChat()
   }
 }
 }

@@ -1,4 +1,5 @@
 import { CRPRoll } from "./rolls/roll.mjs";
+import { CRPChatMessage } from "./chat/chatMessage.mjs";
 
 export class CRPSocketHandler {
   constructor() {
@@ -61,15 +62,20 @@ export class CRPSocketHandler {
 
           break;
         }
-        case "selectManuver":{
+        case "selectManeuver":{
           const actor = game.actors.get(data.actorId);
         // Only the client assigned to this character performs the roll.
           if (!actor || game.user.character?.id !== actor.id) return;
-          const selectedManuver = await actor.getManuver();
-          if(selectedManuver.confirmed){
-            const combatant = game.combat.combatants.get(data.combatantId);
-            await combatant.setFlag("crp", "maneuver", selectedManuver.maneuver);
-            await actor.spendManuverPoints(selectedManuver.maneuverCost)
+          const selectedManeuver = await actor.getManeuver();
+          if(selectedManeuver.confirmed){
+            await actor.setFlag("crp", "maneuver", selectedManeuver.maneuver);
+            await actor.spendManeuverPoints(selectedManeuver.maneuverCost);
+             Object.assign(selectedManeuver.maneuver,{actor: actor, madeTest: false})
+                    const chat=  await ChatMessage.create({
+        speaker: ChatMessage.getSpeaker({ actor }),
+        system: {crp: selectedManeuver.maneuver}
+      })
+        await chat.maneuverToChat()
           }          
           break;
         }
