@@ -10,7 +10,7 @@ export class CRPChatMessage extends ChatMessage {
     const data = this.system.crp;
 
     if (!data) return;
-
+    
     const content = await foundry.applications.handlebars.renderTemplate(
       "systems/crp/templates/chat/atak-roll.hbs",
       {
@@ -22,16 +22,40 @@ export class CRPChatMessage extends ChatMessage {
     await this.update({ content });
   }
   async regenerateSkillRoll(){
-        const data = this.system.crp;
-
+    const data = this.system.crp;
     if (!data) return;
-        const content = await foundry.applications.handlebars.renderTemplate(
+    const agonia = data.agonia;
+    let content;
+    if(agonia){
+      data.rollLabel += "<br><strong>Test Agoni</strong>"
+          content = await foundry.applications.handlebars.renderTemplate(
+      "systems/crp/templates/chat/agonia-roll.hbs",
+      {
+        ...data,
+        messageId: this.id,
+      },
+    );
+    }else{
+    content = await foundry.applications.handlebars.renderTemplate(
       "systems/crp/templates/chat/skill-roll.hbs",
       {
         ...data,
         messageId: this.id,
       },
     );
+  }
+    await this.update({ content });
+  }
+  async maneuverToChat(){
+    const data = this.system.crp; 
+    const content = await foundry.applications.handlebars.renderTemplate(
+      "systems/crp/templates/chat/maneuver.hbs",
+      {
+        ...data,
+        messageId: this.id,
+      },
+    );
+
     await this.update({ content });
   }
 }

@@ -247,7 +247,7 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
 
   #customDragStart(event) {
     const li = event.currentTarget;
-    const itemId = li.dataset.itemId;
+    const itemId = li.dataset.id;
     const item = this.actor.items.get(itemId);
     if (!itemId) return;
     const dragData = {
@@ -478,7 +478,7 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
       const element = target.closest(".crp-skill");
       const attr = element.dataset.attr;
       const skill = element.dataset.skill;
-      this.actor.rollSkill({attr:attr,skill:skill,reRoll:false, allowFate:true})
+      this.actor.rollSkill({attrKey:attr,skillKey:skill,reRoll:false, allowFate:true})
     }
   }
   static async #rollInitiative() {

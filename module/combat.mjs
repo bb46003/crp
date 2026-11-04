@@ -1,7 +1,6 @@
 
 import { CRPRoll } from "./rolls/roll.mjs";
-import {CRPSocketHandler} from "./socket-handler.mjs"
-
+import { CRPChatMessage } from "./chat/chatMessage.mjs";
 export class CRPCombat extends Combat {
   async nextRound() {
     await super.nextRound();
@@ -62,21 +61,17 @@ export class CRPCombat extends Combat {
     const actor = combatant.actor;
     if (!actor) return;
 
-    // Check maneuver expiration.
-    const maneuver = actor.getFlag("crp", "manuver");
-
-    if (maneuver && this.round >= maneuver.expiresRound) {
-      await actor.unsetFlag("crp", "manuver");
+    const maneuver = actor.getFlag("crp", "maneuver");
+    if (maneuver) {
+      await actor.unsetFlag("crp", "maneuver");
     }
 
-    // Wait until all conditions are resolved.
+  
     await this.handleConditions(combatant);
 
-    // Handle maneuver selection.
     const canMakeManeuver = ["character", "npc-rycerz"].includes(actor.type);
-
     if (canMakeManeuver) {
-      await this.handleManuver(combatant);
+      await this.handleManeuver(combatant);
     }
 
     // Refresh actor sheet.
@@ -85,25 +80,7 @@ export class CRPCombat extends Combat {
     }
   }
 
-  async handleConditions(combatant) {
-    const actor = combatant.actor;
-    if (!actor) return;
-
-    const state = actor.system.state;
-
-    if (state.life === "dead") return;
-    if (!state.bleeding) return;
-
-    if (!["character", "npc-rycerz"].includes(actor.type)) return;
-
-    const hasConnectedOwner = game.users.some(
-      (user) =>
-        user.active &&
-        actor.testUserPermission(user, "OWNER") &&
-        !user.isGM,
-    );
-  }
-    async handleConditions(combatant) {
+async handleConditions(combatant) {
   const actor = combatant.actor;
   if (!actor) return;
 
@@ -122,13 +99,14 @@ export class CRPCombat extends Combat {
   let result;
 
   if (actor.type === "character" && hasConnectedOwner) {
-    result = await CRPSocketHandler.requestFortitudeRoll(actor);
+    result = await game.system.socketHandler.requestFortitudeRoll(actor);
   } else {
     result = await actor.rollSkill({
-      attr: "strength",
-      skill: "endurance",
+      attrKey: "strength",
+      skillKey: "endurance",
       reRoll: false,
       allowFate: false,
+      agonia:true
     });
   }
 
@@ -150,7 +128,7 @@ export class CRPCombat extends Combat {
 
 
 
-  async handleManuver(combatant) {
+  async handleManeuver(combatant) {
     const actor = combatant.actor;
     if (!actor) return;
 
@@ -162,13 +140,31 @@ export class CRPCombat extends Combat {
     );
 
     if (actor.type === "character" && hasConnectedOwner) {
-      game.socket.emit("system.crp", {
-        type: "selectManuver",
+      game.system.socketHandler.emit({
+        operation: "selectManeuver",
         actorId: actor.id,
+        combatantId: combatant.id
       });
     } else {
-      const selectedManuver = await actor.getManuver();
-      console.log(selectedManuver);
+      const selectedManeuver = await actor.getManeuver();
+      if(selectedManeuver.confirmed){
+        await actor.setFlag("crp", "maneuver", selectedManeuver.maneuver);
+        await actor.spendManeuverPoints(selectedManeuver.maneuverCost)
+        Object.assign(selectedManeuver.maneuver,{actor: actor, madeTest: false})
+        const chat=  await ChatMessage.create({
+        speaker: ChatMessage.getSpeaker({ actor }),
+        system: {crp: selectedManeuver.maneuver}
+      })
+        await chat.maneuverToChat()
+      }   
     }
+  }
+
+  async endCombat(){
+    await super.endCombat()
+    const combatants = this.combatants;
+    combatants.forEach(async (combatant) =>{
+      await combatant.actor.unsetFlag("crp", "maneuver");
+    })
   }
 }

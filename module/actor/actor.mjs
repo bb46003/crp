@@ -116,7 +116,7 @@ export class CRPActor extends Actor {
   //   system.derived.woundState = woundState;
   // }
 
-  async rollSkill({attrKey, skillKey, reRoll, allowFate}) {
+  async rollSkill({attrKey, skillKey, reRoll, allowFate, agonia, chat=true}) {
     const actor = this;
     const modyfiers = await this.getModifiers(skillKey, attrKey)
     const useFate = this.system.resources.fate.value > 0 && allowFate;
@@ -124,13 +124,14 @@ export class CRPActor extends Actor {
       return
     }else{
       const rollLabel = await this._prepareRollLabel(attrKey, skillKey,reRoll);
-      await CRPRoll.skill({
+      return await CRPRoll.skill({
         actor: actor, 
         modyfiers: modyfiers,
         allowFate: useFate,
         rollLabel: rollLabel,
         reRoll : reRoll,
-        chat: true
+        chat: chat,
+        agonia:agonia
       }
       );
     }
@@ -199,6 +200,7 @@ export class CRPActor extends Actor {
     const actorType = ["character", "npc-rycerz"].includes(this.type) ? this.type : false;
     if (hp <= 0 && !this.system.state.bleeding && actorType) {
       update["system.state.bleeding"] = true;
+      
      await this.toggleStatusEffect("bleeding", { active: true });
     }else if(hp <= 0 && !actorType){
       update["system.state.life"] = "dead";
@@ -600,11 +602,11 @@ export class CRPActor extends Actor {
     },
   });
 }
-async  getManuver() {
+async  getManeuver() {
 const availableManeuver = this.system.derived.maneuver?.value ?? 0;
 
 const maneuvers = Object.fromEntries(
-  Object.entries(CONFIG.CRP.manuvers).filter(
+  Object.entries(CONFIG.CRP.maneuvers).filter(
     ([key, maneuver]) => maneuver.cost <= availableManeuver,
   ),
 );
@@ -631,12 +633,12 @@ const maneuvers = Object.fromEntries(
             "select[name='maneuver']",
           );
           const maneuverOption = maneuverSelect?.selectedOptions[0].value;
-          const selectedManuver = CONFIG.CRP.manuvers[maneuverOption]
+          const selectedManeuver = CONFIG.CRP.maneuvers[maneuverOption]
 
           return {
             confirmed: true,
-            maneuver: selectedManuver,
-            maneuverCost: selectedManuver.cost
+            maneuver: selectedManeuver,
+            maneuverCost: selectedManeuver.cost
           };
         },
       },
@@ -665,6 +667,19 @@ const maneuvers = Object.fromEntries(
       }
     },
   });
+}
+async spendManeuverPoints(cost){
+  const currentManeuverPoint = this.system.derived.maneuver.value;
+  const newManeuverPoints = currentManeuverPoint - cost;
+  this.update({["system.derived.maneuver.value"]:newManeuverPoints})
+  if(this.sheet.rendered){
+    this.sheet.render(true)
+  }
+}
+getAttributeKey(skillKey) {
+  return Object.entries(this.system.attributes).find(
+    ([, attribute]) => Object.hasOwn(attribute.skills, skillKey),
+  )?.[0] ?? null;
 }
 }
 

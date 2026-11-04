@@ -1,0 +1,9 @@
+<div class="flexcol">
+    <label><b>{{actor.name}}</b> używa Manewru <b>{{localize name}}</b></label>
+    <label><b>Opis Manewru</b></label>
+    <label>{{localize description}}</label>
+    {{#if (ne ownTest "none")}}
+    <label>{{actor.name}} wykonuje test {{localize (concat "CRP.skills." ownTest)}}</label>
+    <button data-action="maneuverTest"{{#if madeTest}}disabled{{/if}}>Test {{localize (concat "CRP.skills." ownTest)}}</button>
+    {{/if}}
+</div>

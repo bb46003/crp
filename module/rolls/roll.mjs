@@ -39,7 +39,8 @@ static resolveOutcome(dice, total, target) {
       reRoll = false,
       allowFate = false,
       rollLabel = "",
-      chat = true}
+      chat = true,
+      agonia = false}
   ) {
 
     const target = Math.max(2, modyfiers.target );
@@ -60,7 +61,8 @@ static resolveOutcome(dice, total, target) {
     const eagles = dice.filter((d) => d === 1).length;
     const shields = dice.filter((d) => d === 10).length;
     const showSymbols = eagles > 0 || shields > 0
-
+    const agoniaResult = this.agoniaResult(actor,success,critical)
+    const maneuver = actor.getFlag("crp", "maneuver")
     // wynik
     const result = {
       actor,
@@ -78,7 +80,10 @@ static resolveOutcome(dice, total, target) {
       rollLabel,
       showSymbols,
       resultsText,
-      usedFate: false
+      usedFate: false,
+      agonia: agonia,
+      agoniaResult,
+      maneuver
     };
 
     if (chat) {
@@ -95,23 +100,34 @@ static resolveOutcome(dice, total, target) {
     return result;
   } 
 
-static async fortitude(actor, { chat = true, modifier = 0 } = {}) {
-  const result = await this.skill(actor, "strength", "endurance", {
-    chat: false,
-    allowFate: false,
-    modifier: modifier
-  });
+static agoniaResult(actor, success, critical) {
+  const { bleeding, unconscious, agony } = actor.system.state;
+  if (agony) {
+    if (success) {
+      return "Pozostajesz w agonii!";
+    }
 
-  if (chat && result) {
-    await ChatMessage.create({
-      speaker: ChatMessage.getSpeaker({ actor }),
-      content: this.renderFortitudeHTML(actor, result)
-    });
+    return "Nie udaje Ci się przezwyciężyć agonii. Umierasz!";
   }
 
-  return result;
-}
+  if (unconscious) {
+    if (success) {
+      return "Pozostajesz nieprzytomny!";
+    }
 
+    return "Twój stan się pogarsza. Wpadasz w agonię!";
+  }
+
+  if (bleeding) {
+    if (success) {
+      return "Krwawisz dalej, ale nie tracisz przytomności!";
+    }
+
+    return "Tracisz przytomność z powodu utraty krwi!";
+  }
+
+  return "";
+}
 
 
 

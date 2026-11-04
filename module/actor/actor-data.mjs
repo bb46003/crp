@@ -311,7 +311,10 @@ export class CRPActorData extends TypeDataModel {
     super.prepareDerivedData();
     this._prepareOrigin();
     this._prepareTotalMoney();
-    this._prepareWoundPenalty()
+    this._prepareWoundPenalty();
+    this._prepareInitiativeMod();
+    this._prepareInitiative();
+    this._prepareManeuverPoints()
   }
   _prepareWoundPenalty(){
     const hp = this.derived.health.value;
@@ -338,6 +341,54 @@ export class CRPActorData extends TypeDataModel {
   _prepareTotalMoney() {
     this.money.total = moneyToObols(this.money);
   }
+  _prepareInitiative(){
+    this.derived.initiative = this.attributes.agility.value + this.attributes.perception.value
+    
+    this.derived.initiativeTotal =
+    this.derived.initiative +
+     this.derived.initiativeWeaponModifier +
+      this.derived.initiativeArmorModifier;
+  }
+  _prepareManeuverPoints(){
+    const attr = this.attributes;
+    const maxManeuver = attr.perception.value + attr.reason.value;
+    this.derived.maneuver.max = maxManeuver;
+  }
+  _prepareInitiativeMod(){
+    const wornArmor = this.equipment.armor.id;
+    if(wornArmor){
+    const armorItem = this.parent.items.get(wornArmor);
+      this.derived.initiativeArmorModifier = -armorItem.system.protection;
+
+    }else{
+      this.derived.initiativeArmorModifier = 0
+    }
+    const leftHand = this.equipment.leftHand.id;
+    let leftHandMod = 4;
+          const skillMod = {
+        twoHanded : -3,
+        oneHanded: 0,
+        lightWeapons: 2,
+        ranged: -2,
+      }
+    if(leftHand){
+      const leftHandItem = this.parent.items.get(leftHand);
+      const lefHandSkill = leftHandItem.system.skill;
+
+      leftHandMod = skillMod[lefHandSkill]
+
+    }
+    const rightHand = this.equipment.rightHand.id;
+      let rightHandMod = 4;
+          if(rightHand){
+      const rightHandHandItem = this.parent.items.get(rightHand);
+      const rightHandHandSkill = rightHandHandItem.system.skill;
+
+      rightHandMod = skillMod[rightHandHandSkill]
+
+    }
+    this.derived.initiativeWeaponModifier = Math.min(leftHandMod,rightHandMod)
+  }
 }
 
 export class CRPNPCKnechtData extends CRPActorData {
@@ -346,11 +397,32 @@ export class CRPNPCKnechtData extends CRPActorData {
     this.resources.fate.value = 0;
     this.derived.maneuver.value = 0;
     this.derived.maneuver.max = 0;
+    this._prepareinitiative();
+  }
+    _prepareinitiative(){
+    this.derived.initiative = this.npc.attributes
+    this.derived.initiativeTotal =
+    this.derived.initiative +
+     this.derived.initiativeWeaponModifier +
+      this.derived.initiativeArmorModifier;
   }
 }
 
 export class CRPNPCRycerzData extends CRPActorData {
   prepareDerivedData() {
     super.prepareDerivedData();
+      this._prepareinitiative();
+      this._prepareManeuverPoints()
+
+  }
+    _prepareinitiative(){
+    this.derived.initiative = this.npc.attributes
+    this.derived.initiativeTotal =
+    this.derived.initiative +
+     this.derived.initiativeWeaponModifier +
+      this.derived.initiativeArmorModifier;
+  }
+  _prepareManeuverPoints(){
+    this.derived.maneuver.max = 2*this.npc.attributes;
   }
 }

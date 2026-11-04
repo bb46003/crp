@@ -1,4 +1,5 @@
 import { CRPRoll } from "./rolls/roll.mjs";
+import { CRPChatMessage } from "./chat/chatMessage.mjs";
 
 export class CRPSocketHandler {
   constructor() {
@@ -19,10 +20,11 @@ export class CRPSocketHandler {
 
           try {
             const result = await actor.rollSkill({
-              attr: "strength",
-              skill: "endurance",
+              attrKey: "strength",
+              skillKey: "endurance",
               reRoll: false,
               allowFate: false,
+              agonia:true
             });
 
             this.emit({
@@ -58,6 +60,23 @@ export class CRPSocketHandler {
             success: data.success,
           });
 
+          break;
+        }
+        case "selectManeuver":{
+          const actor = game.actors.get(data.actorId);
+        // Only the client assigned to this character performs the roll.
+          if (!actor || game.user.character?.id !== actor.id) return;
+          const selectedManeuver = await actor.getManeuver();
+          if(selectedManeuver.confirmed){
+            await actor.setFlag("crp", "maneuver", selectedManeuver.maneuver);
+            await actor.spendManeuverPoints(selectedManeuver.maneuverCost);
+             Object.assign(selectedManeuver.maneuver,{actor: actor, madeTest: false})
+                    const chat=  await ChatMessage.create({
+        speaker: ChatMessage.getSpeaker({ actor }),
+        system: {crp: selectedManeuver.maneuver}
+      })
+        await chat.maneuverToChat()
+          }          
           break;
         }
       }

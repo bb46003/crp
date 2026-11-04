@@ -5,6 +5,9 @@
     <div>
       <div class="crp-roll-actor">{{actor.name}}</div>
       <div class="crp-roll-skill">{{rollLabel}}</div>
+      {{#if maneuver}}
+      <label>Dla Manewru {{localize maneuver.name}}</label>
+      {{/if}}
     </div>
   </div>
 
