@@ -116,7 +116,7 @@ export class CRPActor extends Actor {
   //   system.derived.woundState = woundState;
   // }
 
-  async rollSkill({attrKey, skillKey, reRoll, allowFate}) {
+  async rollSkill({attrKey, skillKey, reRoll, allowFate, agonia}) {
     const actor = this;
     const modyfiers = await this.getModifiers(skillKey, attrKey)
     const useFate = this.system.resources.fate.value > 0 && allowFate;
@@ -124,13 +124,14 @@ export class CRPActor extends Actor {
       return
     }else{
       const rollLabel = await this._prepareRollLabel(attrKey, skillKey,reRoll);
-      await CRPRoll.skill({
+      return await CRPRoll.skill({
         actor: actor, 
         modyfiers: modyfiers,
         allowFate: useFate,
         rollLabel: rollLabel,
         reRoll : reRoll,
-        chat: true
+        chat: true,
+        agonia:agonia
       }
       );
     }
@@ -199,6 +200,7 @@ export class CRPActor extends Actor {
     const actorType = ["character", "npc-rycerz"].includes(this.type) ? this.type : false;
     if (hp <= 0 && !this.system.state.bleeding && actorType) {
       update["system.state.bleeding"] = true;
+      
      await this.toggleStatusEffect("bleeding", { active: true });
     }else if(hp <= 0 && !actorType){
       update["system.state.life"] = "dead";
@@ -665,6 +667,14 @@ const maneuvers = Object.fromEntries(
       }
     },
   });
+}
+async spendManuverPoints(cost){
+  const currentManuverPoint = this.system.derived.maneuver.value;
+  const newManuverPoints = currentManuverPoint - cost;
+  this.update({["system.derived.maneuver.value"]:newManuverPoints})
+  if(this.sheet.rendered){
+    this.sheet.render(true)
+  }
 }
 }
 

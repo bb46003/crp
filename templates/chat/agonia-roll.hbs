@@ -1,0 +1,68 @@
+
+<div class="crp-roll-card {{#if success}}success{{else}}fail{{/if}}">
+  <div class="crp-roll-header">
+    <img src="{{actor.img}}" class="crp-roll-avatar">
+    <div>
+      <div class="crp-roll-actor">{{actor.name}}</div>
+      <div class="crp-roll-skill">{{{rollLabel}}}</div>
+    </div>
+  </div>
+
+  <div class="crp-roll-body">
+    <div class="crp-roll-dice">
+      🎲 {{lookup dice 0}},{{lookup dice 1}}
+      → <strong>{{total}}</strong>
+    </div>
+
+    <div class="crp-roll-target" data-toggle="tooltip" 
+          data-placement="bottom" 
+          title="{{modifierTooltip modyfiers}}">
+      🎯 Cel: {{modyfiers.target}} (Całkowity Modyfikator {{modyfiers.totalMod}})
+    </div>
+    <div class="crp-roll-result"></div>
+      <div class="crp-roll-margin">
+        Margin: {{margin}}
+      </div>
+  
+
+{{#if showSymbols}}
+  <div class="crp-roll-symbols">
+    {{#if (ne eagles 0)}}
+    <label>Ilość</label>
+      <span class="crp-dice-icon crp-dice-eagle">
+        <img
+          src="systems/crp/assets/orzel-kostka.webp"
+          alt="Orzeł"
+          title="Orzeł"
+        >
+      </span>
+      
+        <label>:{{eagles}}</label><br>
+    {{/if}}
+
+    {{#if (ne shields 0)}}
+    <label>Ilość</label>
+      <span class="crp-dice-icon crp-dice-shield">
+                <img
+          src="systems/crp/assets/tarcza_kostka.webp"
+          alt="Tarcza"
+          title="Tarcza"
+        >      
+      </span>
+        <label>:{{shields}}<label>
+    {{/if}}
+  </div>
+{{/if}}
+<div class="crp-result">
+  <strong>{{resultsText}}</strong>
+  <strong>{{agoniaResult}}</strong>
+  </div>
+    {{#if allowFate}}
+      <button
+        class="crp-use-fate" data-action="useFate" data-type="skillRoll" {{#if usedFate}}disabled{{/if}}>
+          ✨ Użyj Doli
+      </button>
+    {{/if}}
+
+  </div>
+</div>

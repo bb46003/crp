@@ -19,10 +19,11 @@ export class CRPSocketHandler {
 
           try {
             const result = await actor.rollSkill({
-              attr: "strength",
-              skill: "endurance",
+              attrKey: "strength",
+              skillKey: "endurance",
               reRoll: false,
               allowFate: false,
+              agonia:true
             });
 
             this.emit({
@@ -58,6 +59,18 @@ export class CRPSocketHandler {
             success: data.success,
           });
 
+          break;
+        }
+        case "selectManuver":{
+          const actor = game.actors.get(data.actorId);
+        // Only the client assigned to this character performs the roll.
+          if (!actor || game.user.character?.id !== actor.id) return;
+          const selectedManuver = await actor.getManuver();
+          if(selectedManuver.confirmed){
+            const combatant = game.combat.combatants.get(data.combatantId);
+            await combatant.setFlag("crp", "maneuver", selectedManuver.maneuver);
+            await actor.spendManuverPoints(selectedManuver.maneuverCost)
+          }          
           break;
         }
       }

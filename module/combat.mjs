@@ -1,6 +1,5 @@
 
 import { CRPRoll } from "./rolls/roll.mjs";
-import {CRPSocketHandler} from "./socket-handler.mjs"
 
 export class CRPCombat extends Combat {
   async nextRound() {
@@ -62,19 +61,15 @@ export class CRPCombat extends Combat {
     const actor = combatant.actor;
     if (!actor) return;
 
-    // Check maneuver expiration.
     const maneuver = actor.getFlag("crp", "manuver");
-
-    if (maneuver && this.round >= maneuver.expiresRound) {
+    if (maneuver) {
       await actor.unsetFlag("crp", "manuver");
     }
 
-    // Wait until all conditions are resolved.
+  
     await this.handleConditions(combatant);
 
-    // Handle maneuver selection.
     const canMakeManeuver = ["character", "npc-rycerz"].includes(actor.type);
-
     if (canMakeManeuver) {
       await this.handleManuver(combatant);
     }
@@ -85,25 +80,7 @@ export class CRPCombat extends Combat {
     }
   }
 
-  async handleConditions(combatant) {
-    const actor = combatant.actor;
-    if (!actor) return;
-
-    const state = actor.system.state;
-
-    if (state.life === "dead") return;
-    if (!state.bleeding) return;
-
-    if (!["character", "npc-rycerz"].includes(actor.type)) return;
-
-    const hasConnectedOwner = game.users.some(
-      (user) =>
-        user.active &&
-        actor.testUserPermission(user, "OWNER") &&
-        !user.isGM,
-    );
-  }
-    async handleConditions(combatant) {
+async handleConditions(combatant) {
   const actor = combatant.actor;
   if (!actor) return;
 
@@ -122,13 +99,14 @@ export class CRPCombat extends Combat {
   let result;
 
   if (actor.type === "character" && hasConnectedOwner) {
-    result = await CRPSocketHandler.requestFortitudeRoll(actor);
+    result = await game.system.socketHandler.requestFortitudeRoll(actor);
   } else {
     result = await actor.rollSkill({
       attr: "strength",
       skill: "endurance",
       reRoll: false,
       allowFate: false,
+      agonia:true
     });
   }
 
@@ -162,9 +140,10 @@ export class CRPCombat extends Combat {
     );
 
     if (actor.type === "character" && hasConnectedOwner) {
-      game.socket.emit("system.crp", {
-        type: "selectManuver",
+      game.system.socketHandler.emit({
+        operation: "selectManuver",
         actorId: actor.id,
+        combatantId: combatant.id
       });
     } else {
       const selectedManuver = await actor.getManuver();

@@ -127,6 +127,18 @@ Hooks.once("init", () => {
   game.system.socketHandler = new CRPSocketHandler();
   registerHandlebarsHelpers();
 });
+Hooks.once("ready", async () => {
+  const currentLang = game.settings.get("core", "language");
+
+  if (currentLang !== "pl") {
+    console.log(`Language is ${currentLang}, switching to Polish...`);
+
+    await game.settings.set("core", "language", "pl");
+
+    // reload to apply changes
+    window.location.reload();
+  }
+});
 Hooks.on("getSceneControlButtons", (controls) => {
   controls.tokens.tools.crpTools = {
     name: "crpTools",

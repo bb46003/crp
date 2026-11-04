@@ -247,7 +247,7 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
 
   #customDragStart(event) {
     const li = event.currentTarget;
-    const itemId = li.dataset.itemId;
+    const itemId = li.dataset.id;
     const item = this.actor.items.get(itemId);
     if (!itemId) return;
     const dragData = {
