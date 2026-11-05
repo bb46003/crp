@@ -1,13 +1,34 @@
 {{log this}}
 <div class="crp-oposite-roll">
+  <div class="crp-attaker">
    {{> "systems/crp/templates/chat/skill-roll.hbs" this.atackerRoll}}
-  {{#if defenderRoll}}
-  {{else}}
+
+  </div>
+   {{#if defenderRoll}}
+  <div class="crp-defender">
+ 
+       {{> "systems/crp/templates/chat/skill-roll.hbs" this.defenderRoll}}
+
+  </div>
+   {{else}}
   <div class="crp-oponent-test">
     <label>Oponent {{defender.name}} może wykonać test:</label>
     {{#each defender.defenderSkillKey as |skill|}}
-      <button class="crp-button" data-skill="{{skill}}">Test Przeciwstawny na {{localize (concat "CRP.skills." skill)}}</button>
+      <button class="crp-button" data-action="opositeTest" data-skill="{{skill}}">Test Przeciwstawny na {{localize (concat "CRP.skills." skill)}}</button>
     {{/each}}
+  </div>
+  {{/if}}
+  {{#if result}}
+  <div class="crp-results">
+    {{#if (eq results "A")}}
+      <label>Wygtywa {{atacker.atackerRoll.name}}</label>
+    {{else}}
+      {{#if (eq results "B")}}
+      <label>Wygtywa {{atacker.defender.name}}</label>
+      {{else}}
+      <label>Ramis!</label>
+      {{/if}}
+    {{/if}}
   </div>
   {{/if}}
 </div>

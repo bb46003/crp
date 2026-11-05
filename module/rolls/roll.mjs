@@ -65,7 +65,7 @@ static resolveOutcome(dice, total, target) {
     const agoniaResult = this.agoniaResult(actor,success,critical)
     let maneuver = undefined;
     if(useManeuver){
-      maneuver = actor.getFlag("crp", "maneuver")
+      maneuver = actor.flags?.crp?.maneuver;
     }
     // wynik
     const result = {
@@ -229,7 +229,8 @@ static agoniaResult(actor, success, critical) {
     return result;
   }
 
-  static async opositeTest({attacker={},defender={}}){
+  static async opositeTest({attacker={}, atackerRoll={},defender={},defenderRoll={},messageId=""}){
+    if(Object.keys(atackerRoll).length === 0){
     const atackerRoll = await this.skill(attacker);
     atackerRoll.resultsText = ""
     const chat=  await ChatMessage.create({
@@ -237,12 +238,61 @@ static agoniaResult(actor, success, critical) {
         content: "",
         system: {
           crp: {
-            atacker: attacker,
+            attacker: attacker,
             atackerRoll: atackerRoll,
             defender: defender
           },
         },
       });
     chat.regenerateOpositeRoll()
+  }else if(Object.keys(defenderRoll).length === 0){
+    const defenderRoll1 = await this.skill(defender);
+   const message = game.messages.get(messageId);
+    const opositeTestResult = this.opositeTestResult(atackerRoll,defenderRoll)
+    message.update({
+           ["system.crp.defenderRoll"] : defenderRoll1,
+           ["system.crp.result"]: opositeTestResult
+      });
+    message.regenerateOpositeRoll()
+  }else{
+    const opositeTestResult = this.opositeTestResult(atackerRoll,defenderRoll)
+    const message = game.messages.get(messageId);
+    message.update({
+           ["system.crp.result"]: opositeTestResult
+      });
+    message.regenerateOpositeRoll()
+  }
+  }
+  static opositeTestResult(atackerRoll,defenderRoll){
+  let winner;
+  if (
+    atackerRoll.critical === "criticalSuccess" &&
+    defenderRoll.critical === "criticalSuccess"
+  ) {
+    winner = "tie";
+  } else if (atackerRoll.critical === "criticalSuccess") {
+    winner = "A";
+  } else if (defenderRoll.critical === "criticalSuccess") {
+    winner = "B";
+  } else if (
+    atackerRoll.critical === "criticalFailure" &&
+    defenderRoll.critical === "criticalFailure"
+  ) {
+    winner = "tie";
+  } else if (atackerRoll.critical === "criticalFailure") {
+    winner = "B";
+  } else if (defenderRoll.critical === "criticalFailure") {
+    winner = "A";
+  } else {
+    if (atackerRoll.margin > defenderRoll.margin) {
+      winner = "A";
+    } else if (defenderRoll.margin > atackerRoll.margin) {
+      winner = "B";
+    } else {
+      winner = "tie";
+    }
+  }
+  return winner;
+
   }
 }

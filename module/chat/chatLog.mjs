@@ -11,7 +11,8 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
       defenseChoice: CRPChatLog.#onDefenseChoice,
       applyDamage: CRPChatLog.#onApplyDamage,
       restoreHealth: CRPChatLog.#onRestoreHealth,
-      maneuverTest: CRPChatLog.#maneuverTest,  
+      maneuverTest: CRPChatLog.#maneuverTest,
+      opositeTest: CRPChatLog.#opositeTest,  
     },
   };
 
@@ -68,6 +69,7 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
     const crp = message.system.crp;
     const type = target.dataset.type;
     const isOposite = target.closest(".crp-oposite-roll") !== null
+    const ataker = target.closest(".crp-attaker");
     let roll;
     let actor;
     let attr;
@@ -109,15 +111,55 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
         break;
       }
       case "skillRoll": {
+
+        roll = crp;
         if(isOposite){
 
+          if(ataker){
+            actor = await game.actors.get(roll.attacker.actor._id);
+          }else{
+            actor = await game.actors.get(roll.defender.defenderId);
+          }
         }else{
-        roll = crp;
-        actor = await game.actors.get(roll.actor._id);
+          actor = await game.actors.get(roll.actor._id);
+        }
         if (!game.user.isGM && !actor.isOwner) {
           ui.notifications.warn("Nie kontrolujesz tej postaci");
           return;
         }
+        if(isOposite){
+          if(ataker){
+            roll.attacker.reRoll = true;
+            roll.attacker.allowFate = false; 
+            const atackerRoll = await CRPRoll.skill(roll.attacker);
+            if(roll.defenderRoll){
+              await CRPRoll.opositeTest({
+               attacker: roll.attacker,
+               atackerRoll: atackerRoll,
+               defender: roll.defender,
+               defenderRoll: roll.defenderRoll,
+               messageId: messageId
+              })
+            }else{
+            atackerRoll.resultsText = "";
+            atackerRoll.rollLabel += " Wynik Po użyciu Doli"
+            message.update({["system.crp.atackerRoll"]:atackerRoll})
+            message.regenerateOpositeRoll()
+            }
+          }else{
+            roll.defender.reRoll = true;
+            roll.defender.allowFate = false; 
+            const defenderRoll = await CRPRoll.skill(roll.defender);
+            defenderRoll.resultsText = "";
+              await CRPRoll.opositeTest({
+               attacker: roll.attacker,
+               atackerRoll: roll.atackerRoll,
+               defender: roll.defender,
+               defenderRoll: defenderRoll,
+               messageId: messageId
+              })
+          }
+        }else{
         const spendFate = await actor.spendFate(1);
         if (!spendFate) return;
         await CRPRoll.skill({
@@ -465,7 +507,7 @@ static async #maneuverTest(event, target) {
         agonia:false
       },
       defender:{
-        defenderId: defenderActor.id,
+        defenderId: defenderActor.actor.id,
         defenderName: defenderActor.name,
         defenderSkillKey: [maneuver.oponentTest],
         allowFate:true,
@@ -479,6 +521,21 @@ static async #maneuverTest(event, target) {
     message.update({['system.crp']: maneuver})
     message.maneuverToChat()
   }
+}
+static async #opositeTest(event,target){
+  event.preventDefault();
+  const messageId = target.closest(".crp-chat").dataset.messageId;
+  const message = game.messages.get(messageId);
+  const data = message.system.crp;
+  const defenderData = data.defender;
+  const defenderActor = await game.actors.get(defenderData.defenderId);
+  await defenderActor.opositeTest({
+    attacker: data.attacker,
+    atackerRoll: data.atackerRoll,
+    defender: data.defender,
+    atackRoll: true,
+    messageId: messageId
+  })
 }
 }
 

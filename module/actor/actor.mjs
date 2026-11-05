@@ -137,7 +137,8 @@ export class CRPActor extends Actor {
       );
     }
   }
-  async opositeTest({attacker={},defender={}}){
+  async opositeTest({attacker={},atackerRoll= {},defender={}, atackRoll = false,messageId = ""}){
+    if(!atackRoll){
     const attrKey = attacker.attackerAttrKey;
     const skillKey = attacker.attackerSkillKey;
     const modyfiers = await this.getModifiers(skillKey, attrKey)
@@ -161,6 +162,38 @@ export class CRPActor extends Actor {
       attacker: attackerRollData,
       defender: defender
     })
+   }
+  }else{
+    const skillKey = defender.attackerSkillKey;
+    const attrKey = this.getAttributeKey(skillKey)
+    const modyfiers = await this.getModifiers(skillKey, attrKey)
+    const useFate = this.system.resources.fate.value > 0 && attacker.allowFate;
+        if(!modyfiers){
+      return
+    }else{
+    const reRoll = defender.reRoll;
+    const rollLabel = await this._prepareRollLabel(attrKey, skillKey,reRoll);
+    const defenderRollData = {
+      actor: this, 
+      modyfiers: modyfiers,
+      reRoll : reRoll,
+      allowFate: useFate,
+      rollLabel: rollLabel,      
+      chat: defender.chat,
+      agonia: defender.agonia,
+      useManeuver: defender.useManeuver,
+    }
+    await CRPRoll.opositeTest({
+      attacker: attacker,
+      defender: defenderRollData,
+      atackerRoll: atackerRoll,
+      atackRoll: atackRoll,
+      messageId: messageId
+
+    })
+    }
+  
+  
   }
   }
   async _prepareRollLabel(attrKey,skillKey){
