@@ -116,7 +116,7 @@ export class CRPActor extends Actor {
   //   system.derived.woundState = woundState;
   // }
 
-  async rollSkill({attrKey, skillKey, reRoll, allowFate, agonia, chat=true}) {
+  async rollSkill({attrKey, skillKey, reRoll, allowFate, agonia, chat=true, useManeuver=false}) {
     const actor = this;
     const modyfiers = await this.getModifiers(skillKey, attrKey)
     const useFate = this.system.resources.fate.value > 0 && allowFate;
@@ -131,10 +131,37 @@ export class CRPActor extends Actor {
         rollLabel: rollLabel,
         reRoll : reRoll,
         chat: chat,
-        agonia:agonia
+        agonia:agonia,
+        useManeuver: useManeuver,
       }
       );
     }
+  }
+  async opositeTest({atacker={},defender={}}){
+    const attrKey = atacker.atackerAttrKey;
+    const skillKey = atacker.SkillKey;
+    const modyfiers = await this.getModifiers(skillKey, attrKey)
+    const useFate = this.system.resources.fate.value > 0 && atacker.allowFate;
+        if(!modyfiers){
+      return
+    }else{
+    const reRoll = atacker.reRoll;
+    const rollLabel = await this._prepareRollLabel(attrKey, skillKey,reRoll);
+    const atackerRollData = {
+      actor: this, 
+      modyfiers: modyfiers,
+      reRoll : reRoll,
+      allowFate: useFate,
+      rollLabel: rollLabel,      
+      chat: atacker.chat,
+      agonia: atacker.agonia,
+      useManeuver: atacker.useManeuver,
+    }
+    await CRPRoll.opositeTest({
+      atacker: atackerRollData,
+      defender: defender
+    })
+  }
   }
   async _prepareRollLabel(attrKey,skillKey){
     const attrName = CONFIG.CRP.attributes[attrKey];

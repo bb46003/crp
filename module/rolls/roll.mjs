@@ -40,7 +40,8 @@ static resolveOutcome(dice, total, target) {
       allowFate = false,
       rollLabel = "",
       chat = true,
-      agonia = false}
+      agonia = false,
+      useManeuver = false}
   ) {
 
     const target = Math.max(2, modyfiers.target );
@@ -62,7 +63,10 @@ static resolveOutcome(dice, total, target) {
     const shields = dice.filter((d) => d === 10).length;
     const showSymbols = eagles > 0 || shields > 0
     const agoniaResult = this.agoniaResult(actor,success,critical)
-    const maneuver = actor.getFlag("crp", "maneuver")
+    let maneuver = undefined;
+    if(useManeuver){
+      maneuver = actor.getFlag("crp", "maneuver")
+    }
     // wynik
     const result = {
       actor,
@@ -128,11 +132,6 @@ static agoniaResult(actor, success, critical) {
 
   return "";
 }
-
-
-
-  // actor.mjs
-
   async rollAttack(skillKey) {
     const weapon = this.getEquippedWeapon();
 
@@ -228,5 +227,21 @@ static agoniaResult(actor, success, critical) {
     }
 
     return result;
+  }
+
+  async opositeTest({atacker={},defender={}}){
+    const atackerRoll = await this.skill(atacker);
+    const chat=  await ChatMessage.create({
+        speaker: ChatMessage.getSpeaker({ actor }),
+        content: "",
+        system: {
+          crp: {
+            atacker: atacker,
+            atackerRoll: atackerRoll,
+            defender: defender
+          },
+        },
+      });
+    chat.regenerateOpositeRoll()
   }
 }

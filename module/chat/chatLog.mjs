@@ -428,7 +428,7 @@ static async #maneuverTest(event, target) {
     return;
   }
 
-  if (requireOwnTest) {
+  if (requireOwnTest && !requireOpponent) {
     
     const skillKey = maneuver.ownTest;
     const attrKey = attacker.getAttributeKey(skillKey);
@@ -439,7 +439,37 @@ static async #maneuverTest(event, target) {
       reRoll:false,
       allowFate: true,
       agonia: false,
-      chat: true})
+      chat: true,
+      useManeuver: true})
+    maneuver.madeTest = true;
+    message.update({['system.crp']: maneuver})
+    message.maneuverToChat()
+    return
+  }
+  if(requireOwnTest && requireOpponent){
+    const defenderActor = targets[0];
+    await attacker.opositeTest({
+      attacker:{
+        atakcerId: attacker.id,
+        atackerSkillKey: maneuver.ownTest,
+        atackerAttrKey: attacker.getAttributeKey(maneuver.ownTest),
+        allowFate:true,
+        reRoll:false,
+        useManeuver:true,
+        chat: false,
+        agonia:false
+      },
+      defender:{
+        atakcerId: defenderActor.id,
+        atackerSkillKey: maneuver.oponentTest,
+        atackerAttrKey: defenderActor.getAttributeKey(maneuver.oponentTest),
+        allowFate:true,
+        reRoll:false,
+        useManeuver:true,
+        chat: false,
+        agonia:false
+      }
+    })
     maneuver.madeTest = true;
     message.update({['system.crp']: maneuver})
     message.maneuverToChat()

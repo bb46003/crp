@@ -58,4 +58,16 @@ export class CRPChatMessage extends ChatMessage {
 
     await this.update({ content });
   }
+  async regenerateOpositeRoll(){
+    const data = this.system.crp; 
+    const content = await foundry.applications.handlebars.renderTemplate(
+      "systems/crp/templates/chat/oposite-test.hbs",
+      {
+        ...data,
+        messageId: this.id,
+      },
+    );
+
+    await this.update({ content });
+  }
 }
