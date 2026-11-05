@@ -137,28 +137,28 @@ export class CRPActor extends Actor {
       );
     }
   }
-  async opositeTest({atacker={},defender={}}){
-    const attrKey = atacker.atackerAttrKey;
-    const skillKey = atacker.SkillKey;
+  async opositeTest({attacker={},defender={}}){
+    const attrKey = attacker.attackerAttrKey;
+    const skillKey = attacker.attackerSkillKey;
     const modyfiers = await this.getModifiers(skillKey, attrKey)
-    const useFate = this.system.resources.fate.value > 0 && atacker.allowFate;
+    const useFate = this.system.resources.fate.value > 0 && attacker.allowFate;
         if(!modyfiers){
       return
     }else{
-    const reRoll = atacker.reRoll;
+    const reRoll = attacker.reRoll;
     const rollLabel = await this._prepareRollLabel(attrKey, skillKey,reRoll);
-    const atackerRollData = {
+    const attackerRollData = {
       actor: this, 
       modyfiers: modyfiers,
       reRoll : reRoll,
       allowFate: useFate,
       rollLabel: rollLabel,      
-      chat: atacker.chat,
-      agonia: atacker.agonia,
-      useManeuver: atacker.useManeuver,
+      chat: attacker.chat,
+      agonia: attacker.agonia,
+      useManeuver: attacker.useManeuver,
     }
     await CRPRoll.opositeTest({
-      atacker: atackerRollData,
+      attacker: attackerRollData,
       defender: defender
     })
   }

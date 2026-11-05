@@ -128,9 +128,9 @@ CRP.maneuvers = Object.freeze({
     cost: 1,
     offenceModifier: 0,
     defenseModifier: 0,
-    oponentTest: "endurance",
+    oponentTest: "athletics",
     oponentModifier: 0,
-    ownTest: "athletics",
+    ownTest: "endurance",
     description: "CRP.Maneuvers.knockdown.description",
   },
   standUp: {

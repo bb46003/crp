@@ -67,7 +67,7 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
     const message = game.messages.get(messageId);
     const crp = message.system.crp;
     const type = target.dataset.type;
-
+    const isOposite = target.closest(".crp-oposite-roll") !== null
     let roll;
     let actor;
     let attr;
@@ -109,6 +109,9 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
         break;
       }
       case "skillRoll": {
+        if(isOposite){
+
+        }else{
         roll = crp;
         actor = await game.actors.get(roll.actor._id);
         if (!game.user.isGM && !actor.isOwner) {
@@ -125,8 +128,10 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
           reRoll : true,
           chat: true
         })
-        await message.update({["system.crp.usedFate"]:true})
-        message.regenerateSkillRoll()
+
+          await message.update({["system.crp.usedFate"]:true})
+          message.regenerateSkillRoll()
+        }
         return;
       }
       default:
@@ -450,9 +455,9 @@ static async #maneuverTest(event, target) {
     const defenderActor = targets[0];
     await attacker.opositeTest({
       attacker:{
-        atakcerId: attacker.id,
-        atackerSkillKey: maneuver.ownTest,
-        atackerAttrKey: attacker.getAttributeKey(maneuver.ownTest),
+        actor: attacker.id,
+       attackerSkillKey: maneuver.ownTest,
+       attackerAttrKey: attacker.getAttributeKey(maneuver.ownTest),
         allowFate:true,
         reRoll:false,
         useManeuver:true,
@@ -460,9 +465,9 @@ static async #maneuverTest(event, target) {
         agonia:false
       },
       defender:{
-        atakcerId: defenderActor.id,
-        atackerSkillKey: maneuver.oponentTest,
-        atackerAttrKey: defenderActor.getAttributeKey(maneuver.oponentTest),
+        defenderId: defenderActor.id,
+        defenderName: defenderActor.name,
+        defenderSkillKey: [maneuver.oponentTest],
         allowFate:true,
         reRoll:false,
         useManeuver:true,

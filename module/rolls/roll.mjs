@@ -137,7 +137,7 @@ static agoniaResult(actor, success, critical) {
 
     const attrKey = this._mapSkillToAttribute(skillKey);
 
-    const result = await this.rollSkill(attrKey, skillKey);
+    const result = await this.skill(attrKey, skillKey);
 
     if (!result.success) return result;
 
@@ -229,14 +229,15 @@ static agoniaResult(actor, success, critical) {
     return result;
   }
 
-  async opositeTest({atacker={},defender={}}){
-    const atackerRoll = await this.skill(atacker);
+  static async opositeTest({attacker={},defender={}}){
+    const atackerRoll = await this.skill(attacker);
+    atackerRoll.resultsText = ""
     const chat=  await ChatMessage.create({
-        speaker: ChatMessage.getSpeaker({ actor }),
+        speaker: ChatMessage.getSpeaker({actor:attacker.actor}),
         content: "",
         system: {
           crp: {
-            atacker: atacker,
+            atacker: attacker,
             atackerRoll: atackerRoll,
             defender: defender
           },

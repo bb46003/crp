@@ -1,104 +1,13 @@
-{{{content}}}
-{{!-- ========================================================= --}}
-{{!-- DOLA — ponowny rzut                                  --}}
-{{!-- ========================================================= --}}
-{{#if fate.use}}
-  <button
-    type="button"
-    class="crp-use-fate"
-    data-action="useFate">
-    ✨ Użyj Doli
-  </button>
-{{/if}}
-
-{{!-- ========================================================= --}}
-{{!-- WYNIK WYBORU OBRONY                                    --}}
-{{!-- ========================================================= --}}
-
-  <div class="crp-defense-result">
-    🛡 Wybrałeś: <b>{{defenseResult.label}}</b>
+{{log this}}
+<div class="crp-oposite-roll">
+   {{> "systems/crp/templates/chat/skill-roll.hbs" this.atackerRoll}}
+  {{#if defenderRoll}}
+  {{else}}
+  <div class="crp-oponent-test">
+    <label>Oponent {{defender.name}} może wykonać test:</label>
+    {{#each defender.defenderSkillKey as |skill|}}
+      <button class="crp-button" data-skill="{{skill}}">Test Przeciwstawny na {{localize (concat "CRP.skills." skill)}}</button>
+    {{/each}}
   </div>
-
-
-
-{{!-- ========================================================= --}}
-{{!-- PODSUMOWANIE OBRAŻEŃ                                  --}}
-{{!-- ========================================================= --}}
-
-  <div class="crp-damage">
-    <p>
-      💥 Obrażenia bazowe: <b>{{damageResult.base}}</b>
-    </p>
-
-    <p>
-      🛡 Redukcja: {{damageResult.reduction}}
-      ({{damageResult.armorProtection}} pancerz
-      {{#if damageResult.shieldProtection}}
-        + {{damageResult.shieldProtection}} tarcza
-      {{/if}}
-      {{#if damageResult.defenseEagles}}
-        + {{damageResult.defenseEagles}} 🦅
-      {{/if}}
-      {{#if damageResult.defenseShields}}
-        - {{damageResult.defenseShields}} 🛡️
-      {{/if}})
-    </p>
-
-    {{#if damageResult.hasAttackModifiers}}
-      <p>
-        ⚔ Modyfikator ataku:
-        {{#if damageResult.attackEagles}}
-          +{{damageResult.attackEagles}} 🦅
-        {{/if}}
-        {{#if damageResult.attackShields}}
-          -{{damageResult.attackShields}} 🛡️
-        {{/if}}
-      </p>
-    {{/if}}
-
-    <p>
-      👉 Obrażenia końcowe: <b>{{damageResult.total}}</b>
-    </p>
-  </div>
-
-
-
-{{!-- ========================================================= --}}
-{{!-- KONTROLKI ROZLICZANIA OBRAŻEŃ                          --}}
-{{!-- ========================================================= --}}
-
-  <div
-    class="crp-damage-control"
-    data-message-id="{{damageControls.messageId}}"
-    data-defender="{{damageControls.defenderUuid}}"
-    data-damage="{{damageControls.damage}}">
-
-    <button
-      type="button"
-      class="crp-damage-choice"
-      data-action="damageChoice"
-      data-action-type="accept"
-      data-message-id="{{damageControls.messageId}}"
-      data-defender="{{damageControls.defenderUuid}}"
-      data-damage="{{damageControls.damage}}"
-      {{#if damageControls.disabled}}disabled{{/if}}>
-      Przyjmij obrażenia
-    </button>
-
-    <button
-      type="button"
-      class="crp-damage-choice"
-      data-action="damageChoice"
-      data-action-type="cancel"
-      data-message-id="{{damageControls.messageId}}"
-      data-defender="{{damageControls.defenderUuid}}"
-      data-damage="{{damageControls.damage}}"
-      {{#if damageControls.disabled}}disabled{{/if}}>
-      Anuluj obrażenia
-    </button>
-
-    <div class="crp-damage-status">
-      {{damageControls.status}}
-    </div>
-  </div>
-
+  {{/if}}
+</div>
