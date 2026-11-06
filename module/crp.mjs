@@ -126,6 +126,11 @@ Hooks.once("init", () => {
 };
   game.system.socketHandler = new CRPSocketHandler();
   registerHandlebarsHelpers();
+    const templates = [
+    "systems/crp/templates/chat/skill-roll.hbs",,
+  ];
+
+  foundry.applications.handlebars.loadTemplates(templates);
 });
 Hooks.once("ready", async () => {
   const currentLang = game.settings.get("core", "language");

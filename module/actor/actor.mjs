@@ -116,7 +116,7 @@ export class CRPActor extends Actor {
   //   system.derived.woundState = woundState;
   // }
 
-  async rollSkill({attrKey, skillKey, reRoll, allowFate, agonia, chat=true}) {
+  async rollSkill({attrKey, skillKey, reRoll, allowFate, agonia, chat=true, useManeuver=false}) {
     const actor = this;
     const modyfiers = await this.getModifiers(skillKey, attrKey)
     const useFate = this.system.resources.fate.value > 0 && allowFate;
@@ -131,10 +131,70 @@ export class CRPActor extends Actor {
         rollLabel: rollLabel,
         reRoll : reRoll,
         chat: chat,
-        agonia:agonia
+        agonia:agonia,
+        useManeuver: useManeuver,
       }
       );
     }
+  }
+  async opositeTest({attacker={},atackerRoll= {},defender={}, atackRoll = false,messageId = ""}){
+    if(!atackRoll){
+    const attrKey = attacker.attackerAttrKey;
+    const skillKey = attacker.attackerSkillKey;
+    const modyfiers = await this.getModifiers(skillKey, attrKey)
+    const useFate = this.system.resources.fate.value > 0 && attacker.allowFate;
+        if(!modyfiers){
+      return
+    }else{
+    const reRoll = attacker.reRoll;
+    const rollLabel = await this._prepareRollLabel(attrKey, skillKey,reRoll);
+    const attackerRollData = {
+      actor: this, 
+      modyfiers: modyfiers,
+      reRoll : reRoll,
+      allowFate: useFate,
+      rollLabel: rollLabel,      
+      chat: attacker.chat,
+      agonia: attacker.agonia,
+      useManeuver: attacker.useManeuver,
+    }
+    await CRPRoll.opositeTest({
+      attacker: attackerRollData,
+      defender: defender
+    })
+   }
+  }else{
+    const skillKey = defender.defenderSkill;
+    const attrKey = this.getAttributeKey(skillKey)
+    const modyfiers = await this.getModifiers(skillKey, attrKey)
+    const useFate = this.system.resources.fate.value > 0 && attacker.allowFate;
+        if(!modyfiers){
+      return
+    }else{
+    const reRoll = defender.reRoll;
+    const rollLabel = await this._prepareRollLabel(attrKey, skillKey,reRoll);
+    const defenderRollData = {
+      actor: this, 
+      modyfiers: modyfiers,
+      reRoll : reRoll,
+      allowFate: useFate,
+      rollLabel: rollLabel,      
+      chat: defender.chat,
+      agonia: defender.agonia,
+      useManeuver: defender.useManeuver,
+    }
+    await CRPRoll.opositeTest({
+      attacker: attacker,
+      defender: defenderRollData,
+      atackerRoll: atackerRoll,
+      atackRoll: atackRoll,
+      messageId: messageId
+
+    })
+    }
+  
+  
+  }
   }
   async _prepareRollLabel(attrKey,skillKey){
     const attrName = CONFIG.CRP.attributes[attrKey];

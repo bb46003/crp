@@ -1276,8 +1276,14 @@ input:focus {
   align-items: center;
   gap: 4px;
   font-size: 0.65em;
-}
+      text-wrap-mode: wrap;
 
+    text-align: center;
+}
+.crp-initiative-total{
+  text-align: center;
+      min-width: 100%;
+}
 .crp-protection-value {
   flex-direction: column;
   gap: 2px;
@@ -2180,6 +2186,7 @@ nav.crp-tabs {
         width: 20px;
       }
     }
+ 
   }
   .crp-damage-reduction-details {
     margin-left: 5px;
@@ -2201,6 +2208,9 @@ nav.crp-tabs {
         display: flex;
     align-items: center;
   }
+     .crp-eagel{
+      display: flex;
+    }
 }
 
 .control[data-tool="crpTools"] {
@@ -2212,4 +2222,9 @@ nav.crp-tabs {
 
 .control[data-tool="crpTools"] i {
   display: none;
+}
+.crp-statusy{
+  img{
+    width: 30px;
+  }
 }

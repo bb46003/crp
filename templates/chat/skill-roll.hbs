@@ -29,9 +29,11 @@
   
 
 {{#if showSymbols}}
-  <div class="crp-roll-symbols">
+  <div class="crp-roll-symbols flexrow">
     {{#if (ne eagles 0)}}
-    <label>Ilość</label>
+    <div class="crp-eagel">
+
+     <label>Ilość</label>
       <span class="crp-dice-icon crp-dice-eagle">
         <img
           src="systems/crp/assets/orzel-kostka.webp"
@@ -40,10 +42,12 @@
         >
       </span>
       
-        <label>:{{eagles}}</label><br>
+        <label>:{{eagles}}</label>
+          </div> 
     {{/if}}
 
     {{#if (ne shields 0)}}
+      <div class="crp-eagel">
     <label>Ilość</label>
       <span class="crp-dice-icon crp-dice-shield">
                 <img
@@ -53,6 +57,7 @@
         >      
       </span>
         <label>:{{shields}}<label>
+          </div>
     {{/if}}
   </div>
 {{/if}}
