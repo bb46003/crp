@@ -508,10 +508,29 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
     }
   }
   static async #atack(ev) {
+    const targets = [...game.user.targets];
+     if (targets.length > 1 ) {
+    ui.notifications.info("Wybierz tylko jeden cel");
+    return;
+  }
+
+  if (targets.length === 0 ) {
+    ui.notifications.info("Wybierz cel");
+    return;
+  }
     const target = ev.target;
     const element = target.closest(".crp-item-row");
     const itemId = element?.dataset?.id ?? "";
-    await this.actor.getSkillModifier(itemId, "Test Ataku");
+    let usedWeapon = this.actor.items.get(itemId);
+    let weaponSkill 
+    if(usedWeapon){
+      weaponSkill = usedWeapon.system.skill
+    }else{
+      weaponSkill = "brawl"
+      usedWeapon = "Atak Bez Broni"
+    }
+    const targetActor = targets[0].actor;
+    this.actor.atackTest({skillKey:weaponSkill, usedWeapon: usedWeapon, target:targetActor.id})
   }
   static async #lockSheet(ev) {
     const locked = this.actor.getFlag("crp", "npcSheetLocked");
@@ -564,7 +583,7 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
       const slotType = toElement?.dataset?.slot || parent?.dataset?.slot;
       if (
         itemDoc.type == slotType ||
-        (slotType?.includes("Hand") && itemDoc.type === "weapon")
+        (slotType?.includes("Hand") && (itemDoc.type === "weapon" || itemDoc.type === "shield"))
       ) {
         if(!itemDoc.uuid.includes("Actor")) {
           itemDoc = await this.actor.createEmbeddedDocuments("Item", [itemDoc]);

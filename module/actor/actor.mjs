@@ -138,7 +138,7 @@ export class CRPActor extends Actor {
     }
   }
   async opositeTest({attacker={},atackerRoll= {},defender={}, atackRoll = false,messageId = ""}){
-    if(!atackRoll){
+    if(Object.keys(atackerRoll).length === 0){
     const attrKey = attacker.attackerAttrKey;
     const skillKey = attacker.attackerSkillKey;
     const modyfiers = await this.getModifiers(skillKey, attrKey)
@@ -195,6 +195,75 @@ export class CRPActor extends Actor {
   
   
   }
+  }
+  async atackTest({skillKey, usedWeapon, target}){
+    const actor = this;
+    const attrKey = this.getAttributeKey(skillKey)
+    const modyfiers = await this.getModifiers(skillKey, attrKey)
+    const useFate = this.system.resources.fate.value > 0 && (this.type === "character" && this.type === "npc-rycerz")
+    const maneoverMod = this.flags?.crp?.maneuver.offenceModifier;
+    let weaopnMod = -3;
+    const defenderActor = await game.actors.get(target);
+    const defenderMounted = defenderActor.system.equipment.mounted;
+    const attackerMounted = this.system.equipment.mounted && this.system.attributes.character.animals.value > 0;
+    const mountAttackMod = attackerMounted && !defenderMounted ? 2 : 0;    
+    let weaponName = usedWeapon;
+    if (typeof usedWeapon !== "string"){
+      weaponName = usedWeapon.name
+      switch(skillKey){
+        case "twoHanded" :{
+          weaopnMod = 3
+          break
+        }
+        case "lightWeapons":{
+          weaopnMod = -1
+          break
+        }
+        case "oneHanded":{
+          weaopnMod = 1
+          break
+        }
+        case "ranged":{
+          weaopnMod = 2
+          break
+        }
+      }
+    }
+      if(!modyfiers){
+        return
+      }
+      Object.assign(modyfiers,{
+        weaopnMod: weaopnMod,
+        maneoverMod: maneoverMod,
+        mountedMod: mountAttackMod
+      })
+      modyfiers.target = modyfiers.total + weaopnMod + maneoverMod + mountAttackMod;
+      modyfiers.totalMod = modyfiers.totalMod + weaopnMod + maneoverMod + mountAttackMod;
+      const rollLabel = await this._prepareRollLabel(attrKey, skillKey,false) + "Atak z wykorzystaniem " + weaponName;
+      const attackRoll ={
+        actor: actor, 
+        modyfiers: modyfiers,
+        allowFate: useFate,
+        rollLabel: rollLabel,
+        reRoll : false,
+        chat: true,
+        agonia: false,
+        useManeuver: false,
+      }
+      
+      const defenceOption = await this.defenceOption(defenderActor, skillKey)
+      const defender = {
+        defenderName: defenderActor.name,
+        defenderSkillKey: defenceOption,
+        defenderId: defenderActor.id
+      }
+      await CRPRoll.opositeTest({
+        attacker: attackRoll,
+        defender: defender,
+      })
+      
+
+ 
   }
   async _prepareRollLabel(attrKey,skillKey){
     const attrName = CONFIG.CRP.attributes[attrKey];
@@ -399,6 +468,26 @@ export class CRPActor extends Actor {
     if(data.system?.derived?.health?.value !== undefined){
       await this.applyWoundsState();
     }
+  }
+  async defenceOption(defenderActor, skillKey){
+    if(skillKey === "range"){
+      return ["athletics"]
+    }
+    const defenderLeftHand = defenderActor.system.equipment.leftHand;
+    const defenderRightHand = defenderActor.system.equipment.rightHand;
+    const leftHandItem = await defenderActor.items.get(defenderLeftHand.id)
+    const rightHandItem = await defenderActor.items.get(defenderRightHand.id)
+    const defendeOption = ["athletics"];
+    if(rightHandItem?.type === "weapon" && rightHandItem?.system?.skill !== "range"){
+      defendeOption.push(rightHandItem.system.skill)
+    }
+    if(leftHandItem?.type === "weapon" && leftHandItem?.system?.skill !== "range" && rightHandItem !== leftHandItem){
+      defendeOption.push(leftHandItem.system.skill)
+    }
+    if(leftHandItem?.type === "shield" || rightHandItem?.type === "shield"){
+      defendeOption.push("shield")
+    }
+    return defendeOption
   }
   async atackRoll(itemId) {
     const item = this.items.get(itemId) ?? null;

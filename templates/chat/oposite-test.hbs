@@ -1,4 +1,3 @@
-{{log this}}
 <div class="crp-oposite-roll">
   <div class="crp-attaker">
    {{> "systems/crp/templates/chat/skill-roll.hbs" this.atackerRoll}}
@@ -19,7 +18,6 @@
   </div>
   {{/if}}
   {{#if results}}
-  {{log results}}
   <div class="crp-results">
     {{#if (eq results "A")}}
       <label>Wygtywa {{attacker.actor.name}}</label>
