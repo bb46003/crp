@@ -7,6 +7,18 @@ function isNPCActor(actor) {
 }
 
 export class CRPRoll {
+  static async showDiceSoNice(roll) {
+  const diceSoNiceActive = game.modules.get("dice-so-nice")?.active;
+  const showForRoll = game.dice3d?.showForRoll;
+
+  if (!diceSoNiceActive || typeof showForRoll !== "function") return;
+
+  try {
+    await showForRoll.call(game.dice3d, roll, game.user, true);
+  } catch (error) {
+    console.warn("CRP | Nie udało się wyświetlić rzutu w Dice So Nice.", error);
+  }
+}
   static resolveCritical(dice, total) {
     const isDouble = dice.length === 2 && dice[0] === dice[1];
 
@@ -48,6 +60,7 @@ static resolveOutcome(dice, total, target) {
 
     // rzut 2k10
     const roll = await new Roll("2d10").roll();
+    await this.showDiceSoNice(roll)
     const dice = roll.dice?.[0]?.results?.map((r) => r.result) ?? [];
     const total = roll.total;
 
@@ -159,6 +172,7 @@ static agoniaResult(actor, success, critical) {
       0;
 
     const roll = await new Roll("1d6").roll();
+    await this.showDiceSoNice(roll)
     const dice = roll.dice?.[0]?.results?.map((r) => r.result) ?? [];
     const total = roll.total;
 
@@ -244,23 +258,26 @@ static agoniaResult(actor, success, critical) {
           },
         },
       });
-    chat.regenerateOpositeRoll()
+    await chat.regenerateOpositeRoll()
   }else if(Object.keys(defenderRoll).length === 0){
     const defenderRoll1 = await this.skill(defender);
+    defenderRoll1.resultsText = ""
    const message = game.messages.get(messageId);
-    const opositeTestResult = this.opositeTestResult(atackerRoll,defenderRoll)
-    message.update({
+    const opositeTestResult = this.opositeTestResult(atackerRoll,defenderRoll1)
+   await message.update({
            ["system.crp.defenderRoll"] : defenderRoll1,
-           ["system.crp.result"]: opositeTestResult
+           ["system.crp.results"]: opositeTestResult
       });
-    message.regenerateOpositeRoll()
+    await message.regenerateOpositeRoll()
   }else{
     const opositeTestResult = this.opositeTestResult(atackerRoll,defenderRoll)
     const message = game.messages.get(messageId);
-    message.update({
-           ["system.crp.result"]: opositeTestResult
+    await message.update({
+          ["system.crp.defenderRoll"] : defenderRoll,
+          ["system.crp.atackerRoll"] : atackerRoll,
+           ["system.crp.results"]: opositeTestResult
       });
-    message.regenerateOpositeRoll()
+    await message.regenerateOpositeRoll()
   }
   }
   static opositeTestResult(atackerRoll,defenderRoll){

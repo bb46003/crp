@@ -47,6 +47,7 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
       removeArmor: CRPActorSheet.#removeArmor,
       atack: CRPActorSheet.#atack,
       lockSheet: CRPActorSheet.#lockSheet,
+      rollDeath: CRPActorSheet.#rollDeath
     },
     form: {
       submitOnChange: true,
@@ -519,6 +520,31 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
     this.setY(target);
     this.render({ force: true });
   }
+  static async #rollDeath(){
+    const actor = this.actor;
+    const state = actor.system.state;
+    const result = await actor.rollSkill({      
+      attrKey: "strength",
+      skillKey: "endurance",
+      reRoll: false,
+      allowFate: false,
+      agonia:true})
+      if (!result) return;
+
+  if (!result.success) {
+    if (state.agony) {
+      await actor.update({ "system.state.life": "dead" });
+      await actor.toggleStatusEffect("dead", { active: true });
+    } else if (state.unconscious) {
+      await actor.update({ "system.state.agony": true });
+      await actor.toggleStatusEffect("agonia", { active: true });
+    } else if (state.bleeding) {
+      await actor.update({ "system.state.unconscious": true });
+      await actor.toggleStatusEffect("unconscious", { active: true });
+    }
+    this.render(true)
+  }
+}
   async _onDrop(event) {
     const data = event.dataTransfer;
     const toElement = event.toElement;

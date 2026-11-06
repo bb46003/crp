@@ -12,19 +12,20 @@
   </div>
    {{else}}
   <div class="crp-oponent-test">
-    <label>Oponent {{defender.name}} może wykonać test:</label>
+    <label>Oponent {{defender.defenderName}} może wykonać test:</label>
     {{#each defender.defenderSkillKey as |skill|}}
       <button class="crp-button" data-action="opositeTest" data-skill="{{skill}}">Test Przeciwstawny na {{localize (concat "CRP.skills." skill)}}</button>
     {{/each}}
   </div>
   {{/if}}
-  {{#if result}}
+  {{#if results}}
+  {{log results}}
   <div class="crp-results">
     {{#if (eq results "A")}}
-      <label>Wygtywa {{atacker.atackerRoll.name}}</label>
+      <label>Wygtywa {{attacker.actor.name}}</label>
     {{else}}
       {{#if (eq results "B")}}
-      <label>Wygtywa {{atacker.defender.name}}</label>
+      <label>Wygtywa {{defender.defenderName}}</label>
       {{else}}
       <label>Ramis!</label>
       {{/if}}

@@ -57,8 +57,12 @@
   </div>
   <div class="crp-stat">
     <label>Inicjatywa</label>
-    <div class="crp-stat-value crp-initiative-value">
-      <span>{{system.derived.initiative}}</span>
+    <div class="crp-stat-value crp-initiative-value flexrow">
+      <div>
+      <span class="crp-initiative-mod">
+        {{system.derived.initiative}}
+          <i class="fa-solid fa-person-limbs-wide" title="Modyfikator z atrybutów"></i>      
+          </span>
       <span class="crp-initiative-mod">
         {{initiative.weaponModifierText}}
         <i class="fa-solid fa-sword" title="Modyfikator z broni"></i>
@@ -67,8 +71,13 @@
         {{initiative.armorModifierText}}
         <i class="fa-solid fa-shirt" title="Modyfikator z pancerza"></i>
       </span>
+      </div>
+      <div class="flexrow">
+        <span class="crp-initiative-mod">Modyfikator Inicjatywy</span>
+        <span class="crp-initiative-total">{{system.derived.initiativeTotal}}</span>
+      </div>
     </div>
-    <a class="crp-roll-initiative" data-action="rollInitiative">Rzuć</a>
+    <button class="crp-roll-initiative" data-action="rollInitiative">Rzuć</button>
   </div>
   <div class="crp-stat">
     <label>Karta</label>

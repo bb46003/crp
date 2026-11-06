@@ -164,7 +164,7 @@ export class CRPActor extends Actor {
     })
    }
   }else{
-    const skillKey = defender.attackerSkillKey;
+    const skillKey = defender.defenderSkill;
     const attrKey = this.getAttributeKey(skillKey)
     const modyfiers = await this.getModifiers(skillKey, attrKey)
     const useFate = this.system.resources.fate.value > 0 && attacker.allowFate;
