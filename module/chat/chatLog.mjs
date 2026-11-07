@@ -269,7 +269,8 @@ static async #opositeTest(event,target){
     atackerRoll: data.atackerRoll,
     defender: data.defender,
     atackRoll: true,
-    messageId: messageId
+    messageId: messageId,
+    attack: data.attack
   })
 }
 }

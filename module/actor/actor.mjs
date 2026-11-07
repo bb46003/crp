@@ -137,7 +137,7 @@ export class CRPActor extends Actor {
       );
     }
   }
-  async opositeTest({attacker={},atackerRoll= {},defender={}, atackRoll = false,messageId = ""}){
+  async opositeTest({attacker={},atackerRoll= {},defender={}, atackRoll = false,messageId = "", attack = false}){
     if(Object.keys(atackerRoll).length === 0){
     const attrKey = attacker.attackerAttrKey;
     const skillKey = attacker.attackerSkillKey;
@@ -167,6 +167,20 @@ export class CRPActor extends Actor {
     const skillKey = defender.defenderSkill;
     const attrKey = this.getAttributeKey(skillKey)
     const modyfiers = await this.getModifiers(skillKey, attrKey)
+    if(attack){
+      const defenseModifier = this?.flags?.crp.maneuver?.defenseModifier ?? 0;
+      if(defenseModifier !== 0){
+        Object.assign(modyfiers,{defenseModifier: defenseModifier})
+        modyfiers.totalMod = modyfiers.totalMod + defenseModifier
+        modyfiers.target = modyfiers.target + defenseModifier;
+      }
+      const oponentModifier = this?.flags?.crp.maneuver?.oponentModifier ?? 0;
+      if(oponentModifier !== 0){
+        Object.assign(modyfiers,{oponentModifier: oponentModifier})
+        modyfiers.totalMod = modyfiers.totalMod + oponentModifier
+        modyfiers.target = modyfiers.target + oponentModifier;
+      }
+    }
     const useFate = this.system.resources.fate.value > 0 && attacker.allowFate;
         if(!modyfiers){
       return
@@ -203,10 +217,11 @@ export class CRPActor extends Actor {
     const useFate = this.system.resources.fate.value > 0 && (this.type === "character" && this.type === "npc-rycerz")
     const maneoverMod = this.flags?.crp?.maneuver.offenceModifier;
     let weaopnMod = -3;
+    
     const defenderActor = await game.actors.get(target);
-    const defenderMounted = defenderActor.system.equipment.mounted;
+    const defenderMounted = defenderActor?.system?.equipment?.mounted ?? false;
     const attackerMounted = this.system.equipment.mounted && this.system.attributes.character.animals.value > 0;
-    const mountAttackMod = attackerMounted && !defenderMounted ? 2 : 0;    
+    const mountAttackMod = attackerMounted && !defenderMounted ? 2 : 0;  
     let weaponName = usedWeapon;
     if (typeof usedWeapon !== "string"){
       weaponName = usedWeapon.name
@@ -237,7 +252,7 @@ export class CRPActor extends Actor {
         maneoverMod: maneoverMod,
         mountedMod: mountAttackMod
       })
-      modyfiers.target = modyfiers.total + weaopnMod + maneoverMod + mountAttackMod;
+      modyfiers.target = modyfiers.target + weaopnMod + maneoverMod + mountAttackMod;
       modyfiers.totalMod = modyfiers.totalMod + weaopnMod + maneoverMod + mountAttackMod;
       const rollLabel = await this._prepareRollLabel(attrKey, skillKey,false) + "Atak z wykorzystaniem " + weaponName;
       const attackRoll ={
@@ -246,21 +261,35 @@ export class CRPActor extends Actor {
         allowFate: useFate,
         rollLabel: rollLabel,
         reRoll : false,
-        chat: true,
+        chat: false,
         agonia: false,
-        useManeuver: false,
+        useManeuver: true,
+        attack: true,
       }
-      
+      if(target === ""){
+        attackRoll.chat = true;
+        attackRoll.attack = false
+        await CRPRoll.skill(attackRoll)
+        return
+      }
+      else{
       const defenceOption = await this.defenceOption(defenderActor, skillKey)
       const defender = {
         defenderName: defenderActor.name,
         defenderSkillKey: defenceOption,
-        defenderId: defenderActor.id
+        defenderId: defenderActor.id,
+        reRoll : false,
+        chat: false,
+        agonia: false,
+        useManeuver: true,
+        attack: true,
       }
       await CRPRoll.opositeTest({
         attacker: attackRoll,
         defender: defender,
+        attack: true,
       })
+    }
       
 
  
@@ -471,21 +500,21 @@ export class CRPActor extends Actor {
   }
   async defenceOption(defenderActor, skillKey){
     if(skillKey === "range"){
-      return ["athletics"]
+      return [{skill:"athletics", label:"CRP.defence.evade"}]
     }
     const defenderLeftHand = defenderActor.system.equipment.leftHand;
     const defenderRightHand = defenderActor.system.equipment.rightHand;
     const leftHandItem = await defenderActor.items.get(defenderLeftHand.id)
     const rightHandItem = await defenderActor.items.get(defenderRightHand.id)
-    const defendeOption = ["athletics"];
+    const defendeOption = [{skill:"athletics", label:"CRP.defence.evade"}];
     if(rightHandItem?.type === "weapon" && rightHandItem?.system?.skill !== "range"){
-      defendeOption.push(rightHandItem.system.skill)
+      defendeOption.push({skill:rightHandItem.system.skill, label:"CRP.defence.pary"})
     }
     if(leftHandItem?.type === "weapon" && leftHandItem?.system?.skill !== "range" && rightHandItem !== leftHandItem){
-      defendeOption.push(leftHandItem.system.skill)
+      defendeOption.push({skill:leftHandItem.system.skill, label:"CRP.defence.pary"})
     }
     if(leftHandItem?.type === "shield" || rightHandItem?.type === "shield"){
-      defendeOption.push("shield")
+      defendeOption.push({skill:"shield", label:"CRP.defence.shield"})
     }
     return defendeOption
   }

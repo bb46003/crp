@@ -53,7 +53,8 @@ static resolveOutcome(dice, total, target) {
       rollLabel = "",
       chat = true,
       agonia = false,
-      useManeuver = false}
+      useManeuver = false,
+      attack = false}
   ) {
 
     const target = Math.max(2, modyfiers.target );
@@ -79,6 +80,14 @@ static resolveOutcome(dice, total, target) {
     let maneuver = undefined;
     if(useManeuver){
       maneuver = actor.flags?.crp?.maneuver;
+      if(attack){
+        const offenceModifier = maneuver.offenceModifier;
+        const defenseModifier = maneuver.defenseModifier;
+        const additionaTestAfterHit = maneuver.additionaTestAfterHit
+        if (offenceModifier === 0 && defenseModifier === 0 && additionaTestAfterHit.length === 0){
+          maneuver = ""
+        }        
+      }
     }
     // wynik
     const result = {
@@ -243,7 +252,7 @@ static agoniaResult(actor, success, critical) {
     return result;
   }
 
-  static async opositeTest({attacker={}, atackerRoll={},defender={},defenderRoll={},messageId=""}){
+  static async opositeTest({attacker={}, atackerRoll={},defender={},defenderRoll={},messageId="", attack = false}){
     if(Object.keys(atackerRoll).length === 0){
     const atackerRoll = await this.skill(attacker);
     atackerRoll.resultsText = ""
@@ -254,7 +263,8 @@ static agoniaResult(actor, success, critical) {
           crp: {
             attacker: attacker,
             atackerRoll: atackerRoll,
-            defender: defender
+            defender: defender,
+            attack:  attack, 
           },
         },
       });

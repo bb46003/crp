@@ -508,6 +508,52 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
     }
   }
   static async #atack(ev) {
+    const target = ev.target;
+    const element = target.closest(".crp-item-row");
+    const itemId = element?.dataset?.id ?? "";
+    let usedWeapon = this.actor.items.get(itemId);
+    let weaponSkill 
+    let weaponName = ""
+    if(usedWeapon.type === "shield" ){
+      ui.notifications.info("Nie możesz atakować Tarczą");
+      return;
+    }else if(usedWeapon){
+      weaponSkill = usedWeapon.system.skill
+      weaponName = usedWeapon.name
+    }else{
+      weaponSkill = "brawl"
+      usedWeapon = "Atak Bez Broni";
+      weaponName = usedWeapon;
+    }
+  const content = await foundry.applications.handlebars.renderTemplate(
+    "systems/crp/templates/dialogs/atak-test.hbs",
+    {weaponName: weaponName}
+  );
+  const testType = await foundry.applications.api.DialogV2.wait({
+    window: { title: "Test umiejętności" },
+    classes:["crp-dialog"],
+    content,
+    buttons: [
+      {
+        action: "attack",
+        label: "Zaatakuj",
+        default: true,
+        callback: (_event, _button, dialog) => {
+          return "atack"
+        }
+      },
+      {
+        action: "test",
+        label: "Test Broni",
+        default: true,
+        callback: (_event, _button, dialog) => {
+          return "skill"
+        }
+      }
+    ]
+  })
+
+  if(testType === "atack"){
     const targets = [...game.user.targets];
      if (targets.length > 1 ) {
     ui.notifications.info("Wybierz tylko jeden cel");
@@ -518,20 +564,12 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
     ui.notifications.info("Wybierz cel");
     return;
   }
-    const target = ev.target;
-    const element = target.closest(".crp-item-row");
-    const itemId = element?.dataset?.id ?? "";
-    let usedWeapon = this.actor.items.get(itemId);
-    let weaponSkill 
-    if(usedWeapon){
-      weaponSkill = usedWeapon.system.skill
-    }else{
-      weaponSkill = "brawl"
-      usedWeapon = "Atak Bez Broni"
-    }
     const targetActor = targets[0].actor;
     this.actor.atackTest({skillKey:weaponSkill, usedWeapon: usedWeapon, target:targetActor.id})
+  }else if(testType === "skill"){
+   this.actor.atackTest({skillKey:weaponSkill, usedWeapon: usedWeapon, target:""})
   }
+}
   static async #lockSheet(ev) {
     const locked = this.actor.getFlag("crp", "npcSheetLocked");
     await this.actor.setFlag("crp", "npcSheetLocked", !locked);

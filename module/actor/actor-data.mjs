@@ -373,18 +373,19 @@ export class CRPActorData extends TypeDataModel {
       }
     if(leftHand){
       const leftHandItem = this.parent.items.get(leftHand);
-      const lefHandSkill = leftHandItem.system.skill;
-
-      leftHandMod = skillMod[lefHandSkill]
-
+      const lefHandSkill = leftHandItem.system?.skill ?? 0;
+      if(lefHandSkill){
+        leftHandMod = skillMod[lefHandSkill]
+      }
     }
     const rightHand = this.equipment.rightHand.id;
       let rightHandMod = 4;
           if(rightHand){
       const rightHandHandItem = this.parent.items.get(rightHand);
-      const rightHandHandSkill = rightHandHandItem.system.skill;
-
-      rightHandMod = skillMod[rightHandHandSkill]
+      const rightHandHandSkill = rightHandHandItem?.skill;
+      if(rightHandHandSkill){
+        rightHandMod = skillMod[rightHandHandSkill]
+      }
 
     }
     this.derived.initiativeWeaponModifier = Math.min(leftHandMod,rightHandMod)

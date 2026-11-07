@@ -109,6 +109,11 @@
   "medicine": "Leczenie",
   "politics": "Polityka",
   "knowledge": "Wiedza"
+    },
+    "defence":{
+      "evade": "Unik",
+      "pary": "Parowanie",
+      "shield": "Zasłona Tarczą"
     }
   },
   "TYPES": {

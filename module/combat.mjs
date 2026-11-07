@@ -147,7 +147,7 @@ async handleConditions(combatant) {
       });
     } else {
       const selectedManeuver = await actor.getManeuver();
-      if(selectedManeuver.confirmed){
+      if(selectedManeuver?.confirmed){
         await actor.setFlag("crp", "maneuver", selectedManeuver.maneuver);
         await actor.spendManeuverPoints(selectedManeuver.maneuverCost)
         Object.assign(selectedManeuver.maneuver,{actor: actor, madeTest: false})
