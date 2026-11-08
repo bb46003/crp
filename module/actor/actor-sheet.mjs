@@ -809,7 +809,7 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
     }
 
     await this.actor.update(updateData);
-    this.setY()
+    this.setY();
     this.render({ force: true });
     if (itemDoc.system.language && !remove) {
       const languageItem = await fromUuid(itemDoc.system.language);
@@ -818,35 +818,34 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
       ]);
       await nativeLanguage[0].update({ ["system.role"]: "native" });
       nativeLanguage[0].setFlag("crp", "origin", itemDoc.uuid);
-
     }
-          if (remove) {
-        const originUuid = itemDoc.uuid;
+    if (remove) {
+      const originUuid = itemDoc.uuid;
 
-        const originItem = this.actor.items.find(
-          (item) => item.getFlag("crp", "origin") === originUuid,
-        );
+      const originItem = this.actor.items.find(
+        (item) => item.getFlag("crp", "origin") === originUuid,
+      );
 
-        if (originItem) {
-          await originItem.delete();
-        }
+      if (originItem) {
+        await originItem.delete();
       }
+    }
   }
-  static async #sendToChat(){
+  static async #sendToChat() {
     const crest = this.actor.system.bio.crest;
     const crestDescription = this.actor.system.bio.crestDescription;
-    if(crest !== "" || crestDescription !== ""){
+    if (crest !== "" || crestDescription !== "") {
       const content = await foundry.applications.handlebars.renderTemplate(
-      "systems/crp/templates/chat/crest.hbs",
-      {
-        crest:crest,
-        crestDescription:crestDescription
-      })
+        "systems/crp/templates/chat/crest.hbs",
+        {
+          crest: crest,
+          crestDescription: crestDescription,
+        },
+      );
       await ChatMessage.create({
         speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-        content: content
-
-      })
+        content: content,
+      });
     }
   }
   get isEditable() {

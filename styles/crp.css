@@ -973,7 +973,7 @@ input:focus {
   }
 }
 .crp-dialog {
-    color: black;
+  color: black;
   border: 5px double rgba(75, 48, 20, 1);
   background: url("../assets/parchment.png");
   background-size: cover;
@@ -981,7 +981,7 @@ input:focus {
   header {
     background: rgba(75, 48, 20, 1);
   }
-  .attack-label{
+  .attack-label {
     margin: 10px;
     display: block;
   }
@@ -2267,15 +2267,15 @@ nav.crp-tabs {
     border-radius: 3px;
   }
 }
-.crp-chat{
-.crp-crest{
-  display: grid;
-  grid-template-columns: auto auto;
-  h4{
-    font-size: 1em;
+.crp-chat {
+  .crp-crest {
+    display: grid;
+    grid-template-columns: auto auto;
+    h4 {
+      font-size: 1em;
+    }
+    img {
+      width: 5em;
+    }
   }
-  img{
-    width: 5em;
-  }
-}
 }
