@@ -1,15 +1,35 @@
 // module/crp.mjs
 
 import { CRPActor } from "./actor/actor.mjs";
-import {  CRPActorData,  CRPNPCKnechtData,  CRPNPCRycerzData,} from "./actor/actor-data.mjs";
+import {
+  CRPActorData,
+  CRPNPCKnechtData,
+  CRPNPCRycerzData,
+} from "./actor/actor-data.mjs";
 import { CRP } from "./config.mjs";
 import { CRPActorSheet } from "./actor/actor-sheet.mjs";
 import { CRPNPCKnechtSheet } from "./actor/npc-knecht-sheet.mjs";
 import { CRPNPCRycerzSheet } from "./actor/npc-rycerz-sheet.mjs";
 import { CRPGMPanel } from "./gm-panel.mjs";
 import { CRPItem } from "./item/item.mjs";
-import {  CRPWeaponData,  CRPArmorData,  CRPShieldData,  CRPStuffData,  CRPLanguageData,  CRPOriginData,  CRPTraitData,} from "./item/item-data.mjs";
-import {  CRPWeaponSheet,  CRPArmorSheet,  CRPShieldSheet,  CRPStuffSheet,  CRPLanguageSheet,  CRPOriginSheet,  CRPTraitSheet,} from "./item/item-sheet.mjs";
+import {
+  CRPWeaponData,
+  CRPArmorData,
+  CRPShieldData,
+  CRPStuffData,
+  CRPLanguageData,
+  CRPOriginData,
+  CRPTraitData,
+} from "./item/item-data.mjs";
+import {
+  CRPWeaponSheet,
+  CRPArmorSheet,
+  CRPShieldSheet,
+  CRPStuffSheet,
+  CRPLanguageSheet,
+  CRPOriginSheet,
+  CRPTraitSheet,
+} from "./item/item-sheet.mjs";
 import { CRPCombat } from "./combat.mjs";
 import { registerHandlebarsHelpers } from "./handlebars.mjs";
 import { CRPToken } from "./tokens.mjs";
@@ -115,18 +135,18 @@ Hooks.once("init", () => {
   // ======================
   // OVERRIDE INITIATIVE ROLL
   // ======================
-  game.socket
+  game.socket;
   CONFIG.ChatMessage.documentClass = CRPChatMessage;
   CONFIG.ui.chat = CRPChatLog;
   CONFIG.statusEffects["agonia"] = {
-  id: "agonia",
-  name: "CRP.Status.Agonia",
-  img: "systems/crp/assets/agonia.png",
-  hud: true,
-};
+    id: "agonia",
+    name: "CRP.Status.Agonia",
+    img: "systems/crp/assets/agonia.png",
+    hud: true,
+  };
   game.system.socketHandler = new CRPSocketHandler();
   registerHandlebarsHelpers();
-    const templates = [
+  const templates = [
     "systems/crp/templates/chat/skill-roll.hbs",
     "systems/crp/templates/chat/damage.hbs",
   ];
@@ -202,8 +222,8 @@ function refreshCharacterSheetLocks(locked) {
   }
 
   for (const actor of game.actors) {
-    if(actor.sheet?.rendered){
-    actor.sheet?.render(true);
+    if (actor.sheet?.rendered) {
+      actor.sheet?.render(true);
+    }
   }
-}
 }

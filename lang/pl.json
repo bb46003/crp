@@ -79,38 +79,38 @@
       "native": "Ojczysty",
       "foreign": "Obcy"
     },
-    "skills":{
-        "athletics": "Atletyka",
-  "twoHanded": "Broń dwuręczna",
-  "endurance": "Tężyzna",
-  "brawl": "Walka bez broni",
-  "intimidate": "Zastraszanie",
+    "skills": {
+      "athletics": "Atletyka",
+      "twoHanded": "Broń dwuręczna",
+      "endurance": "Tężyzna",
+      "brawl": "Walka bez broni",
+      "intimidate": "Zastraszanie",
 
-  "oneHanded": "Broń jednoręczna",
-  "lightWeapons": "Broń lekka",
-  "craft": "Rzemiosło",
-  "shield": "Użycie tarczy",
-  "stealth": "Występek",
+      "oneHanded": "Broń jednoręczna",
+      "lightWeapons": "Broń lekka",
+      "craft": "Rzemiosło",
+      "shield": "Użycie tarczy",
+      "stealth": "Występek",
 
-  "empathy": "Empatia",
-  "disguise": "Konspiracja",
-  "survival": "Przetrwanie",
-  "awareness": "Spostrzegawczość",
-  "ranged": "Strzelectwo",
+      "empathy": "Empatia",
+      "disguise": "Konspiracja",
+      "survival": "Przetrwanie",
+      "awareness": "Spostrzegawczość",
+      "ranged": "Strzelectwo",
 
-  "charisma": "Charyzma",
-  "animals": "Doglądanie zwierząt",
-  "carousing": "Hulanka",
-  "gossip": "Plotkowanie",
-  "willpower": "Siła woli",
+      "charisma": "Charyzma",
+      "animals": "Doglądanie zwierząt",
+      "carousing": "Hulanka",
+      "gossip": "Plotkowanie",
+      "willpower": "Siła woli",
 
-  "literacy": "Czytanie i pisanie",
-  "languages": "Języki obce",
-  "medicine": "Leczenie",
-  "politics": "Polityka",
-  "knowledge": "Wiedza"
+      "literacy": "Czytanie i pisanie",
+      "languages": "Języki obce",
+      "medicine": "Leczenie",
+      "politics": "Polityka",
+      "knowledge": "Wiedza"
     },
-    "defence":{
+    "defence": {
       "evade": "Unik",
       "pary": "Parowanie",
       "shield": "Zasłona Tarczą"

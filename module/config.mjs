@@ -51,7 +51,6 @@ CRP.itemWeights = Object.freeze({
   W: "W",
 });
 
-
 CRP.maneuvers = Object.freeze({
   none: {
     name: "CRP.Maneuvers.none.name",
@@ -194,7 +193,9 @@ CRP.maneuvers = Object.freeze({
     oponentModifier: 0,
     ownTest: "none",
     description: "CRP.Maneuvers.shieldBash.description",
-    additionaTestAfterHit: [{skill: "athletics", label: "CRP.skills.athletics"}],
+    additionaTestAfterHit: [
+      { skill: "athletics", label: "CRP.skills.athletics" },
+    ],
   },
   extraDodge: {
     name: "CRP.Maneuvers.extraDodge.name",

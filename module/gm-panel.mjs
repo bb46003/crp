@@ -27,9 +27,11 @@ export class CRPGMPanel extends HandlebarsApplicationMixin(ApplicationV2) {
 
     html.querySelectorAll(".crp-actor-row").forEach((row) => {
       row.addEventListener("click", (ev) => {
+        if (ev.target.closest("input")) return;
+
         ev.preventDefault();
 
-        const checkbox = row.querySelector("input");
+        const checkbox = row.querySelector('input[type="checkbox"]');
         if (!checkbox) return;
 
         checkbox.checked = !checkbox.checked;

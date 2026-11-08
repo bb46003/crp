@@ -136,10 +136,10 @@
       <label>Atak nie zadał obrażeń</label>
     {{/if}}
     {{#if atackerRoll.maneuver.additionaTestAfterHit}}
-  <div class="crp-oponent-test">
+    <div class="crp-oponent-test">
     <label>Oponent {{defenderRoll.actor.name}} może wykonać test przeciw Manewrowi {{localize atackerRoll.maneuver.name}}</label>
     {{#each atackerRoll.maneuver.additionaTestAfterHit as |skill|}}
-      <button class="crp-button" data-action="skillTest" data-skill="{{skill.skill}}" >Test na {{localize skill.label}}</button>
+      <button class="crp-button" data-action="skillTest" {{#if skill.disable}}disabled{{/if}} data-skill="{{skill.skill}}" >Test na {{localize skill.label}}</button>
     {{/each}}
   </div>
     {{/if}}

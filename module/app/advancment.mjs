@@ -7,7 +7,7 @@ export class CRPAdvancementWindow extends HandlebarsApplicationMixin(
   static openWindows = new Map();
 
   static DEFAULT_OPTIONS = {
-    classes: ["crp", "advancement"],
+    classes: ["crp-advancement"],
     window: {
       title: "Rozwój postaci",
       resizable: true,

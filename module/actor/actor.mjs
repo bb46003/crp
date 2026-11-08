@@ -116,232 +116,266 @@ export class CRPActor extends Actor {
   //   system.derived.woundState = woundState;
   // }
 
-  async rollSkill({attrKey, skillKey, reRoll, allowFate, agonia, chat=true, useManeuver=false}) {
+  async rollSkill({
+    attrKey,
+    skillKey,
+    reRoll,
+    allowFate,
+    agonia,
+    chat = true,
+    useManeuver = false,
+  }) {
     const actor = this;
-    const modyfiers = await this.getModifiers(skillKey, attrKey)
+    const modyfiers = await this.getModifiers(skillKey, attrKey);
     const useFate = this.system.resources.fate.value > 0 && allowFate;
-    if(!modyfiers){
-      return
-    }else{
-      const rollLabel = await this._prepareRollLabel(attrKey, skillKey,reRoll);
+    if (!modyfiers) {
+      return;
+    } else {
+      const rollLabel = await this._prepareRollLabel(attrKey, skillKey, reRoll);
       return await CRPRoll.skill({
-        actor: actor, 
+        actor: actor,
         modyfiers: modyfiers,
         allowFate: useFate,
         rollLabel: rollLabel,
-        reRoll : reRoll,
+        reRoll: reRoll,
         chat: chat,
-        agonia:agonia,
+        agonia: agonia,
         useManeuver: useManeuver,
-      }
-      );
+      });
     }
   }
-  async opositeTest({attacker={},atackerRoll= {},defender={}, atackRoll = false,messageId = "", attack = false}){
-    if(Object.keys(atackerRoll).length === 0){
-    const attrKey = attacker.attackerAttrKey;
-    const skillKey = attacker.attackerSkillKey;
-    const modyfiers = await this.getModifiers(skillKey, attrKey)
-    const useFate = this.system.resources.fate.value > 0 && attacker.allowFate;
-        if(!modyfiers){
-      return
-    }else{
-    const reRoll = attacker.reRoll;
-    const rollLabel = await this._prepareRollLabel(attrKey, skillKey,reRoll);
-    const attackerRollData = {
-      actor: this.uuid,
-      actorName: this.name, 
-      modyfiers: modyfiers,
-      reRoll : reRoll,
-      allowFate: useFate,
-      rollLabel: rollLabel,      
-      chat: attacker.chat,
-      agonia: attacker.agonia,
-      useManeuver: attacker.useManeuver,
-    }
-    await CRPRoll.opositeTest({
-      attacker: attackerRollData,
-      defender: defender,
-      attack: attack
-    })
-   }
-  }else{
-    const skillKey = defender.defenderSkill;
-    const attrKey = this.getAttributeKey(skillKey)
-    const modyfiers = await this.getModifiers(skillKey, attrKey)
-    if(attack){
-      const defenseModifier = this?.flags?.crp?.maneuver?.defenseModifier ?? 0;
-      if(defenseModifier !== 0){
-        Object.assign(modyfiers,{defenseModifier: defenseModifier})
-        modyfiers.totalMod = modyfiers.totalMod + defenseModifier
-        modyfiers.target = modyfiers.target + defenseModifier;
+  async opositeTest({
+    attacker = {},
+    atackerRoll = {},
+    defender = {},
+    atackRoll = false,
+    messageId = "",
+    attack = false,
+  }) {
+    if (Object.keys(atackerRoll).length === 0) {
+      const attrKey = attacker.attackerAttrKey;
+      const skillKey = attacker.attackerSkillKey;
+      const modyfiers = await this.getModifiers(skillKey, attrKey);
+      const useFate =
+        this.system.resources.fate.value > 0 && attacker.allowFate;
+      if (!modyfiers) {
+        return;
+      } else {
+        const reRoll = attacker.reRoll;
+        const rollLabel = await this._prepareRollLabel(
+          attrKey,
+          skillKey,
+          reRoll,
+        );
+        const attackerRollData = {
+          actor: this.uuid,
+          actorName: this.name,
+          modyfiers: modyfiers,
+          reRoll: reRoll,
+          allowFate: useFate,
+          rollLabel: rollLabel,
+          chat: attacker.chat,
+          agonia: attacker.agonia,
+          useManeuver: attacker.useManeuver,
+        };
+        await CRPRoll.opositeTest({
+          attacker: attackerRollData,
+          defender: defender,
+          attack: attack,
+        });
       }
-      const oponentModifier = this?.flags?.crp?.maneuver?.oponentModifier ?? 0;
-      if(oponentModifier !== 0){
-        Object.assign(modyfiers,{oponentModifier: oponentModifier})
-        modyfiers.totalMod = modyfiers.totalMod + oponentModifier
-        modyfiers.target = modyfiers.target + oponentModifier;
+    } else {
+      const skillKey = defender.defenderSkill;
+      const attrKey = this.getAttributeKey(skillKey);
+      const modyfiers = await this.getModifiers(skillKey, attrKey);
+      if (attack) {
+        const defenseModifier =
+          this?.flags?.crp?.maneuver?.defenseModifier ?? 0;
+        if (defenseModifier !== 0) {
+          Object.assign(modyfiers, { defenseModifier: defenseModifier });
+          modyfiers.totalMod = modyfiers.totalMod + defenseModifier;
+          modyfiers.target = modyfiers.target + defenseModifier;
+        }
+        const oponentModifier =
+          this?.flags?.crp?.maneuver?.oponentModifier ?? 0;
+        if (oponentModifier !== 0) {
+          Object.assign(modyfiers, { oponentModifier: oponentModifier });
+          modyfiers.totalMod = modyfiers.totalMod + oponentModifier;
+          modyfiers.target = modyfiers.target + oponentModifier;
+        }
+      }
+      const useFate = this.system.resources.fate.value > 0;
+      if (!modyfiers) {
+        return;
+      } else {
+        const reRoll = defender.reRoll;
+        const rollLabel = await this._prepareRollLabel(
+          attrKey,
+          skillKey,
+          reRoll,
+        );
+        const defenderRollData = {
+          actor: this.uuid,
+          actorName: this.name,
+          modyfiers: modyfiers,
+          reRoll: reRoll,
+          allowFate: useFate,
+          rollLabel: rollLabel,
+          chat: defender.chat,
+          agonia: defender.agonia,
+          useManeuver: defender.useManeuver,
+          shield: defender.shield,
+        };
+        await CRPRoll.opositeTest({
+          attacker: attacker,
+          defender: defenderRollData,
+          atackerRoll: atackerRoll,
+          atackRoll: atackRoll,
+          messageId: messageId,
+          attack: attack,
+        });
       }
     }
-    const useFate = this.system.resources.fate.value > 0;
-        if(!modyfiers){
-      return
-    }else{
-    const reRoll = defender.reRoll;
-    const rollLabel = await this._prepareRollLabel(attrKey, skillKey,reRoll);
-    const defenderRollData = {
-      actor: this.uuid, 
-      actorName: this.name,
-      modyfiers: modyfiers,
-      reRoll : reRoll,
-      allowFate: useFate,
-      rollLabel: rollLabel,      
-      chat: defender.chat,
-      agonia: defender.agonia,
-      useManeuver: defender.useManeuver,
-      shield: defender.shield,
-    }
-    await CRPRoll.opositeTest({
-      attacker: attacker,
-      defender: defenderRollData,
-      atackerRoll: atackerRoll,
-      atackRoll: atackRoll,
-      messageId: messageId,
-      attack: attack
-
-    })
-    }
-  
-  
   }
-  }
-  async atackTest({skillKey, usedWeapon, target}){
+  async atackTest({ skillKey, usedWeapon, target }) {
     const actor = this;
-    const attrKey = this.getAttributeKey(skillKey)
-    const modyfiers = await this.getModifiers(skillKey, attrKey)
-    const useFate = this.system.resources.fate.value > 0 && (this.type === "character" || this.type === "npc-rycerz")
+    const attrKey = this.getAttributeKey(skillKey);
+    const modyfiers = await this.getModifiers(skillKey, attrKey);
+    const useFate =
+      this.system.resources.fate.value > 0 &&
+      (this.type === "character" || this.type === "npc-rycerz");
     const maneoverMod = this.flags?.crp?.maneuver.offenceModifier;
     let weaopnMod = -3;
-    
+
     const defenderActor = await fromUuid(target);
     const defenderMounted = defenderActor?.system?.equipment?.mounted ?? false;
-    const attackerMounted = this.system.equipment.mounted && this.system.attributes.character.animals.value > 0;
-    const mountAttackMod = attackerMounted && !defenderMounted ? 2 : 0;  
+    const attackerMounted =
+      this.system.equipment.mounted &&
+      this.system.attributes.character.animals.value > 0;
+    const mountAttackMod = attackerMounted && !defenderMounted ? 2 : 0;
     let weaponName = usedWeapon;
-    if (typeof usedWeapon !== "string"){
-      weaponName = usedWeapon.name
-      switch(skillKey){
-        case "twoHanded" :{
-          weaopnMod = 3
-          break
+    if (typeof usedWeapon !== "string") {
+      weaponName = usedWeapon.name;
+      switch (skillKey) {
+        case "twoHanded": {
+          weaopnMod = 3;
+          break;
         }
-        case "lightWeapons":{
-          weaopnMod = -1
-          break
+        case "lightWeapons": {
+          weaopnMod = -1;
+          break;
         }
-        case "oneHanded":{
-          weaopnMod = 1
-          break
+        case "oneHanded": {
+          weaopnMod = 1;
+          break;
         }
-        case "ranged":{
-          weaopnMod = 2
-          break
+        case "ranged": {
+          weaopnMod = 2;
+          break;
         }
       }
     }
-      if(!modyfiers){
-        return
-      }
-      Object.assign(modyfiers,{
-        weaopnMod: weaopnMod,
-        maneoverMod: maneoverMod,
-        mountedMod: mountAttackMod
-      })
-      modyfiers.target = modyfiers.target + weaopnMod + maneoverMod + mountAttackMod;
-      modyfiers.totalMod = modyfiers.totalMod + weaopnMod + maneoverMod + mountAttackMod;
-      const rollLabel = await this._prepareRollLabel(attrKey, skillKey,false) + "Atak z wykorzystaniem " + weaponName;
-      const attackRoll ={
-        actor: this.uuid,
-        actorName: this.name, 
-        modyfiers: modyfiers,
-        allowFate: useFate,
-        rollLabel: rollLabel,
-        reRoll : false,
-        chat: false,
-        agonia: false,
-        useManeuver: true,
-        attack: true,
-      }
-      if(target === ""){
-        attackRoll.chat = true;
-        attackRoll.attack = false
-        await CRPRoll.skill(attackRoll)
-        return
-      }
-      else{
-      const defenceOption = await this.defenceOption(defenderActor, skillKey)
+    if (!modyfiers) {
+      return;
+    }
+    Object.assign(modyfiers, {
+      weaopnMod: weaopnMod,
+      maneoverMod: maneoverMod,
+      mountedMod: mountAttackMod,
+    });
+    modyfiers.target =
+      modyfiers.target + weaopnMod + maneoverMod + mountAttackMod;
+    modyfiers.totalMod =
+      modyfiers.totalMod + weaopnMod + maneoverMod + mountAttackMod;
+    const rollLabel =
+      (await this._prepareRollLabel(attrKey, skillKey, false)) +
+      "Atak z wykorzystaniem " +
+      weaponName;
+    const attackRoll = {
+      actor: this.uuid,
+      actorName: this.name,
+      modyfiers: modyfiers,
+      allowFate: useFate,
+      rollLabel: rollLabel,
+      reRoll: false,
+      chat: false,
+      agonia: false,
+      useManeuver: true,
+      attack: true,
+    };
+    if (target === "") {
+      attackRoll.chat = true;
+      attackRoll.attack = false;
+      await CRPRoll.skill(attackRoll);
+      return;
+    } else {
+      const defenceOption = await this.defenceOption(defenderActor, skillKey);
       const defender = {
         defenderName: defenderActor.name,
         defenderSkillKey: defenceOption,
         defenderId: defenderActor.uuid,
-        reRoll : false,
+        reRoll: false,
         chat: false,
         agonia: false,
         useManeuver: true,
         attack: true,
-      }
+      };
       await CRPRoll.opositeTest({
         attacker: attackRoll,
         defender: defender,
         attack: true,
-      })
+      });
     }
-      
-
- 
   }
-  async _prepareRollLabel(attrKey,skillKey){
+  async _prepareRollLabel(attrKey, skillKey) {
     const attrName = CONFIG.CRP.attributes[attrKey];
     const skillName = CONFIG.CRP.skills[skillKey];
-    return "Test " + skillName + "("+attrName +")"
-    
+    return "Test " + skillName + "(" + attrName + ")";
   }
-  async getModifiers(skillKey, attrKey){
+  async getModifiers(skillKey, attrKey) {
     const armmorPenelty = -this.getArmorSkillPenalty(skillKey);
     const woundedPenetly = this.system.derived.woundPenalty;
-    const modificatorDialog = await this.getSkillModifier()
+    const modificatorDialog = await this.getSkillModifier();
     let skillValue;
     let attrValue;
-    if(this.type === "character"){
-      attrValue = this.system.attributes[attrKey].value
-      skillValue = this.system.attributes[attrKey].skills[skillKey].value
-    }else{
+    if (this.type === "character") {
+      attrValue = this.system.attributes[attrKey].value;
+      skillValue = this.system.attributes[attrKey].skills[skillKey].value;
+    } else {
       attrValue = this.system.npc.attributes;
       skillValue = 0;
     }
-    if(modificatorDialog.confirmed){
+    if (modificatorDialog.confirmed) {
       const customMod = modificatorDialog.modifier;
-      const target = attrValue + skillValue + armmorPenelty + woundedPenetly + customMod; 
-      const totalMod = armmorPenelty + woundedPenetly + customMod
+      const target =
+        attrValue + skillValue + armmorPenelty + woundedPenetly + customMod;
+      const totalMod = armmorPenelty + woundedPenetly + customMod;
 
-       return {attrValue, skillValue, armmorPenelty, woundedPenetly, customMod, target, totalMod}
-    }else{
-      return false
-    }   
+      return {
+        attrValue,
+        skillValue,
+        armmorPenelty,
+        woundedPenetly,
+        customMod,
+        target,
+        totalMod,
+      };
+    } else {
+      return false;
+    }
   }
   getArmorSkillPenalty(skillKey) {
     if (!ARMOR_PENALIZED_SKILLS.has(skillKey)) return 0;
     return Math.max(0, this.getEquippedArmor());
   }
-  getEquippedArmor(){
+  getEquippedArmor() {
     const equippedArmor = this.system.equipment.armor.id;
-    if(equippedArmor){
+    if (equippedArmor) {
       const armorItem = this.items.get(equippedArmor);
       return armorItem.system.protection;
-    }else{
-      return 0
+    } else {
+      return 0;
     }
-
   }
   async spendFate(amount = 1) {
     const current = this.system.resources.fate.value;
@@ -361,17 +395,19 @@ export class CRPActor extends Actor {
     const hp = this.system.derived.health.value;
 
     const update = {};
-    const actorType = ["character", "npc-rycerz"].includes(this.type) ? this.type : false;
+    const actorType = ["character", "npc-rycerz"].includes(this.type)
+      ? this.type
+      : false;
     if (hp <= 0 && !this.system.state.bleeding && actorType) {
       update["system.state.bleeding"] = true;
-      
-     await this.toggleStatusEffect("bleeding", { active: true });
-    }else if(hp <= 0 && !actorType){
+
+      await this.toggleStatusEffect("bleeding", { active: true });
+    } else if (hp <= 0 && !actorType) {
       update["system.state.life"] = "dead";
       await this.toggleStatusEffect("dead", { active: true, overlay: true });
     }
 
-    if (hp > 0 ) {
+    if (hp > 0) {
       update["system.state.bleeding"] = false;
       update["system.state.unconscious"] = false;
       update["system.state.life"] = "alive";
@@ -402,7 +438,7 @@ export class CRPActor extends Actor {
     await this.applyWoundsState();
   }
   async restoreHealth(amount) {
-        if (amount <= 0) return;
+    if (amount <= 0) return;
 
     const hp = this.system.derived.health.value;
     const max = this.system.derived.health.max;
@@ -500,159 +536,182 @@ export class CRPActor extends Actor {
         CRPAdvancementWindow.refreshForActor(actor);
       }
     }
-    if(data.system?.derived?.health?.value !== undefined){
+    if (data.system?.derived?.health?.value !== undefined) {
       await this.applyWoundsState();
     }
   }
-  async defenceOption(defenderActor, skillKey){
-    if(skillKey === "range"){
-      return [{skill:"athletics", label:"CRP.defence.evade"}]
+  async defenceOption(defenderActor, skillKey) {
+    if (skillKey === "range") {
+      return [{ skill: "athletics", label: "CRP.defence.evade" }];
     }
     const defenderLeftHand = defenderActor.system.equipment.leftHand;
     const defenderRightHand = defenderActor.system.equipment.rightHand;
-    const leftHandItem = await defenderActor.items.get(defenderLeftHand.id)
-    const rightHandItem = await defenderActor.items.get(defenderRightHand.id)
-    const defendeOption = [{skill:"athletics", label:"CRP.defence.evade"}];
-    if(rightHandItem?.type === "weapon" && rightHandItem?.system?.skill !== "range"){
-      defendeOption.push({skill:rightHandItem.system.skill, label:"CRP.defence.pary"})
+    const leftHandItem = await defenderActor.items.get(defenderLeftHand.id);
+    const rightHandItem = await defenderActor.items.get(defenderRightHand.id);
+    const defendeOption = [{ skill: "athletics", label: "CRP.defence.evade" }];
+    if (
+      rightHandItem?.type === "weapon" &&
+      rightHandItem?.system?.skill !== "range"
+    ) {
+      defendeOption.push({
+        skill: rightHandItem.system.skill,
+        label: "CRP.defence.pary",
+      });
     }
-    if(leftHandItem?.type === "weapon" && leftHandItem?.system?.skill !== "range" && rightHandItem !== leftHandItem){
-      defendeOption.push({skill:leftHandItem.system.skill, label:"CRP.defence.pary"})
+    if (
+      leftHandItem?.type === "weapon" &&
+      leftHandItem?.system?.skill !== "range" &&
+      rightHandItem !== leftHandItem
+    ) {
+      defendeOption.push({
+        skill: leftHandItem.system.skill,
+        label: "CRP.defence.pary",
+      });
     }
-    if(leftHandItem?.type === "shield" || rightHandItem?.type === "shield"){
-      defendeOption.push({skill:"shield", label:"CRP.defence.shield" , shield:true})
+    if (leftHandItem?.type === "shield" || rightHandItem?.type === "shield") {
+      defendeOption.push({
+        skill: "shield",
+        label: "CRP.defence.shield",
+        shield: true,
+      });
     }
-    return defendeOption
+    return defendeOption;
   }
 
-  async  getSkillModifier() {
-  const content = await foundry.applications.handlebars.renderTemplate(
-    "systems/crp/templates/dialogs/skills.hbs",
-  );
+  async getSkillModifier() {
+    const content = await foundry.applications.handlebars.renderTemplate(
+      "systems/crp/templates/dialogs/skills.hbs",
+    );
 
-  return foundry.applications.api.DialogV2.wait({
-    window: { title: "Test umiejętności" },
-    classes:["crp-dialog"],
-    content,
-    buttons: [
-      {
-        action: "confirm",
-        label: "Rzuć",
-        default: true,
-        callback: (_event, _button, dialog) => {
-          const value = Number(
-            dialog.element.querySelector("input[name='skillModifier']")
-              ?.value ?? 0,
-          );
-          return {
-            confirmed: true,
-            modifier: Math.max(
-              -4,
-              Math.min(4, Number.isFinite(value) ? value : 0),
-            ),
-          };
+    return foundry.applications.api.DialogV2.wait({
+      window: { title: "Test umiejętności" },
+      classes: ["crp-dialog"],
+      content,
+      buttons: [
+        {
+          action: "confirm",
+          label: "Rzuć",
+          default: true,
+          callback: (_event, _button, dialog) => {
+            const value = Number(
+              dialog.element.querySelector("input[name='skillModifier']")
+                ?.value ?? 0,
+            );
+            return {
+              confirmed: true,
+              modifier: Math.max(
+                -4,
+                Math.min(4, Number.isFinite(value) ? value : 0),
+              ),
+            };
+          },
         },
-      },
-      {
-        action: "cancel",
-        label: "Anuluj",
-        callback: () => ({ confirmed: false }),
-      },
-    ],
-    render: (_event, dialog) => {
-      const input = dialog.element.querySelector("input[name='skillModifier']");
-      const output = dialog.element.querySelector(".crp-skills-modifier-value");
-      if (!input || !output) return;
-
-      const refreshOutput = () => {
-        const value = Number(input.value) || 0;
-        output.value = value >= 0 ? `+${value}` : String(value);
-      };
-
-      input.addEventListener("input", refreshOutput);
-      refreshOutput();
-    },
-  });
-}
-async  getManeuver() {
-const availableManeuver = this.system.derived.maneuver?.value ?? 0;
-
-const maneuvers = Object.fromEntries(
-  Object.entries(CONFIG.CRP.maneuvers).filter(
-    ([key, maneuver]) => maneuver.cost <= availableManeuver,
-  ),
-);
-  
-  const content = await foundry.applications.handlebars.renderTemplate(
-    "systems/crp/templates/dialogs/attack.hbs",
-    {
-      maneuver: this.system.derived.maneuver,
-      maneuvers,
-    },
-  );
-
-  return foundry.applications.api.DialogV2.wait({
-    window: { title: "Wybór Manewru" },
-    classes:["crp-dialog"],
-    content,
-    buttons: [
-      {
-        action: "confirm",
-        label: "Atakuj",
-        default: true,
-        callback: (_event, _button, dialog) => {
-          const maneuverSelect = dialog.element.querySelector(
-            "select[name='maneuver']",
-          );
-          const maneuverOption = maneuverSelect?.selectedOptions[0].value;
-          const selectedManeuver = CONFIG.CRP.maneuvers[maneuverOption]
-
-          return {
-            confirmed: true,
-            maneuver: selectedManeuver,
-            maneuverCost: selectedManeuver.cost
-          };
+        {
+          action: "cancel",
+          label: "Anuluj",
+          callback: () => ({ confirmed: false }),
         },
-      },
-      {
-        action: "cancel",
-        label: "Anuluj",
-        callback: () => ({ confirmed: false }),
-      },
-    ],
-    render: (_event, dialog) => {
-      const maneuverSelect = dialog.element.querySelector(
-        "select[name='maneuver']",
-      );
-      const maneuverDescription = dialog.element.querySelector(
-        ".crp-attack-maneuver-description",
-      );
+      ],
+      render: (_event, dialog) => {
+        const input = dialog.element.querySelector(
+          "input[name='skillModifier']",
+        );
+        const output = dialog.element.querySelector(
+          ".crp-skills-modifier-value",
+        );
+        if (!input || !output) return;
 
-      if (maneuverSelect && maneuverDescription) {
-        const refreshManeuverDescription = () => {
-          const option = maneuverSelect.selectedOptions[0];
-          maneuverDescription.textContent = option?.dataset.description ?? "";
+        const refreshOutput = () => {
+          const value = Number(input.value) || 0;
+          output.value = value >= 0 ? `+${value}` : String(value);
         };
 
-        maneuverSelect.addEventListener("change", refreshManeuverDescription);
-        refreshManeuverDescription();
-      }
-    },
-  });
-}
-async spendManeuverPoints(cost){
-  const currentManeuverPoint = this.system.derived.maneuver.value;
-  const newManeuverPoints = currentManeuverPoint - cost;
-  this.update({["system.derived.maneuver.value"]:newManeuverPoints})
-  if(this.sheet.rendered){
-    this.sheet.render(true)
+        input.addEventListener("input", refreshOutput);
+        refreshOutput();
+      },
+    });
   }
-}
-getAttributeKey(skillKey) {
-  return Object.entries(this.system.attributes).find(
-    ([, attribute]) => Object.hasOwn(attribute.skills, skillKey),
-  )?.[0] ?? null;
-}
+  async getManeuver() {
+    const availableManeuver = this.system.derived.maneuver?.value ?? 0;
+
+    const maneuvers = Object.fromEntries(
+      Object.entries(CONFIG.CRP.maneuvers).filter(
+        ([key, maneuver]) => maneuver.cost <= availableManeuver,
+      ),
+    );
+
+    const content = await foundry.applications.handlebars.renderTemplate(
+      "systems/crp/templates/dialogs/attack.hbs",
+      {
+        maneuver: this.system.derived.maneuver,
+        maneuvers,
+      },
+    );
+
+    return foundry.applications.api.DialogV2.wait({
+      window: { title: "Wybór Manewru" },
+      classes: ["crp-dialog"],
+      content,
+      buttons: [
+        {
+          action: "confirm",
+          label: "Atakuj",
+          default: true,
+          callback: (_event, _button, dialog) => {
+            const maneuverSelect = dialog.element.querySelector(
+              "select[name='maneuver']",
+            );
+            const maneuverOption = maneuverSelect?.selectedOptions[0].value;
+            const selectedManeuver = CONFIG.CRP.maneuvers[maneuverOption];
+
+            return {
+              confirmed: true,
+              maneuver: selectedManeuver,
+              maneuverCost: selectedManeuver.cost,
+            };
+          },
+        },
+        {
+          action: "cancel",
+          label: "Anuluj",
+          callback: () => ({ confirmed: false }),
+        },
+      ],
+      render: (_event, dialog) => {
+        const maneuverSelect = dialog.element.querySelector(
+          "select[name='maneuver']",
+        );
+        const maneuverDescription = dialog.element.querySelector(
+          ".crp-attack-maneuver-description",
+        );
+
+        if (maneuverSelect && maneuverDescription) {
+          const refreshManeuverDescription = () => {
+            const option = maneuverSelect.selectedOptions[0];
+            maneuverDescription.textContent = option?.dataset.description ?? "";
+          };
+
+          maneuverSelect.addEventListener("change", refreshManeuverDescription);
+          refreshManeuverDescription();
+        }
+      },
+    });
+  }
+  async spendManeuverPoints(cost) {
+    const currentManeuverPoint = this.system.derived.maneuver.value;
+    const newManeuverPoints = currentManeuverPoint - cost;
+    this.update({ ["system.derived.maneuver.value"]: newManeuverPoints });
+    if (this.sheet.rendered) {
+      this.sheet.render(true);
+    }
+  }
+  getAttributeKey(skillKey) {
+    return (
+      Object.entries(this.system.attributes).find(([, attribute]) =>
+        Object.hasOwn(attribute.skills, skillKey),
+      )?.[0] ?? null
+    );
+  }
 }
 
 function hasChangedPath(changed, path) {
@@ -660,5 +719,3 @@ function hasChangedPath(changed, path) {
     foundry.utils.hasProperty(changed, path) || Object.hasOwn(changed, path)
   );
 }
-
-

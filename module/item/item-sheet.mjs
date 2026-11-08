@@ -209,6 +209,12 @@ export class CRPItemSheet extends HandlebarsApplicationMixin(DocumentSheetV2) {
 }
 
 export class CRPWeaponSheet extends CRPItemSheet {
+  static DEFAULT_OPTIONS = {
+    position: {
+      width: 650,
+      height: "auto",
+    },
+  };
   static PARTS = {
     body: {
       template: "systems/crp/templates/item/weapon-sheet.hbs",
@@ -217,6 +223,12 @@ export class CRPWeaponSheet extends CRPItemSheet {
 }
 
 export class CRPArmorSheet extends CRPItemSheet {
+  static DEFAULT_OPTIONS = {
+    position: {
+      width: 650,
+      height: "auto",
+    },
+  };
   static PARTS = {
     body: {
       template: "systems/crp/templates/item/armor-sheet.hbs",
@@ -225,6 +237,12 @@ export class CRPArmorSheet extends CRPItemSheet {
 }
 
 export class CRPShieldSheet extends CRPItemSheet {
+  static DEFAULT_OPTIONS = {
+    position: {
+      width: 650,
+      height: "auto",
+    },
+  };
   static PARTS = {
     body: {
       template: "systems/crp/templates/item/shield-sheet.hbs",

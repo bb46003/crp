@@ -42,24 +42,32 @@ export function registerHandlebarsHelpers() {
     return result;
   });
 
-
   Handlebars.registerHelper("modifierTooltip", function (modifiers) {
-      const modifierLabels = {
-    attrValue: "Wartośc Atrybutu",
-    skillValue: "Wartość Umiejętności",
-    aimed: "Modyfikator manewru",
-    woundedPenetly: "Kara za rany",
-    armmorPenelty: "Kara za pancerz",
-    customMod: "Wybrany modyfikator",
-    shield: "Premia za tarczę",
-    defenseModifier: "Modyfikator obrony",
-  };
-  const activeModifiers = Object.entries(modifiers)
-    .filter(([key, value]) => value !== 0 && value != null && key !== "totalMod" && key !== "target")
-    .map(([key, value]) => `${modifierLabels[key] ?? key}: ${value > 0 ? "+" : ""}${value}`);
+    const modifierLabels = {
+      attrValue: "Wartośc Atrybutu",
+      skillValue: "Wartość Umiejętności",
+      aimed: "Modyfikator manewru",
+      woundedPenetly: "Kara za rany",
+      armmorPenelty: "Kara za pancerz",
+      customMod: "Wybrany modyfikator",
+      shield: "Premia za tarczę",
+      defenseModifier: "Modyfikator obrony",
+    };
+    const activeModifiers = Object.entries(modifiers)
+      .filter(
+        ([key, value]) =>
+          value !== 0 &&
+          value != null &&
+          key !== "totalMod" &&
+          key !== "target",
+      )
+      .map(
+        ([key, value]) =>
+          `${modifierLabels[key] ?? key}: ${value > 0 ? "+" : ""}${value}`,
+      );
 
-  return activeModifiers.length
-    ? activeModifiers.join("\n")
-    : "Brak modyfikatorów";
-  })
+    return activeModifiers.length
+      ? activeModifiers.join("\n")
+      : "Brak modyfikatorów";
+  });
 }

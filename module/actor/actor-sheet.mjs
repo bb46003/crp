@@ -47,7 +47,8 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
       removeArmor: CRPActorSheet.#removeArmor,
       atack: CRPActorSheet.#atack,
       lockSheet: CRPActorSheet.#lockSheet,
-      rollDeath: CRPActorSheet.#rollDeath
+      rollDeath: CRPActorSheet.#rollDeath,
+      sendToChat: CRPActorSheet.#sendToChat,
     },
     form: {
       submitOnChange: true,
@@ -408,6 +409,9 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
         img: null,
       };
     }
+    if (item.type === "origin") {
+      await this.applyOriginBonus(item, true);
+    }
     await this.actor.deleteEmbeddedDocuments("Item", [itemId]);
 
     if (Object.keys(updates).length) {
@@ -454,7 +458,7 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
       );
       foundry.applications.api.DialogV2.wait({
         window: { title: "Wybór Typu Jezyka" },
-        classes:["crp-dialog"],
+        classes: ["crp-dialog"],
         content: content,
         buttons: [
           {
@@ -479,7 +483,12 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
       const element = target.closest(".crp-skill");
       const attr = element.dataset.attr;
       const skill = element.dataset.skill;
-      this.actor.rollSkill({attrKey:attr,skillKey:skill,reRoll:false, allowFate:true})
+      this.actor.rollSkill({
+        attrKey: attr,
+        skillKey: skill,
+        reRoll: false,
+        allowFate: true,
+      });
     }
   }
   static async #rollInitiative() {
@@ -512,64 +521,72 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
     const element = target.closest(".crp-item-row");
     const itemId = element?.dataset?.id ?? "";
     let usedWeapon = this.actor.items.get(itemId);
-    let weaponSkill 
-    let weaponName = ""
-    if(usedWeapon.type === "shield" ){
+    let weaponSkill;
+    let weaponName = "";
+    if (usedWeapon.type === "shield") {
       ui.notifications.info("Nie możesz atakować Tarczą");
       return;
-    }else if(usedWeapon){
-      weaponSkill = usedWeapon.system.skill
-      weaponName = usedWeapon.name
-    }else{
-      weaponSkill = "brawl"
+    } else if (usedWeapon) {
+      weaponSkill = usedWeapon.system.skill;
+      weaponName = usedWeapon.name;
+    } else {
+      weaponSkill = "brawl";
       usedWeapon = "Atak Bez Broni";
       weaponName = usedWeapon;
     }
-  const content = await foundry.applications.handlebars.renderTemplate(
-    "systems/crp/templates/dialogs/atak-test.hbs",
-    {weaponName: weaponName}
-  );
-  const testType = await foundry.applications.api.DialogV2.wait({
-    window: { title: "Test umiejętności" },
-    classes:["crp-dialog"],
-    content,
-    buttons: [
-      {
-        action: "attack",
-        label: "Zaatakuj",
-        default: true,
-        callback: (_event, _button, dialog) => {
-          return "atack"
-        }
-      },
-      {
-        action: "test",
-        label: "Test Broni",
-        default: true,
-        callback: (_event, _button, dialog) => {
-          return "skill"
-        }
+    const content = await foundry.applications.handlebars.renderTemplate(
+      "systems/crp/templates/dialogs/atak-test.hbs",
+      { weaponName: weaponName },
+    );
+    const testType = await foundry.applications.api.DialogV2.wait({
+      window: { title: "Test umiejętności" },
+      classes: ["crp-dialog"],
+      content,
+      buttons: [
+        {
+          action: "attack",
+          label: "Zaatakuj",
+          default: true,
+          callback: (_event, _button, dialog) => {
+            return "atack";
+          },
+        },
+        {
+          action: "test",
+          label: "Test Broni",
+          default: true,
+          callback: (_event, _button, dialog) => {
+            return "skill";
+          },
+        },
+      ],
+    });
+
+    if (testType === "atack") {
+      const targets = [...game.user.targets];
+      if (targets.length > 1) {
+        ui.notifications.info("Wybierz tylko jeden cel");
+        return;
       }
-    ]
-  })
 
-  if(testType === "atack"){
-    const targets = [...game.user.targets];
-     if (targets.length > 1 ) {
-    ui.notifications.info("Wybierz tylko jeden cel");
-    return;
+      if (targets.length === 0) {
+        ui.notifications.info("Wybierz cel");
+        return;
+      }
+      const targetActor = targets[0].actor;
+      this.actor.atackTest({
+        skillKey: weaponSkill,
+        usedWeapon: usedWeapon,
+        target: targetActor.uuid,
+      });
+    } else if (testType === "skill") {
+      this.actor.atackTest({
+        skillKey: weaponSkill,
+        usedWeapon: usedWeapon,
+        target: "",
+      });
+    }
   }
-
-  if (targets.length === 0 ) {
-    ui.notifications.info("Wybierz cel");
-    return;
-  }
-    const targetActor = targets[0].actor;
-    this.actor.atackTest({skillKey:weaponSkill, usedWeapon: usedWeapon, target:targetActor.uuid})
-  }else if(testType === "skill"){
-   this.actor.atackTest({skillKey:weaponSkill, usedWeapon: usedWeapon, target:""})
-  }
-}
   static async #lockSheet(ev) {
     const locked = this.actor.getFlag("crp", "npcSheetLocked");
     await this.actor.setFlag("crp", "npcSheetLocked", !locked);
@@ -577,31 +594,32 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
     this.setY(target);
     this.render({ force: true });
   }
-  static async #rollDeath(){
+  static async #rollDeath() {
     const actor = this.actor;
     const state = actor.system.state;
-    const result = await actor.rollSkill({      
+    const result = await actor.rollSkill({
       attrKey: "strength",
       skillKey: "endurance",
       reRoll: false,
       allowFate: false,
-      agonia:true})
-      if (!result) return;
+      agonia: true,
+    });
+    if (!result) return;
 
-  if (!result.success) {
-    if (state.agony) {
-      await actor.update({ "system.state.life": "dead" });
-      await actor.toggleStatusEffect("dead", { active: true });
-    } else if (state.unconscious) {
-      await actor.update({ "system.state.agony": true });
-      await actor.toggleStatusEffect("agonia", { active: true });
-    } else if (state.bleeding) {
-      await actor.update({ "system.state.unconscious": true });
-      await actor.toggleStatusEffect("unconscious", { active: true });
+    if (!result.success) {
+      if (state.agony) {
+        await actor.update({ "system.state.life": "dead" });
+        await actor.toggleStatusEffect("dead", { active: true });
+      } else if (state.unconscious) {
+        await actor.update({ "system.state.agony": true });
+        await actor.toggleStatusEffect("agonia", { active: true });
+      } else if (state.bleeding) {
+        await actor.update({ "system.state.unconscious": true });
+        await actor.toggleStatusEffect("unconscious", { active: true });
+      }
+      this.render(true);
     }
-    this.render(true)
   }
-}
   async _onDrop(event) {
     const data = event.dataTransfer;
     const toElement = event.toElement;
@@ -621,9 +639,10 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
       const slotType = toElement?.dataset?.slot || parent?.dataset?.slot;
       if (
         itemDoc.type == slotType ||
-        (slotType?.includes("Hand") && (itemDoc.type === "weapon" || itemDoc.type === "shield"))
+        (slotType?.includes("Hand") &&
+          (itemDoc.type === "weapon" || itemDoc.type === "shield"))
       ) {
-        if(!itemDoc.uuid.includes("Actor")) {
+        if (!itemDoc.uuid.includes("Actor")) {
           itemDoc = await this.actor.createEmbeddedDocuments("Item", [itemDoc]);
           itemDoc = itemDoc[0];
         }
@@ -703,7 +722,7 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
         );
         foundry.applications.api.DialogV2.wait({
           window: { title: "Wybór Typu Jezyka" },
-              classes:["crp-dialog"],
+          classes: ["crp-dialog"],
           content: content,
           buttons: [
             {
@@ -734,6 +753,11 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
           ui.notifications.warn("Postać posiada już Pochodzenie.");
           return;
         }
+        const origin = await this.actor.createEmbeddedDocuments("Item", [
+          itemDoc,
+        ]);
+        await this.applyOriginBonus(origin[0], false);
+        return;
       }
       super._onDrop(event);
     }
@@ -753,6 +777,78 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
     const section = this.element.querySelector(".tab.active");
     this.y = section.scrollTop;
   }
+  async applyOriginBonus(itemDoc, remove = false) {
+    const attr = itemDoc.system.bonusAttribute;
+    const skillBonus = itemDoc.system.skills;
+    let mod = 1;
+    if (remove) {
+      mod = -1;
+    }
+    const updateData = {};
+    updateData["system.bio.origin.id"] = itemDoc.id;
+    updateData["system.bio.origin.img"] = itemDoc.img;
+    updateData["system.bio.origin.name"] = itemDoc.name;
+    // Apply attribute bonus
+    if (attr) {
+      const currentValue = this.actor.system.attributes[attr].value;
+
+      updateData[`system.attributes.${attr}.value`] = currentValue + 1 * mod;
+    }
+
+    // Apply skill bonuses
+    for (const skill of skillBonus) {
+      const attrKey = this.actor.getAttributeKey(skill.key);
+
+      if (!attrKey) continue;
+
+      const currentValue =
+        this.actor.system.attributes[attrKey].skills[skill.key].value;
+
+      updateData[`system.attributes.${attrKey}.skills.${skill.key}.value`] =
+        currentValue + skill.level * mod;
+    }
+
+    await this.actor.update(updateData);
+    this.setY()
+    this.render({ force: true });
+    if (itemDoc.system.language && !remove) {
+      const languageItem = await fromUuid(itemDoc.system.language);
+      const nativeLanguage = await this.actor.createEmbeddedDocuments("Item", [
+        languageItem,
+      ]);
+      await nativeLanguage[0].update({ ["system.role"]: "native" });
+      nativeLanguage[0].setFlag("crp", "origin", itemDoc.uuid);
+
+    }
+          if (remove) {
+        const originUuid = itemDoc.uuid;
+
+        const originItem = this.actor.items.find(
+          (item) => item.getFlag("crp", "origin") === originUuid,
+        );
+
+        if (originItem) {
+          await originItem.delete();
+        }
+      }
+  }
+  static async #sendToChat(){
+    const crest = this.actor.system.bio.crest;
+    const crestDescription = this.actor.system.bio.crestDescription;
+    if(crest !== "" || crestDescription !== ""){
+      const content = await foundry.applications.handlebars.renderTemplate(
+      "systems/crp/templates/chat/crest.hbs",
+      {
+        crest:crest,
+        crestDescription:crestDescription
+      })
+      await ChatMessage.create({
+        speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+        content: content
+
+      })
+    }
+  }
   get isEditable() {
     const locked = game.settings.get("crp", "characterSheetsLocked");
     if (this.actor !== "character") {
@@ -768,7 +864,6 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
 function isNPCActor(actor) {
   return CRP_NPC_ACTOR_TYPES.has(actor?.type);
 }
-
 
 async function enrich(html) {
   if (html) {

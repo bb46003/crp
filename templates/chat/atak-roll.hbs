@@ -42,10 +42,11 @@
           <span class="crp-label">Cel:</span>
           <span class="crp-value">{{atackRoll.target}}</span>
 
-          <span class="crp-roll-modifier"
-          data-toggle="tooltip" 
-          data-placement="bottom" 
-          title="{{modifierTooltip atackRoll.modifier}}"
+          <span
+            class="crp-roll-modifier"
+            data-toggle="tooltip"
+            data-placement="bottom"
+            title="{{modifierTooltip atackRoll.modifier}}"
           >
             (Modyfikator
             {{#if (gte atackRoll.modifier.total 0)}}
@@ -181,15 +182,17 @@
             <span class="crp-label">Cel:</span>
             <span class="crp-value">{{defenceRoll.target}}</span>
 
-            <span class="crp-roll-modifier"          
-            data-toggle="tooltip" 
-          data-placement="bottom" 
-          title="{{modifierTooltip defenceRoll.modifier}}">
+            <span
+              class="crp-roll-modifier"
+              data-toggle="tooltip"
+              data-placement="bottom"
+              title="{{modifierTooltip defenceRoll.modifier}}"
+            >
               (Modyfikator
-              {{#if (gte defenceRoll.modifier.total  0)}}
-                +{{defenceRoll.modifier.total }}
+              {{#if (gte defenceRoll.modifier.total 0)}}
+                +{{defenceRoll.modifier.total}}
               {{else}}
-                {{defenceRoll.modifier.total }}
+                {{defenceRoll.modifier.total}}
               {{/if}})
             </span>
           </p>
@@ -258,49 +261,79 @@
 
   {{! OBRAŻENIA }}
   {{#if (eq winner "A")}}
-  {{#if damageResult}}
-    
-    <section class="crp-damage-section">
+    {{#if damageResult}}
 
-      <header class="crp-section-header">
-        <h3 class="crp-section-title">Obrażenia</h3>
-      </header>
+      <section class="crp-damage-section">
 
-      <div class="crp-dmg">
+        <header class="crp-section-header">
+          <h3 class="crp-section-title">Obrażenia</h3>
+        </header>
 
-        <p class="crp-damage-base">
-          <span class="crp-label">💥 Obrażenia bazowe:</span>
-          <strong class="crp-value">{{damageResult.base}}</strong>
-        </p>
+        <div class="crp-dmg">
 
-        <div class="crp-damage-reduction">
-
-          <p class="crp-damage-reduction-total">
-            <span class="crp-label">🛡 Redukcja:</span>
-            <strong class="crp-value">{{damageResult.reduction}}</strong>
+          <p class="crp-damage-base">
+            <span class="crp-label">💥 Obrażenia bazowe:</span>
+            <strong class="crp-value">{{damageResult.base}}</strong>
           </p>
 
-          <div class="crp-damage-reduction-details">
+          <div class="crp-damage-reduction">
 
-            {{#if (ne damageResult.armorProtection 0)}}
-              <span class="crp-armor-protection">
-                +
-                {{damageResult.armorProtection}}
-                pancerz
-              </span>
-            {{/if}}
+            <p class="crp-damage-reduction-total">
+              <span class="crp-label">🛡 Redukcja:</span>
+              <strong class="crp-value">{{damageResult.reduction}}</strong>
+            </p>
 
-            {{#if (ne damageResult.shieldProtection 0)}}
-              <span class="crp-shield-protection">
-                +
-                {{damageResult.shieldProtection}}
-                tarcza
-              </span>
-            {{/if}}
+            <div class="crp-damage-reduction-details">
 
-            {{#if (ne defenceRoll.eagles 0)}}
+              {{#if (ne damageResult.armorProtection 0)}}
+                <span class="crp-armor-protection">
+                  +
+                  {{damageResult.armorProtection}}
+                  pancerz
+                </span>
+              {{/if}}
+
+              {{#if (ne damageResult.shieldProtection 0)}}
+                <span class="crp-shield-protection">
+                  +
+                  {{damageResult.shieldProtection}}
+                  tarcza
+                </span>
+              {{/if}}
+
+              {{#if (ne defenceRoll.eagles 0)}}
+                <span class="crp-dice-modifier">
+                  +{{defenceRoll.eagles}}
+                  <img
+                    class="crp-dice-image"
+                    src="systems/crp/assets/orzel-kostka.webp"
+                    alt="Orzeł"
+                    title="Orzeł"
+                  />
+                </span>
+              {{/if}}
+
+              {{#if (ne defenceRoll.shields 0)}}
+                <span class="crp-dice-modifier">
+                  -{{defenceRoll.shields}}
+                  <img
+                    class="crp-dice-image"
+                    src="systems/crp/assets/tarcza_kostka.webp"
+                    alt="Tarcza"
+                    title="Tarcza"
+                  />
+                </span>
+              {{/if}}
+
+            </div>
+          </div>
+
+          <div class="crp-damage-modifier">
+
+            <span class="crp-label">⚔ Modyfikator ataku:</span>
+            {{#if (ne atackRoll.eagles 0)}}
               <span class="crp-dice-modifier">
-                +{{defenceRoll.eagles}}
+                +{{atackRoll.eagles}}
                 <img
                   class="crp-dice-image"
                   src="systems/crp/assets/orzel-kostka.webp"
@@ -310,9 +343,9 @@
               </span>
             {{/if}}
 
-            {{#if (ne defenceRoll.shields 0)}}
+            {{#if (ne atackRoll.shields 0)}}
               <span class="crp-dice-modifier">
-                -{{defenceRoll.shields}}
+                -{{atackRoll.shields}}
                 <img
                   class="crp-dice-image"
                   src="systems/crp/assets/tarcza_kostka.webp"
@@ -323,83 +356,53 @@
             {{/if}}
 
           </div>
-        </div>
 
-        <div class="crp-damage-modifier">
-
-          <span class="crp-label">⚔ Modyfikator ataku:</span>
-          {{#if (ne atackRoll.eagles 0)}}
-            <span class="crp-dice-modifier">
-              +{{atackRoll.eagles}}
-              <img
-                class="crp-dice-image"
-                src="systems/crp/assets/orzel-kostka.webp"
-                alt="Orzeł"
-                title="Orzeł"
-              />
-            </span>
-          {{/if}}
-
-          {{#if (ne atackRoll.shields 0)}}
-            <span class="crp-dice-modifier">
-              -{{atackRoll.shields}}
-              <img
-                class="crp-dice-image"
-                src="systems/crp/assets/tarcza_kostka.webp"
-                alt="Tarcza"
-                title="Tarcza"
-              />
-            </span>
-          {{/if}}
-
-        </div>
-
-        <p class="crp-damage-total">
-          <span class="crp-label">👉 Obrażenia końcowe:</span>
-          <strong class="crp-value">{{damageResult.total}}</strong>
-        </p>
-
-      </div>
-
-      {{#if (gt damageResult.total 0)}}
-      <footer class="crp-damage-control">
-        {{#if damageResult.canApplyDamage}}
-        <button
-          type="button"
-          class="crp-apply-damage"
-          data-action="applyDamage"
-        >
-          Przyjmij obrażenia
-        </button>
-        {{else}}
-                <button
-          type="button"
-          class="crp-apply-damage"
-          data-action="restoreHealth"
-        >
-          Przywróć zdrowie
-        </button>
-        {{/if}}
-        {{#if damageResult.needsDamageChoice}}
-          <button
-            type="button"
-            class="crp-avoid-damage"
-            data-action="avoidDamage"
-          >
-            Anuluj obrażenia
-          </button>
-
-          <p class="crp-damage-status">
-            Uniknięcie obrażeń kosztuje Punkt Doli
+          <p class="crp-damage-total">
+            <span class="crp-label">👉 Obrażenia końcowe:</span>
+            <strong class="crp-value">{{damageResult.total}}</strong>
           </p>
+
+        </div>
+
+        {{#if (gt damageResult.total 0)}}
+          <footer class="crp-damage-control">
+            {{#if damageResult.canApplyDamage}}
+              <button
+                type="button"
+                class="crp-apply-damage"
+                data-action="applyDamage"
+              >
+                Przyjmij obrażenia
+              </button>
+            {{else}}
+              <button
+                type="button"
+                class="crp-apply-damage"
+                data-action="restoreHealth"
+              >
+                Przywróć zdrowie
+              </button>
+            {{/if}}
+            {{#if damageResult.needsDamageChoice}}
+              <button
+                type="button"
+                class="crp-avoid-damage"
+                data-action="avoidDamage"
+              >
+                Anuluj obrażenia
+              </button>
+
+              <p class="crp-damage-status">
+                Uniknięcie obrażeń kosztuje Punkt Doli
+              </p>
+            {{/if}}
+
+          </footer>
+        {{else}}
+          <label>Atak nie zadał obrażeń</label>
         {{/if}}
+      </section>
 
-      </footer>
-    {{else}}
-      <label>Atak nie zadał obrażeń</label>
     {{/if}}
-    </section>
-
   {{/if}}
-{{/if}}
 </div>

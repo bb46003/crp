@@ -24,7 +24,7 @@ export class CRPSocketHandler {
               skillKey: "endurance",
               reRoll: false,
               allowFate: false,
-              agonia:true
+              agonia: true,
             });
 
             this.emit({
@@ -56,27 +56,34 @@ export class CRPSocketHandler {
           clearTimeout(request.timeout);
           this.pendingRequests.delete(data.requestId);
 
-          request.resolve(data.error ? null : {
-            success: data.success,
-          });
+          request.resolve(
+            data.error
+              ? null
+              : {
+                  success: data.success,
+                },
+          );
 
           break;
         }
-        case "selectManeuver":{
+        case "selectManeuver": {
           const actor = game.actors.get(data.actorId);
-        // Only the client assigned to this character performs the roll.
+          // Only the client assigned to this character performs the roll.
           if (!actor || game.user.character?.id !== actor.id) return;
           const selectedManeuver = await actor.getManeuver();
-          if(selectedManeuver.confirmed){
+          if (selectedManeuver.confirmed) {
             await actor.setFlag("crp", "maneuver", selectedManeuver.maneuver);
             await actor.spendManeuverPoints(selectedManeuver.maneuverCost);
-             Object.assign(selectedManeuver.maneuver,{actor: actor, madeTest: false})
-                    const chat=  await ChatMessage.create({
-        speaker: ChatMessage.getSpeaker({ actor }),
-        system: {crp: selectedManeuver.maneuver}
-      })
-        await chat.maneuverToChat()
-          }          
+            Object.assign(selectedManeuver.maneuver, {
+              actor: actor,
+              madeTest: false,
+            });
+            const chat = await ChatMessage.create({
+              speaker: ChatMessage.getSpeaker({ actor }),
+              system: { crp: selectedManeuver.maneuver },
+            });
+            await chat.maneuverToChat();
+          }
           break;
         }
       }
