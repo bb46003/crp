@@ -9,7 +9,17 @@
       <h1 class="crp-name" contenteditable="true">        
         <input type="text" name="name" value="{{actor.name}}">
         </h1>
-<div class="crp-stats npc">
+</div>
+  <!-- TOKEN -->
+  <div class="crp-token">
+    <img src="{{tokenImg}}" data-action="editImage" 
+    {{#if isToken}}
+      data-edit="document.parent.texture.src"
+    {{else}}
+      data-edit="prototypeToken.texture.src"
+    {{/if}}>
+  </div>
+  <div class="crp-stats npc">
   <div class="crp-stat">
           <label>Zdrowie</label>
           <div class="crp-health-values">
@@ -69,14 +79,20 @@
     <div class="crp-stat">
     <label>Dola</label>
     <div class="crp-stat-value">
-      {{system.resources.fate.value}} / {{system.resources.fate.max}}
+            <input type="number"
+             name="system.resources.fate.value"
+             value="{{system.resources.fate.value}}"
+             {{#if npcSheetLocked}}disabled{{/if}}>/ {{system.resources.fate.max}}
     </div>
   </div>
 
     <div class="crp-stat">
     <label>Manewry</label>
     <div class="crp-stat-value">
-      {{system.derived.maneuver.value}} / {{system.derived.maneuver.max}}
+       <input type="number"
+             name="system.derived.maneuver.value"
+             value="{{system.derived.maneuver.value}}"
+             {{#if npcSheetLocked}}disabled{{/if}}> / {{system.derived.maneuver.max}}
     </div>
   </div>
   <div class="crp-stat">
@@ -126,16 +142,6 @@
     </a>
   </div>
 </div>
-</div>
-  <!-- TOKEN -->
-  <div class="crp-token">
-    <img src="{{tokenImg}}" data-action="editImage" 
-    {{#if isToken}}
-      data-edit="document.parent.texture.src"
-    {{else}}
-      data-edit="prototypeToken.texture.src"
-    {{/if}}>
-  </div>
 </header>
 <nav class="crp-tabs tabs" data-group="items">
   <a class="crp-tab-btn {{tabs.attributes.cssClass}}" data-action="tab" data-tab="attributes" data-group="items">

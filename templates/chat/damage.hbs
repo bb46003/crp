@@ -1,0 +1,146 @@
+  <section class="crp-damage-section">
+
+      <header class="crp-section-header">
+        <h3 class="crp-section-title">Obrażenia</h3>
+      </header>
+      <div class="crp-dmg">
+
+        <p class="crp-damage-base">
+          <span class="crp-label">💥 Obrażenia bazowe:</span>
+          <strong class="crp-value">{{damageResult.baseDamage}}</strong>
+        </p>
+
+        <div class="crp-damage-reduction">
+
+          <p class="crp-damage-reduction-total">
+            <span class="crp-label">🛡 Redukcja:</span>
+            <strong class="crp-value">{{damageResult.reduction}}</strong>
+          </p>
+
+          <div class="crp-damage-reduction-details">
+
+            {{#if (ne damageResult.armorProtection 0)}}
+              <span class="crp-armor-protection">
+                +
+                {{damageResult.armorProtection}}
+                pancerz
+              </span>
+            {{/if}}
+
+            {{#if (ne damageResult.shieldProtection 0)}}
+              <span class="crp-shield-protection">
+                +
+                {{damageResult.shieldProtection}}
+                tarcza
+              </span>
+            {{/if}}
+            {{#if (ne defenceRoll.eagles 0)}}
+              <span class="crp-dice-modifier">
+                +{{defenceRoll.eagles}}
+                <img
+                  class="crp-dice-image"
+                  src="systems/crp/assets/orzel-kostka.webp"
+                  alt="Orzeł"
+                  title="Orzeł"
+                />
+              </span>
+            {{/if}}
+
+            {{#if (ne defenceRoll.shields 0)}}
+              <span class="crp-dice-modifier">
+                -{{defenceRoll.shields}}
+                <img
+                  class="crp-dice-image"
+                  src="systems/crp/assets/tarcza_kostka.webp"
+                  alt="Tarcza"
+                  title="Tarcza"
+                />
+              </span>
+            {{/if}}
+
+          </div>
+        </div>
+
+        <div class="crp-damage-modifier">
+
+          <span class="crp-label">⚔ Modyfikator ataku:</span>
+          <div class="crp-damage-reduction-details">
+          {{#if (ne atackRoll.eagles 0)}}
+            <span class="crp-dice-modifier">
+              +{{atackRoll.eagles}}
+              <img
+                class="crp-dice-image"
+                src="systems/crp/assets/orzel-kostka.webp"
+                alt="Orzeł"
+                title="Orzeł"
+              />
+            </span>
+          {{/if}}
+
+          {{#if (ne atackRoll.shields 0)}}
+            <span class="crp-dice-modifier">
+              -{{atackRoll.shields}}
+              <img
+                class="crp-dice-image"
+                src="systems/crp/assets/tarcza_kostka.webp"
+                alt="Tarcza"
+                title="Tarcza"
+              />
+            </span>
+          {{/if}}
+    </div>
+        </div>
+
+        <p class="crp-damage-total">
+          <span class="crp-label">👉 Obrażenia końcowe:</span>
+          <strong class="crp-value">{{damageResult.total}}</strong>
+        </p>
+
+      </div>
+
+      {{#if (gt damageResult.total 0)}}
+      <footer class="crp-damage-control">
+        {{#if damageResult.canApplyDamage}}
+        <button
+          type="button"
+          class="crp-apply-damage"
+          data-action="applyDamage"
+        >
+          Przyjmij obrażenia
+        </button>
+        {{else}}
+                <button
+          type="button"
+          class="crp-apply-damage"
+          data-action="restoreHealth"
+        >
+          Przywróć zdrowie
+        </button>
+        {{/if}}
+        {{#if damageResult.needsDamageChoice}}
+          <button
+            type="button"
+            class="crp-avoid-damage"
+            data-action="avoidDamage"
+          >
+            Anuluj obrażenia
+          </button>
+
+          <p class="crp-damage-status">
+            Uniknięcie obrażeń kosztuje Punkt Doli
+          </p>
+        {{/if}}
+
+      </footer>
+    {{else}}
+      <label>Atak nie zadał obrażeń</label>
+    {{/if}}
+    {{#if atackerRoll.maneuver.additionaTestAfterHit}}
+  <div class="crp-oponent-test">
+    <label>Oponent {{defenderRoll.actor.name}} może wykonać test przeciw Manewrowi {{localize atackerRoll.maneuver.name}}</label>
+    {{#each atackerRoll.maneuver.additionaTestAfterHit as |skill|}}
+      <button class="crp-button" data-action="skillTest" data-skill="{{skill.skill}}" >Test na {{localize skill.label}}</button>
+    {{/each}}
+  </div>
+    {{/if}}
+    </section>

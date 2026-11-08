@@ -109,7 +109,8 @@ static resolveOutcome(dice, total, target) {
       usedFate: false,
       agonia: agonia,
       agoniaResult,
-      maneuver
+      maneuver,
+      uuid: actor.uuid
     };
 
     if (chat) {
@@ -154,25 +155,7 @@ static agoniaResult(actor, success, critical) {
 
   return "";
 }
-  async rollAttack(skillKey) {
-    const weapon = this.getEquippedWeapon();
 
-    const attrKey = this._mapSkillToAttribute(skillKey);
-
-    const result = await this.skill(attrKey, skillKey);
-
-    if (!result.success) return result;
-
-    let damage = weapon?.system.damage ?? 1;
-
-    // opcjonalnie margin jako bonus
-    damage += Math.max(0, result.margin);
-
-    return {
-      ...result,
-      damage,
-    };
-  }
 
   static async initiative(actor, { chat = true, combatant = null } = {}) {
     const base =
@@ -254,10 +237,13 @@ static agoniaResult(actor, success, critical) {
 
   static async opositeTest({attacker={}, atackerRoll={},defender={},defenderRoll={},messageId="", attack = false}){
     if(Object.keys(atackerRoll).length === 0){
-    const atackerRoll = await this.skill(attacker);
+      const rollData = attacker;
+      rollData.actor = await fromUuid(attacker.actor)
+    const atackerRoll = await this.skill(rollData);
     atackerRoll.resultsText = ""
+    const attackerActor = await fromUuid(attacker.actor)
     const chat=  await ChatMessage.create({
-        speaker: ChatMessage.getSpeaker({actor:attacker.actor}),
+        speaker: ChatMessage.getSpeaker({actor:attackerActor}),
         content: "",
         system: {
           crp: {
@@ -270,7 +256,9 @@ static agoniaResult(actor, success, critical) {
       });
     await chat.regenerateOpositeRoll()
   }else if(Object.keys(defenderRoll).length === 0){
-    const defenderRoll1 = await this.skill(defender);
+          const rollData = defender;
+      rollData.actor = await fromUuid(defender.actor)
+    const defenderRoll1 = await this.skill(rollData);
     defenderRoll1.resultsText = ""
    const message = game.messages.get(messageId);
     const opositeTestResult = this.opositeTestResult(atackerRoll,defenderRoll1)
@@ -278,6 +266,13 @@ static agoniaResult(actor, success, critical) {
            ["system.crp.defenderRoll"] : defenderRoll1,
            ["system.crp.results"]: opositeTestResult
       });
+      if(attack){
+        Object.assign(defenderRoll1,{shield: defender.shield})
+        const resoveDamage = await this.resolveDamage(atackerRoll,defenderRoll1)
+        await message.update({
+          ["system.crp.damage"]:resoveDamage
+        })
+      }
     await message.regenerateOpositeRoll()
   }else{
     const opositeTestResult = this.opositeTestResult(atackerRoll,defenderRoll)
@@ -287,6 +282,13 @@ static agoniaResult(actor, success, critical) {
           ["system.crp.atackerRoll"] : atackerRoll,
            ["system.crp.results"]: opositeTestResult
       });
+            if(attack){
+        Object.assign(defenderRoll,{shield: defender.shield})
+        const resoveDamage = await this.resolveDamage(atackerRoll,defenderRoll)
+        await message.update({
+          ["system.crp.damage"]:resoveDamage
+        })
+      }
     await message.regenerateOpositeRoll()
   }
   }
@@ -322,4 +324,46 @@ static agoniaResult(actor, success, critical) {
   return winner;
 
   }
+  static async resolveDamage(atackRoll, defenceRoll) {
+  const marginA = atackRoll?.margin ?? 0;
+  const marginB = defenceRoll?.margin ?? 0;
+  const baseDamage = Math.max(0, marginA - marginB);
+
+  const attackEagles = atackRoll?.eagles ?? 0;
+  const attackShields = atackRoll?.shields ?? 0;
+ const defenderActor = 
+  defenceRoll.actor instanceof Actor
+    ? defenceRoll.actor
+    : await fromUuid(defenceRoll.uuid);
+  let damage = Math.max(0, baseDamage + attackEagles - attackShields);
+  const equipment = defenderActor.system.equipment;
+  const armorProtection =
+    defenderActor.items.get(equipment.armor?.id)?.system?.protection ?? 0;
+  let shieldProtection = 0;
+  if(defenceRoll.shield){
+    const defenderLeftHand = defenderActor.system.equipment.leftHand;
+    const defenderRightHand = defenderActor.system.equipment.rightHand;
+    const leftHandItem = await defenderActor.items.get(defenderLeftHand.id)
+    const rightHandItem = await defenderActor.items.get(defenderRightHand.id)
+    let leftHandShield, rightHandShield = 0;
+    if(leftHandItem?.type === "shield"){
+      leftHandShield = leftHandItem.system.protection
+    }
+    if(rightHandItem?.type === "shield"){
+      rightHandShield = rightHandItem.system.protection
+    }
+    shieldProtection = Math.max(leftHandShield, rightHandShield)
+  }
+  const defenseEagles = defenceRoll?.eagles ?? 0;
+  const defenseShields = defenceRoll?.shields ?? 0;
+
+  const reduction = Math.max(
+    0,
+    armorProtection + shieldProtection + defenseEagles - defenseShields,
+  );
+  damage = Math.max(0, damage - reduction);
+  const needsDamageChoice = defenceRoll.allowFate;
+  return { total:damage, baseDamage, reduction, armorProtection, shieldProtection, canApplyDamage:true, needsDamageChoice: needsDamageChoice};
+}
+
 }

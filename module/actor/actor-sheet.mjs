@@ -565,7 +565,7 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
     return;
   }
     const targetActor = targets[0].actor;
-    this.actor.atackTest({skillKey:weaponSkill, usedWeapon: usedWeapon, target:targetActor.id})
+    this.actor.atackTest({skillKey:weaponSkill, usedWeapon: usedWeapon, target:targetActor.uuid})
   }else if(testType === "skill"){
    this.actor.atackTest({skillKey:weaponSkill, usedWeapon: usedWeapon, target:""})
   }

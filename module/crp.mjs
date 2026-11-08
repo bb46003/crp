@@ -127,7 +127,8 @@ Hooks.once("init", () => {
   game.system.socketHandler = new CRPSocketHandler();
   registerHandlebarsHelpers();
     const templates = [
-    "systems/crp/templates/chat/skill-roll.hbs",,
+    "systems/crp/templates/chat/skill-roll.hbs",
+    "systems/crp/templates/chat/damage.hbs",
   ];
 
   foundry.applications.handlebars.loadTemplates(templates);

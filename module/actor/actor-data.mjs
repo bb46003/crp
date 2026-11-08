@@ -187,7 +187,7 @@ export class CRPActorData extends TypeDataModel {
       // ZASOBY
       resources: new SchemaField({
         fate: new SchemaField({
-          value: new NumberField({ initial: 2, min: 0 }),
+          value: new NumberField({ initial: 2, min: 0, max: 2}),
           max: new NumberField({ initial: 2, min: 2 }),
         }),
         experience: new SchemaField({

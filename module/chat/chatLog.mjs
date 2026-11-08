@@ -20,15 +20,15 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
     const messageId = target.closest(".crp-chat").dataset.messageId;
     const message = await game.messages.get(messageId);
     const crp = message.system.crp;
-    const defenderUuid = crp.defenceRoll.testData.uuid;
+    const defenderUuid = crp.defender.defenderId;
     const defenderActor = await fromUuid(defenderUuid);
     if(game.user.isGM || defenderActor.isOwner){
-      const damage = crp.damageResult.total;
+      const damage = crp.damage.total;
       await defenderActor.applyDamage(damage);
       await message.update({
-        "system.crp.damageResult.canApplyDamage": false,
+        "system.crp.damage.canApplyDamage": false,
       });
-      message.regenerateAtakRollContent();
+      message.regenerateOpositeRoll();
     } else {
       ui.notifications.warn("Nie kontrolujesz tej postaci");
     }
@@ -38,15 +38,15 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
     const messageId = target.closest(".crp-chat").dataset.messageId;
     const message = await game.messages.get(messageId);
     const crp = message.system.crp;
-    const defenderUuid = crp.defenceRoll.testData.uuid;
+    const defenderUuid = crp.defender.defenderId;
     const defenderActor = await fromUuid(defenderUuid);
     if(game.user.isGM || defenderActor.isOwner){
-      const damage = crp.damageResult.total;
+      const damage = crp.damage.total;
       await defenderActor.restoreHealth(damage);
       await message.update({
-        "system.crp.damageResult.canApplyDamage": true,
+        "system.crp.damage.canApplyDamage": true,
       });
-      message.regenerateAtakRollContent();
+      message.regenerateOpositeRoll();
     } else {
       ui.notifications.warn("Nie kontrolujesz tej postaci");
     }
@@ -115,9 +115,9 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
         if(isOposite){
 
           if(ataker){
-            actor = await game.actors.get(roll.attacker.actor._id);
+            actor = await fromUuid(roll.atackerRoll.uuid);
           }else{
-            actor = await game.actors.get(roll.defender.defenderId);
+            actor = await fromUuid(roll.defenderRoll.uuid);
           }
         }else{
           actor = await game.actors.get(roll.actor._id);
@@ -142,8 +142,8 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
                atackerRoll: atackerRoll,
                defender: roll.defender,
                defenderRoll: roll.defenderRoll,
-               messageId: messageId
-              })
+               messageId: messageId,
+               attack: roll.attack              })
             }else{
             message.update({["system.crp.atackerRoll"]:atackerRoll})
             message.regenerateOpositeRoll()
@@ -151,7 +151,8 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
           }else{
             roll.defenderRoll.reRoll = true;
             roll.defenderRoll.allowFate = false; 
-            roll.defenderRoll.chat = false
+            roll.defenderRoll.chat = false;
+            roll.defenderRoll.actor = actor;
             const spendFate = await actor.spendFate(1);
             if (!spendFate) return;
             const defenderRoll = await CRPRoll.skill(roll.defenderRoll);
@@ -162,7 +163,8 @@ export class CRPChatLog extends foundry.applications.sidebar.tabs.ChatLog {
                atackerRoll: roll.atackerRoll,
                defender: roll.defender,
                defenderRoll: defenderRoll,
-               messageId: messageId
+               messageId: messageId,
+               attack: roll.attack  
               })
           }
         }else{
@@ -240,7 +242,7 @@ static async #maneuverTest(event, target) {
         agonia:false
       },
       defender:{
-        defenderId: defenderActor.actor.id,
+        defenderId: defenderActor.actor.uuid,
         defenderName: defenderActor.name,
         defenderSkillKey: maneuver.oponentTest,
         allowFate:true,
@@ -260,52 +262,22 @@ static async #opositeTest(event,target){
   const messageId = target.closest(".crp-chat").dataset.messageId;
   const message = game.messages.get(messageId);
   const selectedSkill = target.dataset.skill;
+  const shield = target.dataset.shield === "true";
   const data = message.system.crp;
   data.defender.defenderSkill = selectedSkill
   const defenderData = data.defender;
-  const defenderActor = await game.actors.get(defenderData.defenderId);
+  const defenderActor = await fromUuid(defenderData.defenderId);
+  Object.assign(data.defender,{shield:shield})
   await defenderActor.opositeTest({
     attacker: data.attacker,
     atackerRoll: data.atackerRoll,
     defender: data.defender,
     atackRoll: true,
     messageId: messageId,
-    attack: data.attack
+    attack: data.attack,
   })
 }
 }
 
 
 
-function damageCalculation(atackRoll, defenceRoll, defenderActor, defenseType) {
-  const marginA = atackRoll?.margin ?? 0;
-  const marginB = defenceRoll?.margin ?? 0;
-  const baseDamage = Math.max(0, marginA - marginB);
-
-  const attackEagles = atackRoll?.eagles ?? 0;
-  const attackShields = atackRoll?.shields ?? 0;
-
-  let damage = Math.max(0, baseDamage + attackEagles - attackShields);
-  const equipment = defenderActor.system.equipment;
-  const armorProtection =
-    defenderActor.items.get(equipment.armor?.id)?.system?.protection ?? 0;
-
-  const shieldProtection =
-    defenseType === "shield"
-      ? Math.max(
-          ...handItems.map((item) =>
-            item?.type === "shield" ? Number(item.system?.protection) || 0 : 0,
-          ),
-        )
-      : 0;
-
-  const defenseEagles = defenceRoll?.eagles ?? 0;
-  const defenseShields = defenceRoll?.shields ?? 0;
-
-  const reduction = Math.max(
-    0,
-    armorProtection + shieldProtection + defenseEagles - defenseShields,
-  );
-  damage = Math.max(0, damage - reduction);
-  return { damage, baseDamage, reduction, armorProtection, shieldProtection };
-}

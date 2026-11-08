@@ -9,7 +9,17 @@
       <h1 class="crp-name" contenteditable="true">        
         <input type="text" name="name" value="{{actor.name}}">
         </h1>
-<div class="crp-stats npc">
+</div>
+  <!-- TOKEN -->
+  <div class="crp-token">
+    <img src="{{tokenImg}}" data-action="editImage" 
+    {{#if isToken}}
+      data-edit="document.parent.texture.src"
+    {{else}}
+      data-edit="prototypeToken.texture.src"
+    {{/if}}>
+  </div>
+  <div class="crp-stats npc">
   <div class="crp-stat">
           <label>Zdrowie</label>
           <div class="crp-health-values">
@@ -86,16 +96,6 @@
     </a>
   </div>
 </div>
-</div>
-  <!-- TOKEN -->
-  <div class="crp-token">
-    <img src="{{tokenImg}}" data-action="editImage" 
-    {{#if isToken}}
-      data-edit="document.parent.texture.src"
-    {{else}}
-      data-edit="prototypeToken.texture.src"
-    {{/if}}>
-  </div>
 </header>
 <nav class="crp-tabs tabs npc" data-group="items">
   <a class="crp-tab-btn {{tabs.attributes.cssClass}}" data-action="tab" data-tab="attributes" data-group="items">
