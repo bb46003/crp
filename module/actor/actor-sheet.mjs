@@ -23,7 +23,7 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
     },
     position: {
       width: 945,
-      height: 860,
+      height: 900,
     },
     dragDrop: [
       {
@@ -674,7 +674,12 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
                   name: itemDoc.name,
                   img: itemDoc.img,
                 },
-              };
+              ["system.equipment.leftHand"]: {
+                id: itemDoc.id,
+                name: itemDoc.name,
+                img: itemDoc.img,
+              },
+            };
             }
             break;
           case "rightHand":

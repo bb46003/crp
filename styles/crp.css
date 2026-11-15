@@ -915,6 +915,7 @@ input:focus {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 6px 12px;
+      margin-bottom: 3em;
 }
 
 /* jeśli rodzic to flex */
