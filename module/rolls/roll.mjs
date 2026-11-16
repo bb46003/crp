@@ -82,18 +82,19 @@ export class CRPRoll {
     const eagles = dice.filter((d) => d === 1).length;
     const shields = dice.filter((d) => d === 10).length;
     const showSymbols = eagles > 0 || shields > 0;
-    const agoniaResult = this.agoniaResult(actor, success, critical);
+    const actorDoc = actor instanceof Actor ? actor : await fromUuid(actor);
+    const agoniaResult = agonia ? this.agoniaResult(actorDoc, success, critical) : "";
     let maneuver = undefined;
     if (useManeuver) {
       maneuver = actor.flags?.crp?.maneuver;
       if (attack) {
-        const offenceModifier = maneuver.offenceModifier;
-        const defenseModifier = maneuver.defenseModifier;
-        const additionaTestAfterHit = maneuver.additionaTestAfterHit;
+        const offenceModifier = maneuver?.offenceModifier ?? 0 ;
+        const defenseModifier = maneuver?.defenseModifier ?? 0;
+        const additionaTestAfterHit = maneuver?.additionaTestAfterHit ?? 0;
         if (
           offenceModifier === 0 &&
           defenseModifier === 0 &&
-          additionaTestAfterHit.length === 0
+          additionaTestAfterHit?.length === 0
         ) {
           maneuver = "";
         }

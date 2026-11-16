@@ -13,7 +13,10 @@
   <div class="crp-oponent-test">
     <label>Oponent {{defender.defenderName}} może wykonać test:</label>
     {{#each defender.defenderSkillKey as |skill|}}
-      <button class="crp-button" data-action="opositeTest" data-skill="{{skill.skill}}" data-shield="{{skill.shield}}">Test Przeciwstawny na {{localize skill.label}}</button>
+      {{log skill}}
+      <button class="crp-button" data-action="opositeTest" data-skill="{{skill.skill}}" data-shield="{{skill.shield}}">
+        Test Przeciwstawny na {{localize skill.label}} {{#if (ne skill.name "")}}przy pomocy {{skill.name}}{{/if}}
+        </button>
     {{/each}}
   </div>
   {{/if}}

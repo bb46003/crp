@@ -14,7 +14,7 @@
                max="10"
                name="system.attributes.{{this.key}}.value"
                value="{{this.value}}"
-               {{#if ../characterSheetsLocked}}disabled{{/if}}>
+               {{#if @root.isEditable}}disabled{{/if}}>
 
 <div class="crp-skills">
   {{#each this.skills as |skill|}}
@@ -39,7 +39,8 @@
          max="10"
          name="system.attributes.{{../key}}.skills.{{skill.key}}.value"
          value="{{skill.value}}"
-         {{#if ../../characterSheetsLocked}}disabled{{/if}}>
+         {{log @root.isEditable}}
+         {{#if @root.isEditable}}disabled{{/if}}>
     </div>
 
 <div class="flexrow">

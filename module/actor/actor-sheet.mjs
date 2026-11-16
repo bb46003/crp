@@ -120,6 +120,7 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
       npcSheetLocked: npcSheetLocked,
       tokenImg: tokenImg,
       isToken: isToken,
+      isEditable: this.isEditable()
     });
 
     return context;
@@ -245,7 +246,9 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
     });
     const section = this.element.querySelector(".tab.active");
     section.scrollTop = this.y;
+
   }
+
 
   #customDragStart(event) {
     const li = event.currentTarget;
@@ -523,7 +526,7 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
     let usedWeapon = this.actor.items.get(itemId);
     let weaponSkill;
     let weaponName = "";
-    if (usedWeapon.type === "shield") {
+    if (usedWeapon?.type === "shield") {
       ui.notifications.info("Nie możesz atakować Tarczą");
       return;
     } else if (usedWeapon) {
@@ -655,6 +658,7 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
                 img: itemDoc.img,
               },
             };
+          
             break;
           case "leftHand":
             updateData = {
@@ -664,6 +668,17 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
                 img: itemDoc.img,
               },
             };
+            const rightHandID = this.actor.system.equipment.rightHand.id;
+            if(rightHandID === itemDoc.id){
+              updateData = {
+                ...updateData,
+              ["system.equipment.rightHand"]: {
+                id: "",
+                name: "",
+                img: "",
+              }
+            };
+            }
             if (
               itemDoc.system.skill === "twoHanded" ||
               itemDoc.system.skill === "ranged"
@@ -691,6 +706,17 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
                 img: itemDoc.img,
               },
             };
+            const leftHandID = this.actor.system.equipment.leftHand.id;
+            if(leftHandID === itemDoc.id){
+              updateData = {
+                ...updateData,
+              ["system.equipment.leftHand"]: {
+                id: "",
+                name: "",
+                img: "",
+              }
+            };
+            }
             if (
               itemDoc.system.skill === "twoHanded" ||
               itemDoc.system.skill === "ranged"
@@ -853,16 +879,17 @@ export class CRPActorSheet extends api.HandlebarsApplicationMixin(
       });
     }
   }
-  get isEditable() {
+  isEditable() {
     const locked = game.settings.get("crp", "characterSheetsLocked");
-    if (this.actor !== "character") {
+    if (this.actor.type !== "character") {
       const npcSheetLocked = this.actor.getFlag("crp", "npcSheetLocked");
       return !npcSheetLocked && !locked;
     } else {
       const isEditable = super.isEditable;
-      return isEditable && !locked;
+      return isEditable && locked;
     }
   }
+
 }
 
 function isNPCActor(actor) {

@@ -244,7 +244,7 @@ export class CRPActor extends Actor {
     const useFate =
       this.system.resources.fate.value > 0 &&
       (this.type === "character" || this.type === "npc-rycerz");
-    const maneoverMod = this.flags?.crp?.maneuver.offenceModifier;
+    const maneoverMod = this.flags?.crp?.maneuver?.offenceModifier ?? 0;
     let weaopnMod = -3;
 
     const defenderActor = await fromUuid(target);
@@ -391,37 +391,51 @@ export class CRPActor extends Actor {
 
     return true;
   }
-  async applyWoundsState() {
+async applyWoundsState() {
     const hp = this.system.derived.health.value;
-
     const update = {};
-    const actorType = ["character", "npc-rycerz"].includes(this.type)
-      ? this.type
-      : false;
-    if (hp <= 0 && !this.system.state.bleeding && actorType) {
-      update["system.state.bleeding"] = true;
 
-      await this.toggleStatusEffect("bleeding", { active: true });
-    } else if (hp <= 0 && !actorType) {
-      update["system.state.life"] = "dead";
-      await this.toggleStatusEffect("dead", { active: true, overlay: true });
+    const actorType = ["character", "npc-rycerz"].includes(this.type);
+
+    if (hp <= 0 && actorType) {
+        if (!this.system.state.bleeding) {
+            update["system.state.bleeding"] = true;
+        }
+
+        await this.toggleStatusEffectOnce("bleeding", true);
+    } else if (hp <= 0) {
+        update["system.state.life"] = "dead";
+        await this.toggleStatusEffectOnce("dead", true, { overlay: true });
     }
 
     if (hp > 0) {
-      update["system.state.bleeding"] = false;
-      update["system.state.unconscious"] = false;
-      update["system.state.life"] = "alive";
-      update["system.state.agony"] = false;
-      await this.toggleStatusEffect("unconscious", { active: false });
-      await this.toggleStatusEffect("dead", { active: false });
-      await this.toggleStatusEffect("bleeding", { active: false });
-      await this.toggleStatusEffect("agonia", { active: false });
+        update["system.state.bleeding"] = false;
+        update["system.state.unconscious"] = false;
+        update["system.state.life"] = "alive";
+        update["system.state.agony"] = false;
+
+        await this.toggleStatusEffectOnce("unconscious", false);
+        await this.toggleStatusEffectOnce("dead", false);
+        await this.toggleStatusEffectOnce("bleeding", false);
+        await this.toggleStatusEffectOnce("agonia", false);
     }
 
     if (Object.keys(update).length) {
-      await this.update(update);
+        await this.update(update);
     }
-  }
+}
+  async toggleStatusEffectOnce(statusId, active, options = {}) {
+    const isApplied = this.appliedEffects.some(
+        (effect) => effect.statuses?.has(statusId)
+    );
+
+    if (isApplied !== active) {
+        await this.toggleStatusEffect(statusId, {
+            ...options,
+            active
+        });
+    }
+}
   async applyDamage(amount) {
     if (amount <= 0) return;
 
@@ -434,8 +448,6 @@ export class CRPActor extends Actor {
     await this.update({
       "system.derived.health.value": newHp,
     });
-
-    await this.applyWoundsState();
   }
   async restoreHealth(amount) {
     if (amount <= 0) return;
@@ -450,7 +462,6 @@ export class CRPActor extends Actor {
       "system.derived.health.value": newHp,
     });
 
-    await this.applyWoundsState();
   }
 
   //rzeczy do zrobienia przed stworzeniem Aktora
@@ -542,13 +553,13 @@ export class CRPActor extends Actor {
   }
   async defenceOption(defenderActor, skillKey) {
     if (skillKey === "range") {
-      return [{ skill: "athletics", label: "CRP.defence.evade" }];
+      return [{ skill: "athletics", label: "CRP.defence.evade", name:""}];
     }
     const defenderLeftHand = defenderActor.system.equipment.leftHand;
     const defenderRightHand = defenderActor.system.equipment.rightHand;
     const leftHandItem = await defenderActor.items.get(defenderLeftHand.id);
     const rightHandItem = await defenderActor.items.get(defenderRightHand.id);
-    const defendeOption = [{ skill: "athletics", label: "CRP.defence.evade" }];
+    const defendeOption = [{ skill: "athletics", label: "CRP.defence.evade", name:"" }];
     if (
       rightHandItem?.type === "weapon" &&
       rightHandItem?.system?.skill !== "range"
@@ -556,6 +567,7 @@ export class CRPActor extends Actor {
       defendeOption.push({
         skill: rightHandItem.system.skill,
         label: "CRP.defence.pary",
+        name: rightHandItem.name,
       });
     }
     if (
@@ -565,6 +577,7 @@ export class CRPActor extends Actor {
     ) {
       defendeOption.push({
         skill: leftHandItem.system.skill,
+        name: leftHandItem.name,
         label: "CRP.defence.pary",
       });
     }
@@ -572,8 +585,19 @@ export class CRPActor extends Actor {
       defendeOption.push({
         skill: "shield",
         label: "CRP.defence.shield",
+        name: leftHandItem.name,
         shield: true,
       });
+    }
+    if(skillKey === "brawl"){
+      if(leftHandItem === undefined || rightHandItem === undefined){
+        defendeOption.push({
+          skill: "brawl",
+          label: "CRP.defence.pary",
+          name: "Bez Broni",
+        });
+      }
+
     }
     return defendeOption;
   }
